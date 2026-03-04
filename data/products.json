@@ -1,0 +1,164 @@
+{
+  "products": [
+    {
+      "id": "netflix-1month",
+      "name_ar": "اشتراك نتفلكس - شهر",
+      "name_en": "Netflix - 1 Month",
+      "description_ar": "اشتراك نتفلكس بريميوم 4K لمدة شهر كامل، مشاهدة غير محدودة",
+      "description_en": "Netflix Premium 4K subscription for 1 full month, unlimited streaming",
+      "price": 5,
+      "currency": "USD",
+      "category": "streaming",
+      "image": "images/netflix.svg",
+      "duration_ar": "شهر واحد",
+      "duration_en": "1 Month",
+      "available": true,
+      "featured": true,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/5",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك نتفلكس شهر - $5"
+      }
+    },
+    {
+      "id": "spotify-3months",
+      "name_ar": "اشتراك سبوتيفاي - 3 أشهر",
+      "name_en": "Spotify Premium - 3 Months",
+      "description_ar": "سبوتيفاي بريميوم بدون إعلانات لمدة 3 أشهر",
+      "description_en": "Spotify Premium ad-free for 3 months",
+      "price": 8,
+      "currency": "USD",
+      "category": "streaming",
+      "image": "images/spotify.svg",
+      "duration_ar": "3 أشهر",
+      "duration_en": "3 Months",
+      "available": true,
+      "featured": false,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/8",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك سبوتيفاي 3 أشهر - $8"
+      }
+    },
+    {
+      "id": "youtube-1month",
+      "name_ar": "يوتيوب بريميوم - شهر",
+      "name_en": "YouTube Premium - 1 Month",
+      "description_ar": "يوتيوب بريميوم بدون إعلانات + تحميل الفيديوهات",
+      "description_en": "YouTube Premium ad-free + offline downloads",
+      "price": 4,
+      "currency": "USD",
+      "category": "streaming",
+      "image": "images/youtube.svg",
+      "duration_ar": "شهر واحد",
+      "duration_en": "1 Month",
+      "available": true,
+      "featured": false,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/4",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك يوتيوب بريميوم شهر - $4"
+      }
+    },
+    {
+      "id": "office365-1year",
+      "name_ar": "مايكروسوفت أوفيس 365 - سنة",
+      "name_en": "Microsoft Office 365 - 1 Year",
+      "description_ar": "جميع تطبيقات أوفيس + 1TB تخزين سحابي OneDrive",
+      "description_en": "All Office apps + 1TB OneDrive cloud storage",
+      "price": 15,
+      "currency": "USD",
+      "category": "software",
+      "image": "images/office365.svg",
+      "duration_ar": "سنة كاملة",
+      "duration_en": "1 Year",
+      "available": true,
+      "featured": true,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/15",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك أوفيس 365 سنة - $15"
+      }
+    },
+    {
+      "id": "nordvpn-1year",
+      "name_ar": "NordVPN - سنة",
+      "name_en": "NordVPN - 1 Year",
+      "description_ar": "حماية كاملة لخصوصيتك على الإنترنت مع NordVPN",
+      "description_en": "Complete online privacy protection with NordVPN",
+      "price": 12,
+      "currency": "USD",
+      "category": "software",
+      "image": "images/nordvpn.svg",
+      "duration_ar": "سنة كاملة",
+      "duration_en": "1 Year",
+      "available": true,
+      "featured": false,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/12",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك NordVPN سنة - $12"
+      }
+    },
+    {
+      "id": "canva-1year",
+      "name_ar": "كانفا برو - سنة",
+      "name_en": "Canva Pro - 1 Year",
+      "description_ar": "تصميم احترافي مع كانفا برو - قوالب وأدوات غير محدودة",
+      "description_en": "Professional design with Canva Pro - unlimited templates & tools",
+      "price": 10,
+      "currency": "USD",
+      "category": "software",
+      "image": "images/canva.svg",
+      "duration_ar": "سنة كاملة",
+      "duration_en": "1 Year",
+      "available": true,
+      "featured": false,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/10",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك كانفا برو سنة - $10"
+      }
+    },
+    {
+      "id": "psplus-3months",
+      "name_ar": "PlayStation Plus - 3 أشهر",
+      "name_en": "PlayStation Plus - 3 Months",
+      "description_ar": "العب أونلاين + ألعاب مجانية شهرياً مع بلايستيشن بلس",
+      "description_en": "Play online + free monthly games with PS Plus",
+      "price": 18,
+      "currency": "USD",
+      "category": "gaming",
+      "image": "images/psplus.svg",
+      "duration_ar": "3 أشهر",
+      "duration_en": "3 Months",
+      "available": true,
+      "featured": true,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/18",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك PS Plus 3 أشهر - $18"
+      }
+    },
+    {
+      "id": "xbox-gamepass-1month",
+      "name_ar": "Xbox Game Pass - شهر",
+      "name_en": "Xbox Game Pass Ultimate - 1 Month",
+      "description_ar": "وصول لمئات الألعاب على Xbox و PC مع Game Pass Ultimate",
+      "description_en": "Access hundreds of games on Xbox & PC with Game Pass Ultimate",
+      "price": 10,
+      "currency": "USD",
+      "category": "gaming",
+      "image": "images/gamepass.svg",
+      "duration_ar": "شهر واحد",
+      "duration_en": "1 Month",
+      "available": true,
+      "featured": false,
+      "payment_links": {
+        "paypal": "https://paypal.me/username/10",
+        "stripe": "https://buy.stripe.com/xxx",
+        "whatsapp_message": "أريد شراء اشتراك Xbox Game Pass شهر - $10"
+      }
+    }
+  ]
+}

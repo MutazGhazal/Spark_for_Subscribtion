@@ -1,0 +1,72 @@
+{
+  "store": {
+    "name_ar": "متجر الاشتراكات الرقمية",
+    "name_en": "Digital Subscriptions Store",
+    "description_ar": "أفضل الأسعار للاشتراكات الرقمية - بث، برامج، ألعاب",
+    "description_en": "Best prices for digital subscriptions - Streaming, Software, Gaming",
+    "logo": "images/logo.svg",
+    "hero_ar": "اشتراكاتك الرقمية بأفضل الأسعار",
+    "hero_en": "Your Digital Subscriptions at Best Prices",
+    "hero_sub_ar": "نوفر لك اشتراكات أصلية ومضمونة بأسعار منافسة مع دعم فني على مدار الساعة",
+    "hero_sub_en": "We provide original & guaranteed subscriptions at competitive prices with 24/7 support"
+  },
+  "payment": {
+    "paypal": {
+      "enabled": true,
+      "link": "https://paypal.me/username",
+      "label_ar": "باي بال",
+      "label_en": "PayPal"
+    },
+    "stripe": {
+      "enabled": true,
+      "label_ar": "بطاقة ائتمان",
+      "label_en": "Credit Card (Stripe)"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "number": "966500000000",
+      "label_ar": "واتساب",
+      "label_en": "WhatsApp"
+    },
+    "crypto": {
+      "enabled": true,
+      "wallets": {
+        "usdt_trc20": "TXxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "btc": "bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "label_ar": "عملات رقمية",
+      "label_en": "Cryptocurrency"
+    }
+  },
+  "social": {
+    "whatsapp": "966500000000",
+    "telegram": "username",
+    "email": "contact@example.com"
+  },
+  "categories": [
+    {
+      "id": "all",
+      "name_ar": "الكل",
+      "name_en": "All",
+      "icon": "grid"
+    },
+    {
+      "id": "streaming",
+      "name_ar": "بث ومشاهدة",
+      "name_en": "Streaming",
+      "icon": "play-circle"
+    },
+    {
+      "id": "software",
+      "name_ar": "برامج وتطبيقات",
+      "name_en": "Software",
+      "icon": "cpu"
+    },
+    {
+      "id": "gaming",
+      "name_ar": "ألعاب",
+      "name_en": "Gaming",
+      "icon": "gamepad-2"
+    }
+  ]
+}
