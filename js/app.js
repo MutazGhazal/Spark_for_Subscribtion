@@ -7,6 +7,95 @@
   let currentCategory = 'all';
   let searchQuery = '';
 
+  let visitorCurrency = 'USD';
+  let exchangeRates = {};
+  let ratesLoaded = false;
+
+  // ===== CURRENCY DETECTION & CONVERSION =====
+  const TIMEZONE_CURRENCY = {
+    'Asia/Riyadh': 'SAR', 'Asia/Baghdad': 'IQD', 'Asia/Amman': 'JOD',
+    'Asia/Damascus': 'SYP', 'Asia/Beirut': 'LBP', 'Africa/Cairo': 'EGP',
+    'Africa/Tripoli': 'LYD', 'Africa/Tunis': 'TND', 'Africa/Algiers': 'DZD',
+    'Africa/Casablanca': 'MAD', 'Asia/Aden': 'YER', 'Asia/Muscat': 'OMR',
+    'Asia/Qatar': 'QAR', 'Asia/Bahrain': 'BHD', 'Asia/Kuwait': 'KWD',
+    'Asia/Dubai': 'AED', 'Asia/Gaza': 'ILS', 'Asia/Hebron': 'ILS',
+    'Europe/London': 'GBP', 'Europe/Berlin': 'EUR', 'Europe/Paris': 'EUR',
+    'Europe/Rome': 'EUR', 'Europe/Madrid': 'EUR', 'Europe/Amsterdam': 'EUR',
+    'Europe/Istanbul': 'TRY', 'America/New_York': 'USD', 'America/Chicago': 'USD',
+    'America/Los_Angeles': 'USD', 'America/Toronto': 'CAD', 'Asia/Karachi': 'PKR',
+    'Asia/Kolkata': 'INR', 'Asia/Calcutta': 'INR', 'Asia/Jakarta': 'IDR',
+    'Asia/Kuala_Lumpur': 'MYR', 'Asia/Tokyo': 'JPY', 'Asia/Seoul': 'KRW',
+    'Asia/Shanghai': 'CNY', 'Australia/Sydney': 'AUD', 'Pacific/Auckland': 'NZD',
+    'America/Sao_Paulo': 'BRL', 'America/Mexico_City': 'MXN',
+    'Africa/Khartoum': 'SDG', 'Africa/Mogadishu': 'SOS', 'Asia/Tehran': 'IRR'
+  };
+
+  const CURRENCY_SYMBOLS = {
+    USD: '$', EUR: '€', GBP: '£', SAR: 'ر.س', AED: 'د.إ', EGP: 'ج.م',
+    KWD: 'د.ك', BHD: 'د.ب', QAR: 'ر.ق', OMR: 'ر.ع', JOD: 'د.أ',
+    IQD: 'د.ع', LBP: 'ل.ل', SYP: 'ل.س', TND: 'د.ت', DZD: 'د.ج',
+    MAD: 'د.م', LYD: 'د.ل', YER: 'ر.ي', ILS: '₪', TRY: '₺',
+    CAD: 'C$', AUD: 'A$', JPY: '¥', CNY: '¥', INR: '₹', PKR: 'Rs',
+    MYR: 'RM', IDR: 'Rp', KRW: '₩', BRL: 'R$', MXN: 'MX$',
+    NZD: 'NZ$', SDG: 'ج.س', SOS: 'Sh', IRR: '﷼'
+  };
+
+  function detectVisitorCurrency() {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (TIMEZONE_CURRENCY[tz]) return TIMEZONE_CURRENCY[tz];
+      const locale = navigator.language || 'en-US';
+      const regionMatch = locale.match(/-([A-Z]{2})$/);
+      if (regionMatch) {
+        const region = regionMatch[1];
+        const regionMap = { US: 'USD', GB: 'GBP', SA: 'SAR', AE: 'AED', EG: 'EGP', JO: 'JOD', IQ: 'IQD', KW: 'KWD', QA: 'QAR', BH: 'BHD', OM: 'OMR', YE: 'YER', LB: 'LBP', SY: 'SYP', PS: 'ILS', DZ: 'DZD', MA: 'MAD', TN: 'TND', LY: 'LYD', SD: 'SDG', TR: 'TRY', DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', CA: 'CAD', AU: 'AUD', JP: 'JPY', IN: 'INR', PK: 'PKR', BR: 'BRL', MX: 'MXN' };
+        if (regionMap[region]) return regionMap[region];
+      }
+    } catch (e) { /* fallback */ }
+    return 'USD';
+  }
+
+  async function loadExchangeRates() {
+    try {
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.rates) {
+        exchangeRates = data.rates;
+        ratesLoaded = true;
+      }
+    } catch (e) {
+      console.warn('Could not load exchange rates:', e);
+    }
+  }
+
+  function convertPrice(priceUSD, fromCurrency) {
+    if (!ratesLoaded) return null;
+    let usd = priceUSD;
+    if (fromCurrency && fromCurrency !== 'USD' && exchangeRates[fromCurrency]) {
+      usd = priceUSD / exchangeRates[fromCurrency];
+    }
+    if (visitorCurrency === 'USD') return null;
+    const rate = exchangeRates[visitorCurrency];
+    if (!rate) return null;
+    return usd * rate;
+  }
+
+  function formatLocalPrice(priceUSD, fromCurrency) {
+    const converted = convertPrice(priceUSD, fromCurrency);
+    if (converted === null) return '';
+    const sym = CURRENCY_SYMBOLS[visitorCurrency] || visitorCurrency;
+    const rounded = converted < 10 ? converted.toFixed(2) : Math.round(converted).toLocaleString();
+    return `≈ ${rounded} ${sym}`;
+  }
+
+  function formatUSDEquiv(price, fromCurrency) {
+    if (!fromCurrency || fromCurrency === 'USD') return `$${price}`;
+    if (!ratesLoaded || !exchangeRates[fromCurrency]) return `${price} ${fromCurrency}`;
+    const usd = (price / exchangeRates[fromCurrency]).toFixed(2);
+    return `≈ $${usd} USD`;
+  }
+
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -246,7 +335,7 @@
             <h3 class="product-name">${name}</h3>
             <p class="product-desc">${desc}</p>
             <div class="product-meta">
-              <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span></span>
+              <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(p.price, p.currency) ? `<span class="local-price">${formatLocalPrice(p.price, p.currency)}</span>` : ''}</span>
               <span class="product-duration">${duration}</span>
             </div>
             <div class="product-actions">
@@ -277,7 +366,15 @@
 
     $('#modalTitle').textContent = txt('choosePay') + ' - ' + name;
 
-    let html = '';
+    const priceDisplay = `${product.price} ${product.currency || 'USD'}`;
+    const localEquiv = formatLocalPrice(product.price, product.currency);
+    const usdEquiv = formatUSDEquiv(product.price, product.currency);
+
+    let html = `<div class="modal-price-summary">
+      <span class="modal-price-main">${priceDisplay}</span>
+      ${localEquiv ? `<span class="modal-price-local">${localEquiv}</span>` : ''}
+      ${product.currency !== 'USD' ? `<span class="modal-price-usd">${usdEquiv}</span>` : ''}
+    </div>`;
 
     const paypalActive = pay.paypal?.enabled && (product.payment_links?.paypal || pay.paypal?.link);
     const paypalLink = product.payment_links?.paypal || (pay.paypal?.link + '/' + product.price);
@@ -524,7 +621,8 @@
   // ===== INIT =====
   async function init() {
     initTheme();
-    await loadData();
+    visitorCurrency = detectVisitorCurrency();
+    await Promise.all([loadData(), loadExchangeRates()]);
     initLang();
     renderCategories();
     renderProducts();
