@@ -29,7 +29,9 @@
       });
       if (!res.ok) throw new Error(`Failed to get ${path}: ${res.status}`);
       const data = await res.json();
-      const content = JSON.parse(atob(data.content));
+      const bytes = Uint8Array.from(atob(data.content), c => c.charCodeAt(0));
+      const decoded = new TextDecoder('utf-8').decode(bytes);
+      const content = JSON.parse(decoded);
       return { content, sha: data.sha };
     },
 
