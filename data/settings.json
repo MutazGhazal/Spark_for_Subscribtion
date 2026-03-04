@@ -58,8 +58,8 @@
     },
     {
       "id": "software",
-      "name_ar": "برامج وتطبيقات",
-      "name_en": "Software",
+      "name_ar": "تطبيقات الذكاء الاصطناعي",
+      "name_en": "AI_Software",
       "icon": "cpu"
     },
     {
