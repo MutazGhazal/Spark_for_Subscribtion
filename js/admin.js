@@ -636,6 +636,10 @@
           <label>عنوان BTC</label>
           <input type="text" id="payCryptoBtc" value="${pay.crypto?.wallets?.btc || ''}" placeholder="bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
         </div>
+        <div class="form-group">
+          <label>Binance ID (Pay)</label>
+          <input type="text" id="payCryptoBinance" value="${pay.crypto?.wallets?.binance_id || ''}" placeholder="123456789">
+        </div>
       </div>
     `;
   }
@@ -663,7 +667,8 @@
         enabled: $('#payCryptoEnabled').checked,
         wallets: {
           usdt_trc20: $('#payCryptoUsdt').value.trim(),
-          btc: $('#payCryptoBtc').value.trim()
+          btc: $('#payCryptoBtc').value.trim(),
+          binance_id: $('#payCryptoBinance').value.trim()
         },
         label_ar: 'عملات رقمية',
         label_en: 'Cryptocurrency'

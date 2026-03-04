@@ -356,6 +356,15 @@
                 </div>
               </div>
             ` : ''}
+            ${wallets.binance_id ? `
+              <div class="crypto-address-item">
+                <label>Binance ID (Pay)</label>
+                <div class="crypto-copy-row">
+                  <input type="text" value="${wallets.binance_id}" readonly>
+                  <button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button>
+                </div>
+              </div>
+            ` : ''}
           </div>
         </div>
       `;
