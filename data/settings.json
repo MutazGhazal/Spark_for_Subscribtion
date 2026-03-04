@@ -32,7 +32,8 @@
       "enabled": true,
       "wallets": {
         "usdt_trc20": "TXxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "btc": "bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "btc": "bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "binance_id": "123456789"
       },
       "label_ar": "عملات رقمية",
       "label_en": "Cryptocurrency"
