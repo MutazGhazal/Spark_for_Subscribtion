@@ -146,6 +146,7 @@
     renderProductsList();
     renderSettingsForm();
     renderPaymentForm();
+    renderCategoriesList();
   }
 
   function logout() {
@@ -321,9 +322,7 @@
           <div class="form-group">
             <label>الفئة</label>
             <select id="pCategory">
-              <option value="streaming" ${p.category === 'streaming' ? 'selected' : ''}>بث ومشاهدة</option>
-              <option value="software" ${p.category === 'software' ? 'selected' : ''}>برامج</option>
-              <option value="gaming" ${p.category === 'gaming' ? 'selected' : ''}>ألعاب</option>
+              ${getCustomCategories().map(c => `<option value="${c.id}" ${p.category === c.id ? 'selected' : ''}>${c.name_ar} / ${c.name_en}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -672,6 +671,144 @@
     };
   }
 
+  // ===== CATEGORIES =====
+  function getCustomCategories() {
+    return (settings.categories || []).filter(c => c.id !== 'all');
+  }
+
+  function renderCategoriesList() {
+    const list = $('#adminCategoriesList');
+    const cats = settings.categories || [];
+
+    if (cats.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <p>لا توجد فئات - أضف أول فئة</p>
+        </div>
+      `;
+      return;
+    }
+
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
+
+    list.innerHTML = cats.map((c, i) => {
+      const isAll = c.id === 'all';
+      const prodCount = isAll ? products.length : products.filter(p => p.category === c.id).length;
+      return `
+        <div class="admin-cat-card ${isAll ? 'is-all' : ''}" data-index="${i}">
+          <span class="cat-color-dot" style="background:${colors[i % colors.length]}"></span>
+          <div class="admin-cat-details">
+            <h4>${c.name_ar} / ${c.name_en}</h4>
+            <p>ID: ${c.id} &bull; ${prodCount} منتج</p>
+          </div>
+          <span class="admin-cat-id">${c.id}</span>
+          ${!isAll ? `
+            <div class="admin-cat-actions">
+              <button class="btn-icon edit" data-index="${i}" title="تعديل">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="btn-icon delete" data-index="${i}" title="حذف">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          ` : '<span style="font-size:0.75rem;color:var(--text-muted);">تلقائي</span>'}
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.btn-icon.edit').forEach(btn => {
+      btn.addEventListener('click', () => showCategoryForm(parseInt(btn.dataset.index)));
+    });
+
+    list.querySelectorAll('.btn-icon.delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteCategory(parseInt(btn.dataset.index)));
+    });
+  }
+
+  function showCategoryForm(index) {
+    const isNew = index === -1;
+    const cat = isNew ? { id: '', name_ar: '', name_en: '' } : { ...settings.categories[index] };
+    const list = $('#adminCategoriesList');
+
+    const existingForm = list.querySelector('.cat-inline-form');
+    if (existingForm) existingForm.remove();
+
+    const form = document.createElement('div');
+    form.className = 'cat-inline-form';
+    form.innerHTML = `
+      <div class="form-group">
+        <label>المعرّف (ID) - إنجليزي بدون مسافات</label>
+        <input type="text" id="catId" value="${cat.id}" placeholder="education" ${!isNew ? 'readonly style="opacity:0.6"' : ''}>
+      </div>
+      <div class="form-group">
+        <label>الاسم بالعربي</label>
+        <input type="text" id="catNameAr" value="${cat.name_ar}" placeholder="تعليم">
+      </div>
+      <div class="form-group">
+        <label>Name in English</label>
+        <input type="text" id="catNameEn" value="${cat.name_en}" placeholder="Education">
+      </div>
+      <div class="cat-form-actions">
+        <button class="btn btn-primary" id="saveCatBtn">${isNew ? 'إضافة' : 'حفظ'}</button>
+        <button class="btn btn-secondary" id="cancelCatBtn">إلغاء</button>
+      </div>
+    `;
+
+    if (isNew) {
+      list.prepend(form);
+    } else {
+      const card = list.querySelector(`[data-index="${index}"]`);
+      if (card) card.after(form);
+    }
+
+    form.querySelector('#saveCatBtn').addEventListener('click', async () => {
+      const id = $('#catId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const nameAr = $('#catNameAr').value.trim();
+      const nameEn = $('#catNameEn').value.trim();
+
+      if (!id || !nameAr || !nameEn) {
+        showToast('يجب تعبئة جميع الحقول');
+        return;
+      }
+
+      if (isNew && settings.categories.some(c => c.id === id)) {
+        showToast('هذا المعرّف موجود مسبقاً');
+        return;
+      }
+
+      if (isNew) {
+        settings.categories.push({ id, name_ar: nameAr, name_en: nameEn, icon: 'tag' });
+      } else {
+        settings.categories[index].name_ar = nameAr;
+        settings.categories[index].name_en = nameEn;
+      }
+
+      await saveSettings(isNew ? `Add category: ${nameEn}` : `Update category: ${nameEn}`);
+      renderCategoriesList();
+    });
+
+    form.querySelector('#cancelCatBtn').addEventListener('click', () => form.remove());
+
+    form.querySelector('#catId')?.focus();
+  }
+
+  async function deleteCategory(index) {
+    const cat = settings.categories[index];
+    const usedCount = products.filter(p => p.category === cat.id).length;
+
+    let msg = `هل أنت متأكد من حذف فئة "${cat.name_ar}"؟`;
+    if (usedCount > 0) {
+      msg += `\n\nتنبيه: يوجد ${usedCount} منتج مرتبط بهذه الفئة. المنتجات لن تُحذف لكن فئتها ستصبح غير معروفة.`;
+    }
+
+    if (!confirm(msg)) return;
+
+    settings.categories.splice(index, 1);
+    await saveSettings(`Delete category: ${cat.name_en || cat.name_ar}`);
+    renderCategoriesList();
+  }
+
   // ===== HELPERS =====
   function generateId(name) {
     return name
@@ -727,6 +864,7 @@
     $('#adminThemeToggle').addEventListener('click', toggleTheme);
     $('#logoutBtn').addEventListener('click', logout);
     $('#addProductBtn').addEventListener('click', () => openProductModal(-1));
+    $('#addCategoryBtn').addEventListener('click', () => showCategoryForm(-1));
     $('#productModalClose').addEventListener('click', closeProductModal);
     $('#productModal').addEventListener('click', (e) => {
       if (e.target === $('#productModal')) closeProductModal();

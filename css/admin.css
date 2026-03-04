@@ -584,3 +584,113 @@
 [dir="rtl"] .switch input:checked + .switch-slider::before {
   transform: translateX(-20px);
 }
+
+/* ===== CATEGORIES LIST (Admin) ===== */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 700px;
+}
+
+.admin-cat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.admin-cat-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--primary-light);
+}
+
+.admin-cat-card.is-all {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.cat-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-cat-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-cat-details h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.admin-cat-details p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-cat-id {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.admin-cat-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.admin-cat-actions .btn-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+}
+
+/* Category inline form */
+.cat-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border: 2px dashed var(--primary-light);
+  border-radius: var(--radius-sm);
+}
+
+.cat-inline-form .form-group {
+  flex: 1;
+  min-width: 140px;
+  margin-bottom: 0;
+}
+
+.cat-inline-form .form-group label {
+  font-size: 0.8rem;
+}
+
+.cat-inline-form .form-group input {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.cat-form-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.cat-form-actions .btn {
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+}
