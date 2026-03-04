@@ -279,96 +279,96 @@
 
     let html = '';
 
-    if (pay.paypal?.enabled) {
-      const paypalLink = product.payment_links?.paypal || pay.paypal.link + '/' + product.price;
-      html += `
-        <a href="${paypalLink}" target="_blank" class="payment-option">
-          <div class="payment-icon paypal">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg>
+    const paypalActive = pay.paypal?.enabled && (product.payment_links?.paypal || pay.paypal?.link);
+    const paypalLink = product.payment_links?.paypal || (pay.paypal?.link + '/' + product.price);
+    const tag1 = paypalActive ? 'a' : 'div';
+    html += `
+      <${tag1} ${paypalActive ? `href="${paypalLink}" target="_blank"` : ''} class="payment-option ${paypalActive ? '' : 'disabled'}">
+        <div class="payment-icon paypal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg>
+        </div>
+        <div class="payment-info">
+          <h4>PayPal</h4>
+          <p>${txt('paypalDesc')}</p>
+        </div>
+      </${tag1}>
+    `;
+
+    const stripeActive = pay.stripe?.enabled && product.payment_links?.stripe;
+    const tag2 = stripeActive ? 'a' : 'div';
+    html += `
+      <${tag2} ${stripeActive ? `href="${product.payment_links.stripe}" target="_blank"` : ''} class="payment-option ${stripeActive ? '' : 'disabled'}">
+        <div class="payment-icon stripe">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="payment-info">
+          <h4>${langVal(pay.stripe || {}, 'label') || 'Stripe'}</h4>
+          <p>${txt('stripeDesc')}</p>
+        </div>
+      </${tag2}>
+    `;
+
+    const waActive = pay.whatsapp?.enabled && pay.whatsapp?.number;
+    const waMsg = encodeURIComponent(product.payment_links?.whatsapp_message || name + ' - $' + product.price);
+    const waLink = `https://wa.me/${pay.whatsapp?.number}?text=${waMsg}`;
+    const tag3 = waActive ? 'a' : 'div';
+    html += `
+      <${tag3} ${waActive ? `href="${waLink}" target="_blank"` : ''} class="payment-option ${waActive ? '' : 'disabled'}">
+        <div class="payment-icon whatsapp">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </div>
+        <div class="payment-info">
+          <h4>${txt('sendVia')}</h4>
+          <p>${txt('whatsappDesc')}</p>
+        </div>
+      </${tag3}>
+    `;
+
+    const wallets = pay.crypto?.wallets || {};
+    const hasAnyWallet = wallets.usdt_trc20 || wallets.btc || wallets.binance_id;
+    const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
+    html += `
+      <div class="payment-option ${cryptoActive ? '' : 'disabled'}" style="cursor:default; flex-direction:column; align-items:stretch;">
+        <div style="display:flex;align-items:center;gap:1rem;${cryptoActive ? 'margin-bottom:0.75rem;' : ''}">
+          <div class="payment-icon crypto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="payment-info">
-            <h4>PayPal</h4>
-            <p>${txt('paypalDesc')}</p>
-          </div>
-        </a>
-      `;
-    }
-
-    if (pay.stripe?.enabled && product.payment_links?.stripe) {
-      html += `
-        <a href="${product.payment_links.stripe}" target="_blank" class="payment-option">
-          <div class="payment-icon stripe">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          </div>
-          <div class="payment-info">
-            <h4>${langVal(pay.stripe, 'label')}</h4>
-            <p>${txt('stripeDesc')}</p>
-          </div>
-        </a>
-      `;
-    }
-
-    if (pay.whatsapp?.enabled) {
-      const waMsg = encodeURIComponent(product.payment_links?.whatsapp_message || name + ' - $' + product.price);
-      const waLink = `https://wa.me/${pay.whatsapp.number}?text=${waMsg}`;
-      html += `
-        <a href="${waLink}" target="_blank" class="payment-option">
-          <div class="payment-icon whatsapp">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-          </div>
-          <div class="payment-info">
-            <h4>${txt('sendVia')}</h4>
-            <p>${txt('whatsappDesc')}</p>
-          </div>
-        </a>
-      `;
-    }
-
-    if (pay.crypto?.enabled) {
-      const wallets = pay.crypto.wallets || {};
-      html += `
-        <div class="payment-option" style="cursor:default; flex-direction:column; align-items:stretch;">
-          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">
-            <div class="payment-icon crypto">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div class="payment-info">
-              <h4>${txt('cryptoTitle')}</h4>
-              <p>${txt('cryptoInstructions')}</p>
-            </div>
-          </div>
-          <div class="crypto-addresses">
-            ${wallets.usdt_trc20 ? `
-              <div class="crypto-address-item">
-                <label>USDT (TRC20)</label>
-                <div class="crypto-copy-row">
-                  <input type="text" value="${wallets.usdt_trc20}" readonly>
-                  <button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button>
-                </div>
-              </div>
-            ` : ''}
-            ${wallets.btc ? `
-              <div class="crypto-address-item">
-                <label>BTC</label>
-                <div class="crypto-copy-row">
-                  <input type="text" value="${wallets.btc}" readonly>
-                  <button onclick="copyToClipboard('${wallets.btc}')">${txt('copy')}</button>
-                </div>
-              </div>
-            ` : ''}
-            ${wallets.binance_id ? `
-              <div class="crypto-address-item">
-                <label>Binance ID (Pay)</label>
-                <div class="crypto-copy-row">
-                  <input type="text" value="${wallets.binance_id}" readonly>
-                  <button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button>
-                </div>
-              </div>
-            ` : ''}
+            <h4>${txt('cryptoTitle')}</h4>
+            <p>${txt(cryptoActive ? 'cryptoInstructions' : 'cryptoDesc')}</p>
           </div>
         </div>
-      `;
-    }
+        ${cryptoActive ? `<div class="crypto-addresses">
+          ${wallets.usdt_trc20 ? `
+            <div class="crypto-address-item">
+              <label>USDT (TRC20)</label>
+              <div class="crypto-copy-row">
+                <input type="text" value="${wallets.usdt_trc20}" readonly>
+                <button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button>
+              </div>
+            </div>
+          ` : ''}
+          ${wallets.btc ? `
+            <div class="crypto-address-item">
+              <label>BTC</label>
+              <div class="crypto-copy-row">
+                <input type="text" value="${wallets.btc}" readonly>
+                <button onclick="copyToClipboard('${wallets.btc}')">${txt('copy')}</button>
+              </div>
+            </div>
+          ` : ''}
+          ${wallets.binance_id ? `
+            <div class="crypto-address-item">
+              <label>Binance ID (Pay)</label>
+              <div class="crypto-copy-row">
+                <input type="text" value="${wallets.binance_id}" readonly>
+                <button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button>
+              </div>
+            </div>
+          ` : ''}
+        </div>` : ''}
+      </div>
+    `;
 
     body.innerHTML = html;
     modal.classList.add('active');
@@ -400,55 +400,56 @@
     const grid = $('#paymentGrid');
     if (!grid) return;
 
-    let html = '';
+    const disabledLabel = currentLang === 'ar' ? 'غير مفعّل' : 'Disabled';
 
-    if (pay.paypal?.enabled) {
-      html += `
-        <div class="payment-card">
-          <div class="payment-card-icon paypal">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg>
-          </div>
-          <h3>PayPal</h3>
-          <p>${txt('paypalDesc')}</p>
+    const ppOk = pay.paypal?.enabled && pay.paypal?.link;
+    html += `
+      <div class="payment-card ${ppOk ? '' : 'disabled'}">
+        <div class="payment-card-icon paypal">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg>
         </div>
-      `;
-    }
+        <h3>PayPal</h3>
+        <p>${txt('paypalDesc')}</p>
+        ${ppOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}
+      </div>
+    `;
 
-    if (pay.stripe?.enabled) {
-      html += `
-        <div class="payment-card">
-          <div class="payment-card-icon stripe">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          </div>
-          <h3>${langVal(pay.stripe, 'label')}</h3>
-          <p>${txt('stripeDesc')}</p>
+    const stOk = pay.stripe?.enabled;
+    html += `
+      <div class="payment-card ${stOk ? '' : 'disabled'}">
+        <div class="payment-card-icon stripe">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         </div>
-      `;
-    }
+        <h3>${langVal(pay.stripe || {}, 'label') || 'Stripe'}</h3>
+        <p>${txt('stripeDesc')}</p>
+        ${stOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}
+      </div>
+    `;
 
-    if (pay.whatsapp?.enabled) {
-      html += `
-        <div class="payment-card">
-          <div class="payment-card-icon whatsapp">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-          </div>
-          <h3>${langVal(pay.whatsapp, 'label')}</h3>
-          <p>${txt('whatsappDesc')}</p>
+    const waOk = pay.whatsapp?.enabled && pay.whatsapp?.number;
+    html += `
+      <div class="payment-card ${waOk ? '' : 'disabled'}">
+        <div class="payment-card-icon whatsapp">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
         </div>
-      `;
-    }
+        <h3>${langVal(pay.whatsapp || {}, 'label') || 'WhatsApp'}</h3>
+        <p>${txt('whatsappDesc')}</p>
+        ${waOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}
+      </div>
+    `;
 
-    if (pay.crypto?.enabled) {
-      html += `
-        <div class="payment-card">
-          <div class="payment-card-icon crypto">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <h3>${langVal(pay.crypto, 'label')}</h3>
-          <p>${txt('cryptoDesc')}</p>
+    const crWallets = pay.crypto?.wallets || {};
+    const crOk = pay.crypto?.enabled && (crWallets.usdt_trc20 || crWallets.btc || crWallets.binance_id);
+    html += `
+      <div class="payment-card ${crOk ? '' : 'disabled'}">
+        <div class="payment-card-icon crypto">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
-      `;
-    }
+        <h3>${langVal(pay.crypto || {}, 'label') || 'Crypto'}</h3>
+        <p>${txt('cryptoDesc')}</p>
+        ${crOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}
+      </div>
+    `;
 
     grid.innerHTML = html;
   }

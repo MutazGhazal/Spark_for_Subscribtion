@@ -569,6 +569,52 @@ body.rtl {
   color: var(--text-muted);
 }
 
+/* Disabled payment option (modal) */
+.payment-option.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(1);
+  border-color: var(--border);
+  background: var(--bg-secondary);
+}
+
+.payment-option.disabled:hover {
+  transform: none;
+  border-color: var(--border);
+  background: var(--bg-secondary);
+}
+
+.payment-option.disabled .payment-icon {
+  background: var(--text-muted) !important;
+}
+
+/* Disabled payment card (section) */
+.payment-card.disabled {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+.payment-card.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.payment-card.disabled .payment-card-icon {
+  background: var(--text-muted) !important;
+}
+
+.payment-disabled-label {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
 /* Crypto modal */
 .crypto-addresses {
   margin-top: 1rem;
