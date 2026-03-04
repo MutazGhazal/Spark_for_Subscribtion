@@ -497,6 +497,7 @@
 
   // ===== INIT =====
   async function init() {
+    initSupabase();
     initTheme();
     visitorCurrency = detectVisitorCurrency();
     await Promise.all([loadData(), loadExchangeRates()]);

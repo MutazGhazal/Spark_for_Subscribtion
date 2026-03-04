@@ -1003,6 +1003,7 @@
 
   // ===== INIT =====
   async function init() {
+    initSupabase();
     initTheme();
     initSidebar();
     initTabs();
