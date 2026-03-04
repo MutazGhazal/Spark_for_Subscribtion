@@ -95,11 +95,11 @@
   </footer>
 
   <!-- Payment Modal -->
-  <div class="modal-overlay" id="paymentModal">
+  <div class="modal-overlay" id="paymentModal" onclick="if(event.target===this){this.classList.remove('active');document.body.style.overflow=''}">
     <div class="modal">
       <div class="modal-header">
         <h3 id="modalTitle">اختر طريقة الدفع</h3>
-        <button class="modal-close" id="modalClose">&times;</button>
+        <button class="modal-close" id="modalClose" onclick="document.getElementById('paymentModal').classList.remove('active');document.body.style.overflow=''" type="button">&times;</button>
       </div>
       <div class="modal-body" id="modalBody"></div>
     </div>

@@ -487,6 +487,10 @@ body.rtl {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 5;
 }
 
 .modal-header h3 {
@@ -495,8 +499,8 @@ body.rtl {
 }
 
 .modal-close {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
   border: none;
   background: var(--bg-secondary);
@@ -506,7 +510,11 @@ body.rtl {
   align-items: center;
   justify-content: center;
   transition: all var(--transition);
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .modal-close:hover {
