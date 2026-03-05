@@ -112,6 +112,8 @@ body.rtl {
   justify-content: center;
   gap: 0.05em;
   perspective: 600px;
+  direction: ltr;
+  unicode-bidi: bidi-override;
 }
 
 .spark-letter {
@@ -131,7 +133,6 @@ body.rtl {
 }
 
 .spark-letter::after {
-  content: attr(style);
   content: '';
   position: absolute;
   bottom: -4px;
