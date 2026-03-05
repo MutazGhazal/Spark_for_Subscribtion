@@ -10,6 +10,9 @@
   let visitorCurrency = 'USD';
   let exchangeRates = {};
   let ratesLoaded = false;
+  let ratesTimestamp = 0;
+  const RATES_CACHE_KEY = 'exchange_rates_cache';
+  const RATES_REFRESH_MS = 10 * 60 * 1000;
 
   // ===== CURRENCY DETECTION & CONVERSION =====
   const TIMEZONE_CURRENCY = {
@@ -40,6 +43,11 @@
     NZD: 'NZ$', SDG: 'ج.س', SOS: 'Sh', IRR: '﷼'
   };
 
+  const CURRENCY_NAMES = {
+    ar: { USD:'دولار أمريكي',EUR:'يورو',GBP:'جنيه إسترليني',SAR:'ريال سعودي',AED:'درهم إماراتي',EGP:'جنيه مصري',KWD:'دينار كويتي',BHD:'دينار بحريني',QAR:'ريال قطري',OMR:'ريال عماني',JOD:'دينار أردني',IQD:'دينار عراقي',LBP:'ليرة لبنانية',SYP:'ليرة سورية',TND:'دينار تونسي',DZD:'دينار جزائري',MAD:'درهم مغربي',LYD:'دينار ليبي',YER:'ريال يمني',ILS:'شيكل',TRY:'ليرة تركية',CAD:'دولار كندي',AUD:'دولار أسترالي',JPY:'ين ياباني',CNY:'يوان صيني',INR:'روبية هندية',PKR:'روبية باكستانية',MYR:'رينغيت ماليزي',IDR:'روبية إندونيسية',KRW:'وون كوري',BRL:'ريال برازيلي',MXN:'بيزو مكسيكي',NZD:'دولار نيوزيلندي',SDG:'جنيه سوداني',SOS:'شلن صومالي',IRR:'ريال إيراني' },
+    en: { USD:'US Dollar',EUR:'Euro',GBP:'British Pound',SAR:'Saudi Riyal',AED:'UAE Dirham',EGP:'Egyptian Pound',KWD:'Kuwaiti Dinar',BHD:'Bahraini Dinar',QAR:'Qatari Riyal',OMR:'Omani Rial',JOD:'Jordanian Dinar',IQD:'Iraqi Dinar',LBP:'Lebanese Pound',SYP:'Syrian Pound',TND:'Tunisian Dinar',DZD:'Algerian Dinar',MAD:'Moroccan Dirham',LYD:'Libyan Dinar',YER:'Yemeni Rial',ILS:'Israeli Shekel',TRY:'Turkish Lira',CAD:'Canadian Dollar',AUD:'Australian Dollar',JPY:'Japanese Yen',CNY:'Chinese Yuan',INR:'Indian Rupee',PKR:'Pakistani Rupee',MYR:'Malaysian Ringgit',IDR:'Indonesian Rupiah',KRW:'South Korean Won',BRL:'Brazilian Real',MXN:'Mexican Peso',NZD:'New Zealand Dollar',SDG:'Sudanese Pound',SOS:'Somali Shilling',IRR:'Iranian Rial' }
+  };
+
   function detectVisitorCurrency() {
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -55,13 +63,113 @@
     return 'USD';
   }
 
-  async function loadExchangeRates() {
+  function loadCachedRates() {
     try {
-      const res = await fetch('https://open.er-api.com/v6/latest/USD');
-      if (!res.ok) return;
+      const cached = JSON.parse(localStorage.getItem(RATES_CACHE_KEY));
+      if (cached && cached.rates && cached.ts && (Date.now() - cached.ts < RATES_REFRESH_MS)) {
+        exchangeRates = cached.rates;
+        ratesTimestamp = cached.ts;
+        ratesLoaded = true;
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
+  function saveCachedRates() {
+    try {
+      localStorage.setItem(RATES_CACHE_KEY, JSON.stringify({ rates: exchangeRates, ts: ratesTimestamp }));
+    } catch (e) { /* ignore */ }
+  }
+
+  async function fetchFromAPI(url, extractRates) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
       const data = await res.json();
-      if (data.rates) { exchangeRates = data.rates; ratesLoaded = true; }
-    } catch (e) { console.warn('Could not load exchange rates:', e); }
+      return extractRates(data);
+    } catch (e) {
+      clearTimeout(timeout);
+      return null;
+    }
+  }
+
+  async function loadExchangeRates() {
+    if (loadCachedRates()) return;
+
+    const apis = [
+      {
+        url: 'https://latest.currency-api.pages.dev/v1/currencies/usd.json',
+        extract: d => d && d.usd ? Object.fromEntries(Object.entries(d.usd).map(([k,v]) => [k.toUpperCase(), v])) : null
+      },
+      {
+        url: 'https://open.er-api.com/v6/latest/USD',
+        extract: d => d && d.rates ? d.rates : null
+      },
+      {
+        url: 'https://api.exchangerate-api.com/v4/latest/USD',
+        extract: d => d && d.rates ? d.rates : null
+      }
+    ];
+
+    for (const api of apis) {
+      const rates = await fetchFromAPI(api.url, api.extract);
+      if (rates && Object.keys(rates).length > 10) {
+        exchangeRates = rates;
+        ratesTimestamp = Date.now();
+        ratesLoaded = true;
+        saveCachedRates();
+        return;
+      }
+    }
+  }
+
+  function startRatesAutoRefresh() {
+    setInterval(async () => {
+      const old = { ...exchangeRates };
+      ratesLoaded = false;
+      localStorage.removeItem(RATES_CACHE_KEY);
+      await loadExchangeRates();
+      if (ratesLoaded && visitorCurrency !== 'USD') {
+        const changed = old[visitorCurrency] !== exchangeRates[visitorCurrency];
+        if (changed) {
+          renderProducts();
+          renderRateInfo();
+        }
+      }
+    }, RATES_REFRESH_MS);
+  }
+
+  function renderRateInfo() {
+    const el = document.getElementById('rateInfo');
+    if (!el) return;
+    if (!ratesLoaded || visitorCurrency === 'USD') { el.style.display = 'none'; return; }
+
+    const rate = exchangeRates[visitorCurrency];
+    if (!rate) { el.style.display = 'none'; return; }
+
+    const sym = CURRENCY_SYMBOLS[visitorCurrency] || visitorCurrency;
+    const name = (CURRENCY_NAMES[currentLang] || CURRENCY_NAMES.ar)[visitorCurrency] || visitorCurrency;
+    const rateStr = rate < 10 ? rate.toFixed(4) : rate < 1000 ? rate.toFixed(2) : Math.round(rate).toLocaleString();
+
+    const ago = ratesTimestamp ? timeSince(ratesTimestamp) : '';
+
+    el.style.display = '';
+    el.innerHTML = currentLang === 'ar'
+      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> <span>1$ = ${rateStr} ${sym} <span class="rate-name">(${name})</span></span><span class="rate-time">${ago}</span>`
+      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> <span>1$ = ${rateStr} ${sym} <span class="rate-name">(${name})</span></span><span class="rate-time">${ago}</span>`;
+  }
+
+  function timeSince(ts) {
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 60) return currentLang === 'ar' ? 'الآن' : 'just now';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return currentLang === 'ar' ? `منذ ${min} د` : `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    return currentLang === 'ar' ? `منذ ${hr} س` : `${hr}h ago`;
   }
 
   function convertPrice(priceUSD, fromCurrency) {
@@ -165,6 +273,7 @@
     renderProducts();
     renderPaymentSection();
     renderFooter();
+    renderRateInfo();
   }
 
   function applyLang() {
@@ -594,7 +703,9 @@
     renderProducts();
     renderPaymentSection();
     renderFooter();
+    renderRateInfo();
     initSearch();
+    startRatesAutoRefresh();
 
     $('#themeToggle').addEventListener('click', toggleTheme);
     $('#langToggle').addEventListener('click', toggleLang);

@@ -422,6 +422,62 @@ body.rtl {
   transform: translateY(-2px);
 }
 
+/* ===== EXCHANGE RATE BANNER ===== */
+.rate-banner {
+  max-width: 1280px;
+  margin: 1rem auto 0;
+  padding: 0.55rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow);
+  transition: all var(--transition);
+}
+
+.rate-banner:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 12px var(--glow);
+}
+
+.rate-banner svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.rate-banner .rate-name {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.rate-banner .rate-time {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin-inline-start: 0.5rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .rate-banner {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    padding: 0.45rem 1rem;
+  }
+}
+
 /* ===== CATEGORIES ===== */
 .categories-section {
   max-width: 1280px;
