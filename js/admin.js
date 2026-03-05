@@ -20,10 +20,18 @@
     isBootstrap = (!error && data === 0);
     if (isBootstrap) {
       $('#nameGroup').style.display = '';
+      $('#adminName').required = true;
       $('#loginTitle').textContent = 'إعداد Spark';
       $('#loginSubtitle').textContent = 'أنشئ حساب الأدمن الرئيسي';
       $('#loginBtnText').textContent = 'إنشاء الحساب';
       $('#loginNote').textContent = 'ستكون الأدمن الرئيسي (Super Admin) للمتجر';
+    } else {
+      $('#nameGroup').style.display = 'none';
+      $('#adminName').required = false;
+      $('#loginTitle').textContent = 'Spark - لوحة التحكم';
+      $('#loginSubtitle').textContent = 'أدخل إيميلك وكلمة المرور';
+      $('#loginBtnText').textContent = 'دخول';
+      $('#loginNote').textContent = 'أدخل بياناتك وسيتم التعرف عليك تلقائياً';
     }
   }
 
