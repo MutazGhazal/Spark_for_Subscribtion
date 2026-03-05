@@ -612,75 +612,167 @@
 
     const ctx = canvas.getContext('2d');
     let W, H;
-    const particles = [];
     let animId;
+    const sparks = [];
+    const trail = [];
+    let lineX = 0;
+    let phase = 0;
+    const startTime = performance.now();
 
     function resize() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
     }
     resize();
-    window.addEventListener('resize', resize);
 
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = W * 0.3 + Math.random() * W * 0.4;
-        this.y = H + 10;
-        this.size = Math.random() * 6 + 2;
-        this.speedY = -(Math.random() * 4 + 2);
-        this.speedX = (Math.random() - 0.5) * 2;
-        this.life = 1;
-        this.decay = Math.random() * 0.015 + 0.008;
-        const colors = [
-          [255, 100, 0],
-          [255, 160, 20],
-          [255, 60, 30],
-          [255, 200, 50],
-          [236, 72, 153],
-          [255, 80, 60]
-        ];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
+    const COLORS = [
+      [255, 220, 50],
+      [255, 160, 10],
+      [255, 100, 0],
+      [255, 60, 0],
+      [255, 40, 20],
+      [236, 72, 153],
+      [255, 255, 180]
+    ];
+
+    function rndColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+
+    function spawnSparks(x, y, count) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        sparks.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - Math.random() * 3,
+          size: Math.random() * 3.5 + 1,
+          life: 1,
+          decay: Math.random() * 0.02 + 0.012,
+          color: rndColor(),
+          gravity: 0.08 + Math.random() * 0.06
+        });
       }
-      update() {
-        this.x += this.speedX + (Math.random() - 0.5) * 0.5;
-        this.y += this.speedY;
-        this.speedY *= 0.99;
-        this.life -= this.decay;
-        this.size *= 0.995;
-        if (this.life <= 0 || this.size < 0.5) this.reset();
-      }
-      draw() {
-        const [r, g, b] = this.color;
-        const a = this.life * 0.8;
+    }
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(11, 15, 26, 0.12)';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      if (phase === 0) {
+        const duration = 1200;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        lineX = ease * W;
+
+        const lineY = H * 0.5;
+        const headX = lineX;
+
+        for (let i = 0; i < 4; i++) {
+          trail.push({
+            x: headX - Math.random() * 8,
+            y: lineY + (Math.random() - 0.5) * 6,
+            size: Math.random() * 5 + 3,
+            life: 1,
+            decay: Math.random() * 0.015 + 0.01,
+            color: rndColor()
+          });
+        }
+
+        spawnSparks(headX, lineY, 3);
+
+        const glowSize = 40 + Math.sin(elapsed * 0.02) * 10;
+        const grd = ctx.createRadialGradient(headX, lineY, 0, headX, lineY, glowSize);
+        grd.addColorStop(0, 'rgba(255, 200, 50, 0.9)');
+        grd.addColorStop(0.3, 'rgba(255, 100, 0, 0.5)');
+        grd.addColorStop(0.7, 'rgba(255, 40, 0, 0.15)');
+        grd.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(headX - glowSize, lineY - glowSize, glowSize * 2, glowSize * 2);
+
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(headX, lineY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 220, 1)';
+        ctx.fill();
+
+        if (progress >= 1) phase = 1;
+      }
+
+      if (phase === 1) {
+        const burstTime = elapsed - 1200;
+        if (burstTime < 100) {
+          const cx = W / 2, cy = H / 2;
+          spawnSparks(cx, cy, 25);
+          spawnSparks(cx - W * 0.2, cy, 15);
+          spawnSparks(cx + W * 0.2, cy, 15);
+          spawnSparks(cx, cy - H * 0.15, 10);
+          spawnSparks(cx, cy + H * 0.15, 10);
+        }
+
+        const ringProgress = Math.min(burstTime / 600, 1);
+        if (ringProgress < 1) {
+          const radius = ringProgress * Math.max(W, H) * 0.6;
+          const alpha = (1 - ringProgress) * 0.5;
+          ctx.beginPath();
+          ctx.arc(W / 2, H / 2, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 150, 30, ${alpha})`;
+          ctx.lineWidth = 4 * (1 - ringProgress) + 1;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(W / 2, H / 2, radius * 0.85, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 80, 0, ${alpha * 0.6})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        if (burstTime > 800) phase = 2;
+      }
+
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const t = trail[i];
+        t.life -= t.decay;
+        t.size *= 0.98;
+        if (t.life <= 0) { trail.splice(i, 1); continue; }
+        const [r, g, b] = t.color;
+        const a = t.life * 0.7;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.2})`;
+        ctx.arc(t.x, t.y, t.size * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.15})`;
         ctx.fill();
       }
-    }
 
-    const count = Math.min(180, Math.floor(W * H / 5000));
-    for (let i = 0; i < count; i++) {
-      const p = new Particle();
-      p.y = Math.random() * H;
-      p.life = Math.random();
-      particles.push(p);
-    }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += s.gravity;
+        s.vx *= 0.98;
+        s.life -= s.decay;
+        s.size *= 0.97;
+        if (s.life <= 0 || s.size < 0.3) { sparks.splice(i, 1); continue; }
+        const [r, g, b] = s.color;
+        const a = s.life;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size * 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.25})`;
+        ctx.fill();
+      }
 
-    function animate() {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(11, 15, 26, 0.15)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.globalCompositeOperation = 'lighter';
-      particles.forEach(p => { p.update(); p.draw(); });
       animId = requestAnimationFrame(animate);
     }
-    animate();
+
+    animId = requestAnimationFrame(animate);
 
     setTimeout(() => {
       splash.classList.add('done');
@@ -688,7 +780,7 @@
         cancelAnimationFrame(animId);
         splash.remove();
       }, 900);
-    }, 2600);
+    }, 2800);
   }
 
   // ===== INIT =====
