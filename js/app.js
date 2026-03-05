@@ -211,7 +211,7 @@
       paypalDesc: 'ادفع بسهولة عبر حساب باي بال الخاص بك',
       stripeDesc: 'ادفع ببطاقة الائتمان أو الخصم بأمان',
       whatsappDesc: 'تواصل معنا عبر واتساب لإتمام الدفع',
-      cryptoDesc: 'ادفع بالعملات الرقمية USDT أو BTC',
+      cryptoDesc: 'ادفع بالعملات الرقمية USDT',
       featured: 'مميز', unavailable: 'غير متوفر حالياً',
       copied: 'تم النسخ!', copy: 'نسخ',
       sendVia: 'إرسال عبر واتساب', cryptoTitle: 'الدفع بالعملات الرقمية',
@@ -226,7 +226,7 @@
       paypalDesc: 'Pay easily through your PayPal account',
       stripeDesc: 'Pay securely with credit or debit card',
       whatsappDesc: 'Contact us on WhatsApp to complete payment',
-      cryptoDesc: 'Pay with USDT or BTC cryptocurrency',
+      cryptoDesc: 'Pay with USDT cryptocurrency',
       featured: 'Featured', unavailable: 'Currently Unavailable',
       copied: 'Copied!', copy: 'Copy',
       sendVia: 'Send via WhatsApp', cryptoTitle: 'Pay with Crypto',
@@ -497,7 +497,7 @@
 
     // Crypto
     const wallets = pay.crypto?.wallets || {};
-    const hasAnyWallet = wallets.usdt_trc20 || wallets.btc || wallets.binance_id;
+    const hasAnyWallet = wallets.usdt_trc20 || wallets.binance_id;
     const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
     html += `
       <div class="payment-option ${cryptoActive ? '' : 'disabled'}" style="cursor:default; flex-direction:column; align-items:stretch;">
@@ -507,7 +507,6 @@
         </div>
         ${cryptoActive ? `<div class="crypto-addresses">
           ${wallets.usdt_trc20 ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
-          ${wallets.btc ? `<div class="crypto-address-item"><label>BTC</label><div class="crypto-copy-row"><input type="text" value="${wallets.btc}" readonly><button onclick="copyToClipboard('${wallets.btc}')">${txt('copy')}</button></div></div>` : ''}
           ${wallets.binance_id ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
         </div>` : ''}
       </div>
@@ -552,7 +551,7 @@
     html += `<div class="payment-card ${waOk ? '' : 'disabled'}"><div class="payment-card-icon whatsapp"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></div><h3>${langVal(pay.whatsapp || {}, 'label') || 'WhatsApp'}</h3><p>${txt('whatsappDesc')}</p>${waOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
     const crWallets = pay.crypto?.wallets || {};
-    const crOk = pay.crypto?.enabled && (crWallets.usdt_trc20 || crWallets.btc || crWallets.binance_id);
+    const crOk = pay.crypto?.enabled && (crWallets.usdt_trc20 || crWallets.binance_id);
     html += `<div class="payment-card ${crOk ? '' : 'disabled'}"><div class="payment-card-icon crypto"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>${langVal(pay.crypto || {}, 'label') || 'Crypto'}</h3><p>${txt('cryptoDesc')}</p>${crOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
     grid.innerHTML = html;

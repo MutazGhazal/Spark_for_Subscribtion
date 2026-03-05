@@ -13,17 +13,14 @@
   <!-- Login Screen -->
   <div class="admin-login" id="loginScreen">
     <div class="login-card">
-      <div class="login-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-      <h1 id="loginTitle">لوحة التحكم</h1>
-      <p id="loginSubtitle">سجل الدخول بإيميلك</p>
+      <div class="login-icon">⚡</div>
+      <h1 id="loginTitle">Spark - لوحة التحكم</h1>
+      <p id="loginSubtitle">أدخل إيميلك وكلمة المرور</p>
 
-      <!-- Login Form -->
       <form id="loginForm">
         <div class="form-group" id="nameGroup" style="display:none;">
-          <label for="adminName">الاسم</label>
-          <input type="text" id="adminName" placeholder="اسمك">
+          <label for="adminName">اسمك</label>
+          <input type="text" id="adminName" placeholder="مثال: أحمد" required>
         </div>
         <div class="form-group">
           <label for="adminEmail">البريد الإلكتروني</label>
@@ -31,23 +28,16 @@
         </div>
         <div class="form-group">
           <label for="adminPassword">كلمة المرور</label>
-          <input type="password" id="adminPassword" placeholder="••••••••" required minlength="6">
+          <input type="password" id="adminPassword" placeholder="6 أحرف على الأقل" required minlength="6">
         </div>
-        <div class="form-group" id="refCodeGroup" style="display:none;">
-          <label for="adminRefCode">كود الريفيرال الخاص بك</label>
-          <input type="text" id="adminRefCode" placeholder="ahmed123">
-        </div>
+        <input type="hidden" id="adminRefCode" value="">
         <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           <span id="loginBtnText">دخول</span>
         </button>
       </form>
 
-      <div class="login-toggle">
-        <button type="button" class="link-btn" id="toggleMode">أول مرة؟ سجل حسابك</button>
-      </div>
-
-      <p class="login-note" id="loginNote">يجب أن يكون إيميلك مسجلاً من قبل الأدمن الرئيسي</p>
+      <p class="login-note" id="loginNote">أدخل بياناتك وسيتم التعرف عليك تلقائياً</p>
     </div>
   </div>
 

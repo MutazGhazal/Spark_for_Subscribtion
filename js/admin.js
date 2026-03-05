@@ -12,33 +12,18 @@
   let socialSettings = {};
   let admins = [];
   let currentTab = 'products';
-  let isSignupMode = false;
   let isBootstrap = false;
 
   // ===== AUTH =====
   async function checkBootstrap() {
     const { data, error } = await sb.rpc('admin_count');
     isBootstrap = (!error && data === 0);
-    updateLoginUI();
-  }
-
-  function updateLoginUI() {
-    if (isSignupMode || isBootstrap) {
+    if (isBootstrap) {
       $('#nameGroup').style.display = '';
-      $('#refCodeGroup').style.display = '';
-      $('#loginBtnText').textContent = isBootstrap ? 'إنشاء حساب الأدمن الرئيسي' : 'إنشاء حساب';
-      $('#loginTitle').textContent = isBootstrap ? 'إعداد لوحة التحكم' : 'إنشاء حساب';
-      $('#loginSubtitle').textContent = isBootstrap ? 'أنت أول أدمن - سيتم تعيينك كأدمن رئيسي' : 'سجل بإيميلك المسجل مسبقاً';
-      $('#loginNote').textContent = isBootstrap ? 'ستكون الأدمن الرئيسي (super admin) للمتجر' : 'يجب أن يكون إيميلك مسجلاً من قبل الأدمن الرئيسي';
-      $('#toggleMode').style.display = isBootstrap ? 'none' : '';
-    } else {
-      $('#nameGroup').style.display = 'none';
-      $('#refCodeGroup').style.display = 'none';
-      $('#loginBtnText').textContent = 'دخول';
-      $('#loginTitle').textContent = 'لوحة التحكم';
-      $('#loginSubtitle').textContent = 'سجل الدخول بإيميلك';
-      $('#loginNote').textContent = 'يجب أن يكون إيميلك مسجلاً من قبل الأدمن الرئيسي';
-      $('#toggleMode').style.display = '';
+      $('#loginTitle').textContent = 'إعداد Spark';
+      $('#loginSubtitle').textContent = 'أنشئ حساب الأدمن الرئيسي';
+      $('#loginBtnText').textContent = 'إنشاء الحساب';
+      $('#loginNote').textContent = 'ستكون الأدمن الرئيسي (Super Admin) للمتجر';
     }
   }
 
@@ -46,35 +31,34 @@
     e.preventDefault();
     const btn = $('#loginBtn');
     btn.disabled = true;
-    const origText = $('#loginBtnText').textContent;
     $('#loginBtnText').textContent = 'جاري الاتصال...';
 
     const email = $('#adminEmail').value.trim();
     const password = $('#adminPassword').value;
     const name = $('#adminName').value.trim();
-    const refCode = $('#adminRefCode').value.trim();
 
     try {
-      if (isSignupMode || isBootstrap) {
+      if (isBootstrap) {
         const { data, error } = await sb.auth.signUp({ email, password });
         if (error) throw error;
         if (!data.user) throw new Error('فشل إنشاء الحساب');
-
-        if (isBootstrap) {
-          const { data: bData, error: bErr } = await sb.rpc('bootstrap_admin', {
-            admin_name: name || email.split('@')[0],
-            ref_code: refCode || email.split('@')[0]
-          });
-          if (bErr) throw bErr;
-          if (bData?.error) throw new Error(bData.error);
-        } else {
-          const { data: lData, error: lErr } = await sb.rpc('link_admin_user');
-          if (lErr) throw lErr;
-          if (lData?.error) throw new Error(lData.error);
-        }
+        const { data: bData, error: bErr } = await sb.rpc('bootstrap_admin', {
+          admin_name: name || email.split('@')[0],
+          ref_code: email.split('@')[0]
+        });
+        if (bErr) throw bErr;
+        if (bData?.error) throw new Error(bData.error);
       } else {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const loginRes = await sb.auth.signInWithPassword({ email, password });
+        if (loginRes.error) {
+          if (loginRes.error.message.includes('Invalid login')) {
+            const signupRes = await sb.auth.signUp({ email, password });
+            if (signupRes.error) throw signupRes.error;
+            if (!signupRes.data.user) throw new Error('فشل إنشاء الحساب');
+          } else {
+            throw loginRes.error;
+          }
+        }
       }
 
       const { data: linkData, error: linkErr } = await sb.rpc('link_admin_user');
@@ -85,9 +69,13 @@
       await loadAllData();
       showDashboard();
     } catch (err) {
-      showToast(err.message || 'فشل تسجيل الدخول');
+      let msg = err.message || 'فشل تسجيل الدخول';
+      if (msg.includes('Invalid login')) msg = 'كلمة المرور غير صحيحة';
+      if (msg.includes('not found in admins')) msg = 'إيميلك غير مسجل. تواصل مع الأدمن الرئيسي';
+      if (msg.includes('already registered')) msg = 'هذا الإيميل مسجل مسبقاً. جرب تسجيل الدخول';
+      showToast(msg);
       btn.disabled = false;
-      $('#loginBtnText').textContent = origText;
+      $('#loginBtnText').textContent = isBootstrap ? 'إنشاء الحساب' : 'دخول';
     }
   }
 
@@ -111,7 +99,6 @@
     $('#loginScreen').style.display = '';
     $('#dashboard').style.display = 'none';
     $('#adminPassword').value = '';
-    isSignupMode = false;
     await checkBootstrap();
   }
 
@@ -1020,11 +1007,6 @@
     $('#savePaymentBtn').addEventListener('click', collectAndSavePayment);
 
     $('#loginForm').addEventListener('submit', handleAuth);
-    $('#toggleMode').addEventListener('click', () => {
-      isSignupMode = !isSignupMode;
-      $('#toggleMode').textContent = isSignupMode ? 'لديك حساب؟ سجل دخول' : 'أول مرة؟ سجل حسابك';
-      updateLoginUI();
-    });
 
     if (!isSupabaseConfigured()) {
       showToast('يجب إعداد Supabase أولاً - عدّل js/supabase-config.js');
