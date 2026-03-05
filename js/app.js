@@ -513,6 +513,36 @@
     $('#modalClose').addEventListener('click', closePaymentModal);
     $('#paymentModal').addEventListener('click', (e) => { if (e.target === $('#paymentModal')) closePaymentModal(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePaymentModal(); });
+
+    initScrollReveal();
+    initHeaderScroll();
+  }
+
+  function initScrollReveal() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  }
+
+  function initHeaderScroll() {
+    const header = $('.header');
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          header.classList.toggle('scrolled', window.scrollY > 10);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') {
