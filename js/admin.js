@@ -39,9 +39,17 @@
 
     try {
       if (isBootstrap) {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) throw error;
-        if (!data.user) throw new Error('فشل إنشاء الحساب');
+        const { data: suData, error: suErr } = await sb.auth.signUp({
+          email, password,
+          options: { data: { name: name || email.split('@')[0] } }
+        });
+        if (suErr) throw suErr;
+
+        if (!suData.session) {
+          const { error: siErr } = await sb.auth.signInWithPassword({ email, password });
+          if (siErr) throw siErr;
+        }
+
         const { data: bData, error: bErr } = await sb.rpc('bootstrap_admin', {
           admin_name: name || email.split('@')[0],
           ref_code: email.split('@')[0]
@@ -51,10 +59,14 @@
       } else {
         const loginRes = await sb.auth.signInWithPassword({ email, password });
         if (loginRes.error) {
-          if (loginRes.error.message.includes('Invalid login')) {
-            const signupRes = await sb.auth.signUp({ email, password });
-            if (signupRes.error) throw signupRes.error;
-            if (!signupRes.data.user) throw new Error('فشل إنشاء الحساب');
+          const errMsg = loginRes.error.message || '';
+          if (errMsg.includes('Invalid login') || errMsg.includes('invalid_credentials')) {
+            const { data: suData, error: suErr } = await sb.auth.signUp({ email, password });
+            if (suErr) throw suErr;
+            if (!suData.session) {
+              const { error: siErr } = await sb.auth.signInWithPassword({ email, password });
+              if (siErr) throw siErr;
+            }
           } else {
             throw loginRes.error;
           }
@@ -70,9 +82,10 @@
       showDashboard();
     } catch (err) {
       let msg = err.message || 'فشل تسجيل الدخول';
-      if (msg.includes('Invalid login')) msg = 'كلمة المرور غير صحيحة';
-      if (msg.includes('not found in admins')) msg = 'إيميلك غير مسجل. تواصل مع الأدمن الرئيسي';
-      if (msg.includes('already registered')) msg = 'هذا الإيميل مسجل مسبقاً. جرب تسجيل الدخول';
+      if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) msg = 'كلمة المرور غير صحيحة';
+      if (msg.includes('Not authorized')) msg = 'إيميلك غير مسجل. تواصل مع الأدمن الرئيسي لإضافتك';
+      if (msg.includes('already registered') || msg.includes('already been registered')) msg = 'الإيميل مسجل مسبقاً. جرب كلمة مرور مختلفة';
+      if (msg.includes('Email not confirmed')) msg = 'جاري التفعيل... أعد المحاولة';
       showToast(msg);
       btn.disabled = false;
       $('#loginBtnText').textContent = isBootstrap ? 'إنشاء الحساب' : 'دخول';
