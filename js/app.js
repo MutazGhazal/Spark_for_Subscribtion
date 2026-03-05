@@ -495,8 +495,96 @@
     input.addEventListener('input', () => { searchQuery = input.value.trim(); renderProducts(); });
   }
 
+  // ===== FIRE SPLASH =====
+  function initFireSplash() {
+    const canvas = document.getElementById('fireCanvas');
+    const splash = document.getElementById('splash');
+    if (!canvas || !splash) return;
+
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    const particles = [];
+    let animId;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = W * 0.3 + Math.random() * W * 0.4;
+        this.y = H + 10;
+        this.size = Math.random() * 6 + 2;
+        this.speedY = -(Math.random() * 4 + 2);
+        this.speedX = (Math.random() - 0.5) * 2;
+        this.life = 1;
+        this.decay = Math.random() * 0.015 + 0.008;
+        const colors = [
+          [255, 100, 0],
+          [255, 160, 20],
+          [255, 60, 30],
+          [255, 200, 50],
+          [236, 72, 153],
+          [255, 80, 60]
+        ];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+      update() {
+        this.x += this.speedX + (Math.random() - 0.5) * 0.5;
+        this.y += this.speedY;
+        this.speedY *= 0.99;
+        this.life -= this.decay;
+        this.size *= 0.995;
+        if (this.life <= 0 || this.size < 0.5) this.reset();
+      }
+      draw() {
+        const [r, g, b] = this.color;
+        const a = this.life * 0.8;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.2})`;
+        ctx.fill();
+      }
+    }
+
+    const count = Math.min(180, Math.floor(W * H / 5000));
+    for (let i = 0; i < count; i++) {
+      const p = new Particle();
+      p.y = Math.random() * H;
+      p.life = Math.random();
+      particles.push(p);
+    }
+
+    function animate() {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(11, 15, 26, 0.15)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      particles.forEach(p => { p.update(); p.draw(); });
+      animId = requestAnimationFrame(animate);
+    }
+    animate();
+
+    setTimeout(() => {
+      splash.classList.add('done');
+      setTimeout(() => {
+        cancelAnimationFrame(animId);
+        splash.remove();
+      }, 900);
+    }, 2600);
+  }
+
   // ===== INIT =====
   async function init() {
+    initFireSplash();
     initSupabase();
     initTheme();
     visitorCurrency = detectVisitorCurrency();
