@@ -100,54 +100,127 @@ body.rtl {
   z-index: 2;
   text-align: center;
   color: white;
-  opacity: 0;
-  animation: splashIn 0.5s 1.3s ease both;
-}
-
-@keyframes splashIn {
-  from { opacity: 0; transform: scale(0.7) translateY(30px); filter: blur(8px); }
-  60% { opacity: 1; transform: scale(1.05) translateY(-5px); filter: blur(0); }
-  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-}
-
-.splash-logo {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1.25rem;
-  background: linear-gradient(135deg, #f59e0b, #ef4444, #ec4899);
-  border-radius: 28px;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 1rem;
+}
+
+.splash-brand {
+  display: flex;
+  align-items: baseline;
   justify-content: center;
-  box-shadow: 0 0 40px rgba(245, 158, 11, 0.5), 0 0 80px rgba(239, 68, 68, 0.3);
-  animation: logoGlow 1.2s ease-in-out infinite alternate, logoPulse 2s ease-in-out infinite;
+  gap: 0.05em;
+  perspective: 600px;
 }
 
-@keyframes logoGlow {
-  from { box-shadow: 0 0 40px rgba(245, 158, 11, 0.6), 0 0 80px rgba(239, 68, 68, 0.3); }
-  to { box-shadow: 0 0 60px rgba(245, 158, 11, 0.8), 0 0 120px rgba(239, 68, 68, 0.6), 0 0 180px rgba(236, 72, 153, 0.25); }
-}
-
-@keyframes logoPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
-
-.splash-title {
-  font-size: 1.6rem;
+.spark-letter {
+  font-size: clamp(4rem, 14vw, 8rem);
   font-weight: 900;
-  background: linear-gradient(90deg, #fde68a, #f59e0b, #ef4444, #ec4899, #fde68a);
-  background-size: 300% auto;
+  font-family: var(--font-en);
+  display: inline-block;
+  background: linear-gradient(180deg, #fff8e1 0%, #ffcc02 20%, #ff8f00 50%, #ff3d00 80%, #b71c1c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmerText 2.5s linear infinite;
+  opacity: 0;
+  filter: blur(10px);
+  animation: letterIgnite 0.5s calc(0.8s + var(--i) * 0.1s) ease-out both;
   text-shadow: none;
+  position: relative;
 }
 
-@keyframes shimmerText {
-  0% { background-position: 0% center; }
-  100% { background-position: 300% center; }
+.spark-letter::after {
+  content: attr(style);
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff6a00, #ffdc00);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  animation: letterUnderline 0.4s calc(1.4s + var(--i) * 0.1s) ease-out both;
+  box-shadow: 0 0 8px rgba(255, 160, 0, 0.6);
+}
+
+.spark-icon {
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px) drop-shadow(0 0 20px #ff8f00);
+  animation: iconFlash 0.6s 1.4s ease-out both;
+  margin-inline-start: 0.1em;
+}
+
+@keyframes letterIgnite {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(30px) scale(0.5) rotateX(40deg);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(-8px) scale(1.08) rotateX(0deg);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0) drop-shadow(0 0 15px rgba(255, 140, 0, 0.5));
+    transform: translateY(0) scale(1) rotateX(0deg);
+  }
+}
+
+@keyframes letterUnderline {
+  from { width: 0; }
+  to { width: 80%; }
+}
+
+@keyframes iconFlash {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(0.3) rotate(-20deg);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0) drop-shadow(0 0 30px #ffab00);
+    transform: scale(1.3) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0) drop-shadow(0 0 20px rgba(255, 170, 0, 0.6));
+    transform: scale(1) rotate(0deg);
+    animation: iconPulse 1.5s 2s ease-in-out infinite both;
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 170, 0, 0.5)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 35px rgba(255, 170, 0, 0.8)); }
+}
+
+.splash-tagline {
+  font-size: clamp(0.95rem, 3vw, 1.35rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.02em;
+  opacity: 0;
+  animation: taglineIn 0.7s 1.8s ease-out both;
+}
+
+@keyframes taglineIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .splash-line {
@@ -164,20 +237,20 @@ body.rtl {
 .splash-line::before {
   content: '';
   position: absolute;
-  top: -2px;
+  top: -3px;
   left: 0;
   width: 100%;
-  height: 6px;
-  background: linear-gradient(90deg, transparent, #ff6a00, #ffdc00, #ff3c00, transparent);
-  animation: fireLine 1.2s ease-out both;
-  box-shadow: 0 0 20px rgba(255, 100, 0, 0.8), 0 0 60px rgba(255, 60, 0, 0.4);
-  filter: blur(1px);
+  height: 8px;
+  background: linear-gradient(90deg, transparent 0%, #ff6a00 15%, #ffdc00 40%, #fff 50%, #ffdc00 60%, #ff3c00 85%, transparent 100%);
+  animation: fireLine 1s ease-out both;
+  box-shadow: 0 0 25px rgba(255, 100, 0, 0.9), 0 0 60px rgba(255, 60, 0, 0.5);
+  filter: blur(1.5px);
 }
 
 @keyframes fireLine {
   0% { transform: translateX(-100%); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateX(0); opacity: 1; }
+  5% { opacity: 1; }
+  100% { transform: translateX(0%); opacity: 1; }
 }
 
 /* ===== SCROLL REVEAL ===== */
@@ -244,20 +317,30 @@ body.rtl {
 .logo-icon {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, var(--primary), var(--accent-pink));
+  background: linear-gradient(135deg, #ff8f00, #ff3d00, #ff6a00);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  font-size: 1.4rem;
+  box-shadow: 0 4px 15px rgba(255, 100, 0, 0.35);
   transition: transform var(--bounce), box-shadow var(--transition);
 }
 
 .logo:hover .logo-icon {
   transform: rotate(-5deg) scale(1.1);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 20px rgba(255, 100, 0, 0.5);
+}
+
+#storeName {
+  font-family: var(--font-en) !important;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ff8f00, #ff3d00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-actions {

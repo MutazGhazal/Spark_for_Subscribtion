@@ -288,7 +288,7 @@
       $('#langToggle').textContent = 'عربي';
     }
 
-    $('#storeName').textContent = langVal(settings.store || {}, 'name') || (currentLang === 'ar' ? 'متجر الاشتراكات الرقمية' : 'Digital Subscriptions Store');
+    $('#storeName').textContent = 'Spark';
     $('#heroTitle').textContent = langVal(settings.store || {}, 'hero') || '';
     $('#heroSub').textContent = langVal(settings.store || {}, 'hero_sub') || '';
     $('#searchInput').placeholder = txt('searchPlaceholder');
@@ -576,8 +576,7 @@
     }
 
     links.innerHTML = html;
-    const storeName = langVal(settings.store || {}, 'name') || (currentLang === 'ar' ? 'متجر الاشتراكات الرقمية' : 'Digital Subscriptions Store');
-    copy.textContent = `© ${new Date().getFullYear()} ${storeName}. ${txt('copyright')}.`;
+    copy.textContent = `© ${new Date().getFullYear()} Spark. ${txt('copyright')}.`;
   }
 
   // ===== TOAST =====
