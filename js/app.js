@@ -603,6 +603,91 @@
     input.addEventListener('input', () => { searchQuery = input.value.trim(); renderProducts(); });
   }
 
+  // ===== AMBIENT SPARKLES =====
+  function initSparkles() {
+    const canvas = document.getElementById('sparklesCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let W, H, animId;
+    const particles = [];
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const COLORS = ['#ffdc00','#ff8f00','#ff6a00','#ffab00','#fff5cc','#ffffff'];
+
+    class Sparkle {
+      constructor() { this.reset(true); }
+      reset(init) {
+        this.x = Math.random() * W;
+        this.y = init ? Math.random() * H : -10;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedY = Math.random() * 0.4 + 0.1;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.opacity = 0;
+        this.maxOpacity = Math.random() * 0.6 + 0.2;
+        this.fadeIn = true;
+        this.fadeSpeed = Math.random() * 0.008 + 0.003;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.twinkle = Math.random() * Math.PI * 2;
+        this.twinkleSpeed = Math.random() * 0.05 + 0.02;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.twinkle += this.twinkleSpeed;
+        if (this.fadeIn) {
+          this.opacity += this.fadeSpeed;
+          if (this.opacity >= this.maxOpacity) this.fadeIn = false;
+        } else {
+          this.opacity -= this.fadeSpeed * 0.5;
+        }
+        if (this.opacity <= 0 || this.y > H + 10 || this.x < -10 || this.x > W + 10) {
+          this.reset(false);
+        }
+      }
+      draw() {
+        const flicker = 0.5 + 0.5 * Math.sin(this.twinkle);
+        const a = this.opacity * flicker;
+        if (a <= 0.01) return;
+
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = this.color;
+
+        ctx.beginPath();
+        const s = this.size;
+        ctx.moveTo(this.x, this.y - s * 2);
+        ctx.quadraticCurveTo(this.x + s * 0.5, this.y - s * 0.5, this.x + s * 2, this.y);
+        ctx.quadraticCurveTo(this.x + s * 0.5, this.y + s * 0.5, this.x, this.y + s * 2);
+        ctx.quadraticCurveTo(this.x - s * 0.5, this.y + s * 0.5, this.x - s * 2, this.y);
+        ctx.quadraticCurveTo(this.x - s * 0.5, this.y - s * 0.5, this.x, this.y - s * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = a * 0.3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, s * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    const count = Math.min(40, Math.floor(W * H / 30000));
+    for (let i = 0; i < count; i++) particles.push(new Sparkle());
+
+    function animate() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => { p.update(); p.draw(); });
+      animId = requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
   // ===== FIRE SPLASH =====
   function initFireSplash() {
     const canvas = document.getElementById('fireCanvas');
@@ -806,6 +891,7 @@
 
     initScrollReveal();
     initHeaderScroll();
+    initSparkles();
   }
 
   function initScrollReveal() {
