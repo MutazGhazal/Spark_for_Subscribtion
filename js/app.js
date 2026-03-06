@@ -172,6 +172,28 @@
     return currentLang === 'ar' ? `منذ ${hr} س` : `${hr}h ago`;
   }
 
+  function renderLastUpdated() {
+    const bar = document.getElementById('lastUpdatedBar');
+    if (!bar) return;
+    if (!products || products.length === 0) { bar.style.display = 'none'; return; }
+
+    const timestamps = products
+      .map(p => p.updated_at || p.created_at)
+      .filter(Boolean)
+      .map(t => new Date(t).getTime());
+
+    if (timestamps.length === 0) { bar.style.display = 'none'; return; }
+
+    const latest = new Date(Math.max(...timestamps));
+    const opts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    const formatted = latest.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', opts);
+
+    bar.style.display = '';
+    bar.textContent = currentLang === 'ar'
+      ? `آخر تحديث: ${formatted}`
+      : `Last updated: ${formatted}`;
+  }
+
   function convertPrice(priceUSD, fromCurrency) {
     if (!ratesLoaded) return null;
     let usd = priceUSD;
@@ -286,6 +308,7 @@
     renderPaymentSection();
     renderFooter();
     renderRateInfo();
+    renderLastUpdated();
   }
 
   function applyLang() {
@@ -1169,6 +1192,7 @@
     renderPaymentSection();
     renderFooter();
     renderRateInfo();
+    renderLastUpdated();
     initSearch();
     startRatesAutoRefresh();
 

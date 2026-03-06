@@ -239,6 +239,19 @@ body.rtl {
   transform: translateY(0);
 }
 
+/* ===== LAST UPDATED BAR ===== */
+.last-updated-bar {
+  width: 100%;
+  text-align: center;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
 /* ===== HEADER ===== */
 .header {
   position: sticky;
