@@ -246,6 +246,7 @@
     const isNew = index === -1;
     const p = isNew ? {
       id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
+      features_ar: '', features_en: '',
       price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
       duration_ar: '', duration_en: '', available: true, featured: false,
       payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
@@ -264,6 +265,10 @@
         <div class="form-row">
           <div class="form-group"><label>الوصف (عربي)</label><textarea id="pDescAr">${p.description_ar}</textarea></div>
           <div class="form-group"><label>Description (English)</label><textarea id="pDescEn">${p.description_en}</textarea></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>المميزات (عربي) <small style="color:var(--text-muted)">سطر لكل ميزة</small></label><textarea id="pFeatAr" rows="3" placeholder="اشتراك أصلي&#10;تفعيل فوري&#10;دعم فني">${p.features_ar || ''}</textarea></div>
+          <div class="form-group"><label>Features (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pFeatEn" rows="3" placeholder="Original subscription&#10;Instant activation&#10;Technical support">${p.features_en || ''}</textarea></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>السعر</label><input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required></div>
@@ -368,6 +373,8 @@
       name_ar: nameAr, name_en: nameEn,
       description_ar: $('#pDescAr').value.trim(),
       description_en: $('#pDescEn').value.trim(),
+      features_ar: $('#pFeatAr').value.trim(),
+      features_en: $('#pFeatEn').value.trim(),
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
       category: $('#pCategory').value,

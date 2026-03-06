@@ -213,11 +213,13 @@
       whatsappDesc: 'تواصل معنا عبر واتساب لإتمام الدفع',
       cryptoDesc: 'ادفع بالعملات الرقمية USDT',
       featured: 'مميز', unavailable: 'غير متوفر حالياً',
+      available: 'متوفر',
       copied: 'تم النسخ!', copy: 'نسخ',
       sendVia: 'إرسال عبر واتساب', cryptoTitle: 'الدفع بالعملات الرقمية',
       cryptoInstructions: 'حوّل المبلغ لأحد العناوين التالية ثم أرسل إيصال الدفع عبر واتساب',
       copyright: 'جميع الحقوق محفوظة',
-      whatsappContact: 'واتساب', telegramContact: 'تيليجرام', emailContact: 'البريد الإلكتروني'
+      whatsappContact: 'واتساب', telegramContact: 'تيليجرام', emailContact: 'البريد الإلكتروني',
+      featuresTitle: 'المميزات', viewDetails: 'عرض التفاصيل'
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -228,11 +230,13 @@
       whatsappDesc: 'Contact us on WhatsApp to complete payment',
       cryptoDesc: 'Pay with USDT cryptocurrency',
       featured: 'Featured', unavailable: 'Currently Unavailable',
+      available: 'Available',
       copied: 'Copied!', copy: 'Copy',
       sendVia: 'Send via WhatsApp', cryptoTitle: 'Pay with Crypto',
       cryptoInstructions: 'Transfer the amount to one of the addresses below, then send the receipt via WhatsApp',
       copyright: 'All rights reserved',
-      whatsappContact: 'WhatsApp', telegramContact: 'Telegram', emailContact: 'Email'
+      whatsappContact: 'WhatsApp', telegramContact: 'Telegram', emailContact: 'Email',
+      featuresTitle: 'Features', viewDetails: 'View Details'
     }
   };
 
@@ -438,8 +442,88 @@
     }).join('');
 
     grid.querySelectorAll('.buy-btn').forEach(btn => {
-      btn.addEventListener('click', () => openPaymentModal(btn.dataset.id));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPaymentModal(btn.dataset.id);
+      });
     });
+
+    grid.querySelectorAll('.product-card').forEach(card => {
+      card.addEventListener('click', () => openProductDetail(card.dataset.id));
+    });
+  }
+
+  // ===== PRODUCT DETAIL MODAL =====
+  function openProductDetail(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const modal = $('#productDetailModal');
+    const body = $('#productDetailBody');
+    const name = langVal(product, 'name');
+    const desc = langVal(product, 'description');
+    const duration = langVal(product, 'duration');
+    const features = langVal(product, 'features');
+    const isAvailable = product.available !== false;
+    const localPrice = formatLocalPrice(product.price, product.currency);
+
+    const featuresList = features
+      ? features.split('\n').filter(f => f.trim())
+      : [];
+
+    body.innerHTML = `
+      <div class="pd-hero">
+        <div class="pd-badges">
+          ${product.featured ? `<span class="pd-badge featured">${txt('featured')}</span>` : ''}
+          <span class="pd-badge ${isAvailable ? 'available' : 'unavailable'}">${isAvailable ? txt('available') : txt('unavailable')}</span>
+        </div>
+        <img src="${product.image}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <svg class="placeholder-icon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </div>
+      <div class="pd-body">
+        <div class="pd-category">${getCategoryLabel(product.category)}</div>
+        <h2 class="pd-name">${name}</h2>
+        ${desc ? `<p class="pd-desc">${desc}</p>` : ''}
+        ${featuresList.length > 0 ? `
+          <div class="pd-features">
+            <div class="pd-features-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              ${txt('featuresTitle')}
+            </div>
+            <ul class="pd-features-list">
+              ${featuresList.map(f => `<li>${f.trim()}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        <div class="pd-meta">
+          <div class="pd-price">
+            ${product.price} <span class="currency">${product.currency || 'USD'}</span>
+            ${localPrice ? `<span class="local-price">${localPrice}</span>` : ''}
+          </div>
+          ${duration ? `
+            <div class="pd-duration">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${duration}
+            </div>
+          ` : ''}
+        </div>
+        <div class="pd-actions">
+          <button class="btn btn-primary pd-buy-btn" data-id="${product.id}" ${!isAvailable ? 'disabled' : ''}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            ${txt('buyNow')}
+          </button>
+        </div>
+      </div>
+    `;
+
+    body.querySelector('.pd-buy-btn')?.addEventListener('click', () => {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      setTimeout(() => openPaymentModal(productId), 200);
+    });
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
 
   // ===== PAYMENT MODAL =====

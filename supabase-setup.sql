@@ -3,6 +3,13 @@
 -- Run this in Supabase SQL Editor (supabase.com → SQL Editor)
 -- ============================================================
 
+-- ============================================================
+-- MIGRATION: Run this if you already have the tables set up
+-- ============================================================
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_ar TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_en TEXT DEFAULT '';
+-- ============================================================
+
 -- 1. TABLES
 -- ============================================================
 
@@ -23,6 +30,8 @@ CREATE TABLE public.products (
   name_en TEXT NOT NULL DEFAULT '',
   description_ar TEXT DEFAULT '',
   description_en TEXT DEFAULT '',
+  features_ar TEXT DEFAULT '',
+  features_en TEXT DEFAULT '',
   price NUMERIC NOT NULL DEFAULT 0,
   currency TEXT DEFAULT 'USD',
   category TEXT DEFAULT 'streaming',

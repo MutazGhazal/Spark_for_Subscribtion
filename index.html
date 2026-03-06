@@ -118,6 +118,14 @@
     </div>
   </footer>
 
+  <!-- Product Detail Modal -->
+  <div class="modal-overlay" id="productDetailModal" onclick="if(event.target===this){this.classList.remove('active');document.body.style.overflow=''}">
+    <div class="modal product-detail-modal">
+      <button class="modal-close" onclick="document.getElementById('productDetailModal').classList.remove('active');document.body.style.overflow=''" type="button">&times;</button>
+      <div class="modal-body" id="productDetailBody"></div>
+    </div>
+  </div>
+
   <!-- Payment Modal -->
   <div class="modal-overlay" id="paymentModal" onclick="if(event.target===this){this.classList.remove('active');document.body.style.overflow=''}">
     <div class="modal">
