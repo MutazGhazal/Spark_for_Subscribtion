@@ -214,7 +214,7 @@
     }
 
     list.innerHTML = products.map((p, i) => `
-      <div class="admin-product-card" data-index="${i}">
+      <div class="admin-product-card ${p.source_url ? 'has-source' : ''}" data-index="${i}">
         <div class="admin-product-img">
           <img src="${p.image}" alt="" onerror="this.style.display='none'">
         </div>
@@ -231,11 +231,22 @@
       </div>
     `).join('');
 
+    list.querySelectorAll('.admin-product-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-icon') || e.target.closest('.source-link')) return;
+        const idx = parseInt(card.dataset.index);
+        const p = products[idx];
+        if (p?.source_url) {
+          window.open(p.source_url, '_blank');
+        }
+      });
+    });
+
     list.querySelectorAll('.btn-icon.edit').forEach(btn => {
-      btn.addEventListener('click', () => openProductModal(parseInt(btn.dataset.index)));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); openProductModal(parseInt(btn.dataset.index)); });
     });
     list.querySelectorAll('.btn-icon.delete').forEach(btn => {
-      btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.index)));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); deleteProduct(parseInt(btn.dataset.index)); });
     });
   }
 

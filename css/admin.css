@@ -285,6 +285,14 @@
   border-color: var(--primary-light);
 }
 
+.admin-product-card.has-source {
+  cursor: pointer;
+}
+
+.admin-product-card.has-source:hover {
+  border-color: var(--primary);
+}
+
 .admin-product-img {
   width: 56px;
   height: 56px;
