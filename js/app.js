@@ -692,17 +692,6 @@
     return lines.join('\n');
   }
 
-  async function fetchProductImage(imageUrl) {
-    try {
-      const resp = await fetch(imageUrl);
-      const blob = await resp.blob();
-      const ext = imageUrl.split('.').pop().split('?')[0] || 'jpg';
-      const mimeType = blob.type || `image/${ext}`;
-      return new File([blob], `product.${ext}`, { type: mimeType });
-    } catch (e) {
-      return null;
-    }
-  }
 
   async function saveCustomerOrder(product, method) {
     if (!sb) return;
@@ -813,21 +802,19 @@
           const productLink = getProductUrl(product);
           const fullMsg = msg + '\n\n' + productLink;
           const waNum = pay.whatsapp.number.replace(/[^0-9]/g, '');
+          const encoded = encodeURIComponent(fullMsg);
 
-          let shared = false;
-          if (navigator.share && product.image) {
-            try {
-              const imgFile = await fetchProductImage(product.image);
-              if (imgFile && navigator.canShare && navigator.canShare({ files: [imgFile] })) {
-                await navigator.share({ text: fullMsg, files: [imgFile] });
-                shared = true;
-              }
-            } catch (e) {
-              if (e.name === 'AbortError') { return; }
-            }
-          }
-          if (!shared) {
-            window.location.href = `https://api.whatsapp.com/send?phone=${waNum}&text=${encodeURIComponent(fullMsg)}`;
+          const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+          if (isMobile) {
+            const appLink = `whatsapp://send?phone=${waNum}&text=${encoded}`;
+            const webLink = `https://api.whatsapp.com/send?phone=${waNum}&text=${encoded}`;
+            const start = Date.now();
+            window.location.href = appLink;
+            setTimeout(() => {
+              if (Date.now() - start < 2500) window.location.href = webLink;
+            }, 1500);
+          } else {
+            window.open(`https://web.whatsapp.com/send?phone=${waNum}&text=${encoded}`, '_blank');
           }
         } else if (opt.dataset.email === 'true') {
           const msg = buildOrderMessage(product, 'Email');
@@ -1221,8 +1208,24 @@
     const params = new URLSearchParams(window.location.search);
     const pid = params.get('product');
     if (pid) {
-      setTimeout(() => openProductDetail(pid), 600);
+      setTimeout(() => {
+        const p = products.find(x => x.id === pid);
+        if (p) updateOGTags(p);
+        openProductDetail(pid);
+      }, 600);
     }
+  }
+
+  function updateOGTags(product) {
+    const name = langVal(product, 'name');
+    const desc = langVal(product, 'description');
+    const url = getProductUrl(product);
+    const setMeta = (id, val) => { const el = document.getElementById(id); if (el) el.setAttribute('content', val); };
+    setMeta('ogTitle', `${name} | Spark`);
+    setMeta('ogDesc', desc || `${name} - ${product.price} ${product.currency || 'USD'}`);
+    setMeta('ogImage', product.image || '');
+    setMeta('ogUrl', url);
+    document.title = `${name} | Spark`;
   }
 
   function initScrollReveal() {
