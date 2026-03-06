@@ -644,6 +644,11 @@
         <div class="form-group"><label>رقم واتساب (بدون +)</label><input type="text" id="payWhatsappNumber" value="${pay.whatsapp?.number||''}" placeholder="966500000000"></div>
       </div>
       <div class="settings-section">
+        <h3>البريد الإلكتروني</h3>
+        <div class="switch-wrapper"><span>تفعيل إرسال الطلبات عبر الإيميل</span><label class="switch"><input type="checkbox" id="payEmailEnabled" ${pay.email?.enabled?'checked':''}><span class="switch-slider"></span></label></div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">يظهر كخيار دفع يفتح رسالة إيميل جاهزة بتفاصيل الطلب (يستخدم إيميل التواصل من الإعدادات)</p>
+      </div>
+      <div class="settings-section">
         <h3>عملات رقمية</h3>
         <div class="switch-wrapper"><span>تفعيل العملات الرقمية</span><label class="switch"><input type="checkbox" id="payCryptoEnabled" ${pay.crypto?.enabled?'checked':''}><span class="switch-slider"></span></label></div>
         <div class="form-group"><label>عنوان USDT (TRC20)</label><input type="text" id="payCryptoUsdt" value="${pay.crypto?.wallets?.usdt_trc20||''}" placeholder="TXxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
@@ -658,6 +663,7 @@
       paypal: { enabled: $('#payPaypalEnabled').checked, link: $('#payPaypalLink').value.trim(), label_ar: 'باي بال', label_en: 'PayPal' },
       stripe: { enabled: $('#payStripeEnabled').checked, label_ar: 'بطاقة ائتمان', label_en: 'Credit Card (Stripe)' },
       whatsapp: { enabled: $('#payWhatsappEnabled').checked, number: $('#payWhatsappNumber').value.trim(), label_ar: 'واتساب', label_en: 'WhatsApp' },
+      email: { enabled: $('#payEmailEnabled').checked, label_ar: 'البريد الإلكتروني', label_en: 'Email' },
       crypto: {
         enabled: $('#payCryptoEnabled').checked,
         wallets: { usdt_trc20: $('#payCryptoUsdt').value.trim(), btc: $('#payCryptoBtc').value.trim(), binance_id: $('#payCryptoBinance').value.trim() },
