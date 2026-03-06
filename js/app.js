@@ -624,17 +624,33 @@
   // ===== PAYMENT MODAL =====
   function buildOrderMessage(product, method) {
     const name = langVal(product, 'name');
+    const desc = langVal(product, 'description');
     const order = pendingOrder || {};
     const hasReqs = order.customerName || Object.keys(order.requirements || {}).length > 0;
+    const siteUrl = window.location.origin + window.location.pathname;
 
     let lines = [];
     lines.push(`🛒 *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
-    lines.push(`📦 ${name}`);
+    lines.push(`━━━━━━━━━━━━━━━`);
+    lines.push(`📦 *${name}*`);
+    if (desc) lines.push(`📝 ${desc}`);
     lines.push(`💰 ${product.price} ${product.currency || 'USD'}`);
+    if (product.duration) lines.push(`⏱ ${product.duration}`);
     if (method) lines.push(`💳 ${method}`);
+
+    if (product.image) {
+      lines.push('');
+      lines.push(`🖼 ${currentLang === 'ar' ? 'صورة المنتج:' : 'Product image:'}`);
+      lines.push(product.image);
+    }
+
+    lines.push('');
+    lines.push(`🔗 ${currentLang === 'ar' ? 'رابط المتجر:' : 'Store link:'}`);
+    lines.push(`${siteUrl}?product=${product.id}`);
 
     if (hasReqs) {
       lines.push('');
+      lines.push(`━━━━━━━━━━━━━━━`);
       lines.push(`👤 ${order.customerName || ''}`);
       if (order.customerEmail) lines.push(`📧 ${order.customerEmail}`);
       const reqs = order.requirements || {};
@@ -1144,6 +1160,15 @@
     initScrollReveal();
     initHeaderScroll();
     initSparkles();
+    handleDeepLink();
+  }
+
+  function handleDeepLink() {
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('product');
+    if (pid) {
+      setTimeout(() => openProductDetail(pid), 600);
+    }
   }
 
   function initScrollReveal() {
