@@ -172,6 +172,13 @@
     return currentLang === 'ar' ? `منذ ${hr} س` : `${hr}h ago`;
   }
 
+  function parseUTC(ts) {
+    if (!ts) return NaN;
+    const s = String(ts);
+    if (/[Zz]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s).getTime();
+    return new Date(s + 'Z').getTime();
+  }
+
   function renderLastUpdated() {
     const bar = document.getElementById('lastUpdatedBar');
     if (!bar) return;
@@ -180,13 +187,15 @@
     const timestamps = products
       .map(p => p.updated_at || p.created_at)
       .filter(Boolean)
-      .map(t => new Date(t).getTime());
+      .map(parseUTC)
+      .filter(t => !isNaN(t));
 
     if (timestamps.length === 0) { bar.style.display = 'none'; return; }
 
     const latest = new Date(Math.max(...timestamps));
-    const opts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    const formatted = latest.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', opts);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const opts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: tz };
+    const formatted = latest.toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', opts);
 
     bar.style.display = '';
     bar.textContent = currentLang === 'ar'
