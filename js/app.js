@@ -219,7 +219,7 @@
       cryptoInstructions: 'حوّل المبلغ لأحد العناوين التالية ثم أرسل إيصال الدفع عبر واتساب',
       copyright: 'جميع الحقوق محفوظة',
       whatsappContact: 'واتساب', telegramContact: 'تيليجرام', emailContact: 'البريد الإلكتروني',
-      featuresTitle: 'المميزات', viewDetails: 'عرض التفاصيل'
+      featuresTitle: 'تفاصيل الاشتراك', viewDetails: 'عرض التفاصيل'
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -236,7 +236,7 @@
       cryptoInstructions: 'Transfer the amount to one of the addresses below, then send the receipt via WhatsApp',
       copyright: 'All rights reserved',
       whatsappContact: 'WhatsApp', telegramContact: 'Telegram', emailContact: 'Email',
-      featuresTitle: 'Features', viewDetails: 'View Details'
+      featuresTitle: 'Subscription Details', viewDetails: 'View Details'
     }
   };
 

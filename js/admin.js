@@ -267,8 +267,8 @@
           <div class="form-group"><label>Description (English)</label><textarea id="pDescEn">${p.description_en}</textarea></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>المميزات (عربي) <small style="color:var(--text-muted)">سطر لكل ميزة</small></label><textarea id="pFeatAr" rows="3" placeholder="اشتراك أصلي&#10;تفعيل فوري&#10;دعم فني">${p.features_ar || ''}</textarea></div>
-          <div class="form-group"><label>Features (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pFeatEn" rows="3" placeholder="Original subscription&#10;Instant activation&#10;Technical support">${p.features_en || ''}</textarea></div>
+          <div class="form-group"><label>تفاصيل الاشتراك (عربي) <small style="color:var(--text-muted)">سطر لكل تفصيل</small></label><textarea id="pFeatAr" rows="3" placeholder="اشتراك أصلي&#10;تفعيل فوري&#10;دعم فني">${p.features_ar || ''}</textarea></div>
+          <div class="form-group"><label>Subscription Details (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pFeatEn" rows="3" placeholder="Original subscription&#10;Instant activation&#10;Technical support">${p.features_en || ''}</textarea></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>السعر</label><input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required></div>
