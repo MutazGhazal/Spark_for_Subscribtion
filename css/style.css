@@ -1769,6 +1769,92 @@ body.rtl {
   font-weight: 600;
 }
 
+/* ===== REQUIREMENTS FORM MODAL ===== */
+.requirements-modal {
+  max-width: 480px;
+}
+
+.req-product-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.25rem;
+}
+
+.req-product-info img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.req-product-info .req-prod-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.req-product-info .req-prod-price {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.req-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.req-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.req-form label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.req-form input,
+.req-form textarea {
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.req-form input:focus,
+.req-form textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.req-form .req-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.req-form .btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+}
+
 /* ===== PRODUCT DETAIL MODAL ===== */
 .product-detail-modal {
   max-width: 640px;

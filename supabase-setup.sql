@@ -9,6 +9,31 @@
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_ar TEXT DEFAULT '';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_en TEXT DEFAULT '';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS source_url TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS requirements_ar TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS requirements_en TEXT DEFAULT '';
+
+-- Customer orders table (run if not exists)
+CREATE TABLE IF NOT EXISTS public.customer_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id TEXT,
+  product_name TEXT DEFAULT '',
+  amount NUMERIC DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  customer_name TEXT DEFAULT '',
+  customer_email TEXT DEFAULT '',
+  requirements_data JSONB DEFAULT '{}',
+  referral_code TEXT DEFAULT '',
+  payment_method TEXT DEFAULT '',
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_customer_orders_status ON public.customer_orders(status);
+CREATE INDEX IF NOT EXISTS idx_customer_orders_created ON public.customer_orders(created_at);
+ALTER TABLE public.customer_orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "cust_orders_insert" ON public.customer_orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "cust_orders_select" ON public.customer_orders FOR SELECT USING (public.is_admin());
+CREATE POLICY "cust_orders_update" ON public.customer_orders FOR UPDATE USING (public.is_admin());
+CREATE POLICY "cust_orders_delete" ON public.customer_orders FOR DELETE USING (public.is_super_admin());
 -- ============================================================
 
 -- 1. TABLES
@@ -34,6 +59,8 @@ CREATE TABLE public.products (
   features_ar TEXT DEFAULT '',
   features_en TEXT DEFAULT '',
   source_url TEXT DEFAULT '',
+  requirements_ar TEXT DEFAULT '',
+  requirements_en TEXT DEFAULT '',
   price NUMERIC NOT NULL DEFAULT 0,
   currency TEXT DEFAULT 'USD',
   category TEXT DEFAULT 'streaming',
@@ -82,9 +109,26 @@ CREATE TABLE public.referral_orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE public.customer_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id TEXT,
+  product_name TEXT DEFAULT '',
+  amount NUMERIC DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  customer_name TEXT DEFAULT '',
+  customer_email TEXT DEFAULT '',
+  requirements_data JSONB DEFAULT '{}',
+  referral_code TEXT DEFAULT '',
+  payment_method TEXT DEFAULT '',
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 2. INDEXES
 -- ============================================================
 
+CREATE INDEX idx_customer_orders_status ON public.customer_orders(status);
+CREATE INDEX idx_customer_orders_created ON public.customer_orders(created_at);
 CREATE INDEX idx_referral_visits_code ON public.referral_visits(referral_code);
 CREATE INDEX idx_referral_visits_created ON public.referral_visits(created_at);
 CREATE INDEX idx_referral_orders_code ON public.referral_orders(referral_code);
@@ -172,6 +216,7 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.referral_visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.referral_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_orders ENABLE ROW LEVEL SECURITY;
 
 -- Products: public read, admin write
 CREATE POLICY "products_select" ON public.products FOR SELECT USING (true);
@@ -208,6 +253,12 @@ CREATE POLICY "orders_select" ON public.referral_orders FOR SELECT USING (
 CREATE POLICY "orders_insert" ON public.referral_orders FOR INSERT WITH CHECK (public.is_super_admin());
 CREATE POLICY "orders_update" ON public.referral_orders FOR UPDATE USING (public.is_super_admin());
 CREATE POLICY "orders_delete" ON public.referral_orders FOR DELETE USING (public.is_super_admin());
+
+-- Customer orders: anyone can insert, admin can read/update, super_admin can delete
+CREATE POLICY "cust_orders_insert" ON public.customer_orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "cust_orders_select" ON public.customer_orders FOR SELECT USING (public.is_admin());
+CREATE POLICY "cust_orders_update" ON public.customer_orders FOR UPDATE USING (public.is_admin());
+CREATE POLICY "cust_orders_delete" ON public.customer_orders FOR DELETE USING (public.is_super_admin());
 
 -- 5. STORAGE BUCKET
 -- ============================================================

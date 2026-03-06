@@ -219,7 +219,11 @@
       cryptoInstructions: 'حوّل المبلغ لأحد العناوين التالية ثم أرسل إيصال الدفع عبر واتساب',
       copyright: 'جميع الحقوق محفوظة',
       whatsappContact: 'واتساب', telegramContact: 'تيليجرام', emailContact: 'البريد الإلكتروني',
-      featuresTitle: 'تفاصيل الاشتراك', viewDetails: 'عرض التفاصيل'
+      featuresTitle: 'تفاصيل الاشتراك', viewDetails: 'عرض التفاصيل',
+      reqTitle: 'بيانات الطلب', reqName: 'اسمك', reqEmail: 'بريدك الإلكتروني',
+      reqContinue: 'متابعة للدفع', reqNote: 'بياناتك آمنة ولن تُشارك مع أي طرف ثالث',
+      orderSaved: 'تم تسجيل طلبك بنجاح!', orderFailed: 'فشل تسجيل الطلب',
+      emailSubject: 'طلب جديد', sendViaEmail: 'إرسال عبر الإيميل'
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -236,7 +240,11 @@
       cryptoInstructions: 'Transfer the amount to one of the addresses below, then send the receipt via WhatsApp',
       copyright: 'All rights reserved',
       whatsappContact: 'WhatsApp', telegramContact: 'Telegram', emailContact: 'Email',
-      featuresTitle: 'Subscription Details', viewDetails: 'View Details'
+      featuresTitle: 'Subscription Details', viewDetails: 'View Details',
+      reqTitle: 'Order Details', reqName: 'Your Name', reqEmail: 'Your Email',
+      reqContinue: 'Continue to Payment', reqNote: 'Your data is secure and will not be shared with third parties',
+      orderSaved: 'Your order has been submitted!', orderFailed: 'Failed to submit order',
+      emailSubject: 'New Order', sendViaEmail: 'Send via Email'
     }
   };
 
@@ -444,7 +452,7 @@
     grid.querySelectorAll('.buy-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openPaymentModal(btn.dataset.id);
+        startBuyFlow(btn.dataset.id);
       });
     });
 
@@ -519,7 +527,94 @@
     body.querySelector('.pd-buy-btn')?.addEventListener('click', () => {
       modal.classList.remove('active');
       document.body.style.overflow = '';
-      setTimeout(() => openPaymentModal(productId), 200);
+      setTimeout(() => startBuyFlow(productId), 200);
+    });
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // ===== BUY FLOW =====
+  let pendingOrder = null;
+
+  function startBuyFlow(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const reqs = langVal(product, 'requirements');
+    const reqList = reqs ? reqs.split('\n').filter(r => r.trim()) : [];
+
+    pendingOrder = { productId, customerName: '', customerEmail: '', requirements: {} };
+
+    if (reqList.length > 0) {
+      openRequirementsForm(product, reqList);
+    } else {
+      openPaymentModal(productId);
+    }
+  }
+
+  function openRequirementsForm(product, reqList) {
+    const modal = $('#requirementsModal');
+    const body = $('#reqModalBody');
+    const name = langVal(product, 'name');
+
+    $('#reqModalTitle').textContent = txt('reqTitle') + ' - ' + name;
+
+    let html = `
+      <div class="req-product-info">
+        <img src="${product.image}" alt="${name}" onerror="this.style.display='none'">
+        <div>
+          <div class="req-prod-name">${name}</div>
+          <div class="req-prod-price">${product.price} ${product.currency || 'USD'}</div>
+        </div>
+      </div>
+      <form class="req-form" id="reqForm">
+        <div class="form-group">
+          <label>${txt('reqName')} *</label>
+          <input type="text" id="reqCustName" required placeholder="${currentLang === 'ar' ? 'مثال: أحمد محمد' : 'e.g. John Doe'}">
+        </div>
+        <div class="form-group">
+          <label>${txt('reqEmail')} *</label>
+          <input type="email" id="reqCustEmail" required placeholder="email@example.com" dir="ltr">
+        </div>
+    `;
+
+    reqList.forEach((req, i) => {
+      const label = req.trim();
+      const isPassword = label.match(/كلمة.*مرور|password|pass/i);
+      const inputType = isPassword ? 'password' : 'text';
+      html += `
+        <div class="form-group">
+          <label>${label} *</label>
+          <input type="${inputType}" class="req-field" data-label="${label}" required placeholder="${label}">
+        </div>
+      `;
+    });
+
+    html += `
+        <p class="req-note">${txt('reqNote')}</p>
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          ${txt('reqContinue')}
+        </button>
+      </form>
+    `;
+
+    body.innerHTML = html;
+
+    $('#reqForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      pendingOrder.customerName = $('#reqCustName').value.trim();
+      pendingOrder.customerEmail = $('#reqCustEmail').value.trim();
+      const reqData = {};
+      body.querySelectorAll('.req-field').forEach(input => {
+        reqData[input.dataset.label] = input.value.trim();
+      });
+      pendingOrder.requirements = reqData;
+
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      setTimeout(() => openPaymentModal(product.id), 200);
     });
 
     modal.classList.add('active');
@@ -527,6 +622,61 @@
   }
 
   // ===== PAYMENT MODAL =====
+  function buildOrderMessage(product, method) {
+    const name = langVal(product, 'name');
+    const order = pendingOrder || {};
+    const hasReqs = order.customerName || Object.keys(order.requirements || {}).length > 0;
+
+    let lines = [];
+    lines.push(`🛒 *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
+    lines.push(`📦 ${name}`);
+    lines.push(`💰 ${product.price} ${product.currency || 'USD'}`);
+    if (method) lines.push(`💳 ${method}`);
+
+    if (hasReqs) {
+      lines.push('');
+      lines.push(`👤 ${order.customerName || ''}`);
+      if (order.customerEmail) lines.push(`📧 ${order.customerEmail}`);
+      const reqs = order.requirements || {};
+      Object.entries(reqs).forEach(([label, value]) => {
+        if (value) lines.push(`• ${label}: ${value}`);
+      });
+    }
+
+    if (typeof ReferralTracker !== 'undefined') {
+      const ref = ReferralTracker.getCode?.() || '';
+      if (ref) lines.push(`\n🔗 Ref: ${ref}`);
+    }
+
+    return lines.join('\n');
+  }
+
+  async function saveCustomerOrder(product, method) {
+    if (!sb) return;
+    const order = pendingOrder || {};
+    const name = langVal(product, 'name');
+    let refCode = '';
+    if (typeof ReferralTracker !== 'undefined') {
+      refCode = ReferralTracker.getCode?.() || '';
+    }
+
+    try {
+      await sb.from('customer_orders').insert({
+        product_id: product.id,
+        product_name: name,
+        amount: product.price,
+        currency: product.currency || 'USD',
+        customer_name: order.customerName || '',
+        customer_email: order.customerEmail || '',
+        requirements_data: order.requirements || {},
+        referral_code: refCode,
+        payment_method: method
+      });
+    } catch (e) {
+      console.error('[Order] save failed:', e);
+    }
+  }
+
   function openPaymentModal(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -552,39 +702,41 @@
     // PayPal
     const paypalActive = pay.paypal?.enabled && (pl.paypal || pay.paypal?.link);
     const paypalLink = pl.paypal || (pay.paypal?.link + '/' + product.price);
-    const tag1 = paypalActive ? 'a' : 'div';
-    html += `<${tag1} ${paypalActive ? `href="${paypalLink}" target="_blank"` : ''} class="payment-option ${paypalActive ? '' : 'disabled'}">
+    html += `<div class="payment-option ${paypalActive ? 'pay-clickable' : 'disabled'}" data-method="PayPal" ${paypalActive ? `data-href="${paypalLink}"` : ''}>
       <div class="payment-icon paypal"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg></div>
       <div class="payment-info"><h4>PayPal</h4><p>${txt('paypalDesc')}</p></div>
-    </${tag1}>`;
+    </div>`;
 
     // Stripe
     const stripeActive = pay.stripe?.enabled && pl.stripe;
-    const tag2 = stripeActive ? 'a' : 'div';
-    html += `<${tag2} ${stripeActive ? `href="${pl.stripe}" target="_blank"` : ''} class="payment-option ${stripeActive ? '' : 'disabled'}">
+    html += `<div class="payment-option ${stripeActive ? 'pay-clickable' : 'disabled'}" data-method="Stripe" ${stripeActive ? `data-href="${pl.stripe}"` : ''}>
       <div class="payment-icon stripe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
       <div class="payment-info"><h4>${langVal(pay.stripe || {}, 'label') || 'Stripe'}</h4><p>${txt('stripeDesc')}</p></div>
-    </${tag2}>`;
+    </div>`;
 
-    // WhatsApp (with referral code)
+    // WhatsApp
     const waActive = pay.whatsapp?.enabled && pay.whatsapp?.number;
-    let waMsg = pl.whatsapp_message || name + ' - $' + product.price;
-    if (typeof ReferralTracker !== 'undefined') {
-      waMsg = ReferralTracker.appendToMessage(waMsg);
-    }
-    const waLink = `https://wa.me/${pay.whatsapp?.number}?text=${encodeURIComponent(waMsg)}`;
-    const tag3 = waActive ? 'a' : 'div';
-    html += `<${tag3} ${waActive ? `href="${waLink}" target="_blank"` : ''} class="payment-option ${waActive ? '' : 'disabled'}">
+    html += `<div class="payment-option ${waActive ? 'pay-clickable' : 'disabled'}" data-method="WhatsApp" data-wa="true">
       <div class="payment-icon whatsapp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></div>
       <div class="payment-info"><h4>${txt('sendVia')}</h4><p>${txt('whatsappDesc')}</p></div>
-    </${tag3}>`;
+    </div>`;
+
+    // Email
+    const social = settings.social || {};
+    const emailAddr = social.email;
+    if (emailAddr) {
+      html += `<div class="payment-option pay-clickable" data-method="Email" data-email="true">
+        <div class="payment-icon email" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div class="payment-info"><h4>${txt('sendViaEmail')}</h4><p>${emailAddr}</p></div>
+      </div>`;
+    }
 
     // Crypto
     const wallets = pay.crypto?.wallets || {};
     const hasAnyWallet = wallets.usdt_trc20 || wallets.binance_id;
     const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
     html += `
-      <div class="payment-option ${cryptoActive ? '' : 'disabled'}" style="cursor:default; flex-direction:column; align-items:stretch;">
+      <div class="payment-option ${cryptoActive ? '' : 'disabled'}" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
         <div style="display:flex;align-items:center;gap:1rem;${cryptoActive ? 'margin-bottom:0.75rem;' : ''}">
           <div class="payment-icon crypto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt(cryptoActive ? 'cryptoInstructions' : 'cryptoDesc')}</p></div>
@@ -597,6 +749,43 @@
     `;
 
     body.innerHTML = html;
+
+    body.querySelectorAll('.pay-clickable').forEach(opt => {
+      opt.style.cursor = 'pointer';
+      opt.addEventListener('click', async () => {
+        const method = opt.dataset.method;
+        saveCustomerOrder(product, method);
+
+        if (opt.dataset.wa === 'true') {
+          const msg = buildOrderMessage(product, 'WhatsApp');
+          const waLink = `https://wa.me/${pay.whatsapp.number}?text=${encodeURIComponent(msg)}`;
+          window.open(waLink, '_blank');
+        } else if (opt.dataset.email === 'true') {
+          const msg = buildOrderMessage(product, 'Email');
+          const subject = encodeURIComponent(txt('emailSubject') + ' - ' + name);
+          const emailBody = encodeURIComponent(msg);
+          window.open(`mailto:${emailAddr}?subject=${subject}&body=${emailBody}`, '_blank');
+        } else if (opt.dataset.href) {
+          window.open(opt.dataset.href, '_blank');
+        }
+
+        showToast(txt('orderSaved'));
+        closePaymentModal();
+      });
+    });
+
+    if (cryptoActive) {
+      body.querySelectorAll('.crypto-copy-row button').forEach(btn => {
+        const origClick = btn.getAttribute('onclick');
+        btn.removeAttribute('onclick');
+        btn.addEventListener('click', () => {
+          const input = btn.parentElement.querySelector('input');
+          if (input) window.copyToClipboard(input.value);
+          saveCustomerOrder(product, 'Crypto');
+        });
+      });
+    }
+
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
   }

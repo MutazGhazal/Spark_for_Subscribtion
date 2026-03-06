@@ -259,6 +259,7 @@
     const p = isNew ? {
       id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
       features_ar: '', features_en: '', source_url: '',
+      requirements_ar: '', requirements_en: '',
       price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
       duration_ar: '', duration_en: '', available: true, featured: false,
       payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
@@ -319,6 +320,10 @@
         <div class="form-row">
           <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pAvailable" ${p.available!==false?'checked':''}> متوفر للبيع</label></div>
           <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pFeatured" ${p.featured?'checked':''}> منتج مميز</label></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>متطلبات الاشتراك (عربي) <small style="color:var(--text-muted)">سطر لكل متطلب</small></label><textarea id="pReqAr" rows="3" placeholder="الإيميل&#10;كلمة المرور&#10;نوع الجهاز">${p.requirements_ar || ''}</textarea></div>
+          <div class="form-group"><label>Requirements (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pReqEn" rows="3" placeholder="Email&#10;Password&#10;Device type">${p.requirements_en || ''}</textarea></div>
         </div>
         <div class="form-group" style="margin-top:0.5rem;">
           <label>🔗 رابط مصدر الشراء <small style="color:var(--text-muted)">(للأدمن فقط - لا يظهر للزائر)</small></label>
@@ -391,6 +396,8 @@
       description_en: $('#pDescEn').value.trim(),
       features_ar: $('#pFeatAr').value.trim(),
       features_en: $('#pFeatEn').value.trim(),
+      requirements_ar: $('#pReqAr').value.trim(),
+      requirements_en: $('#pReqEn').value.trim(),
       source_url: $('#pSourceUrl').value.trim(),
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
@@ -861,43 +868,97 @@
     const container = $('#ordersList');
     if (!container) return;
 
-    let orders = [];
+    let custOrders = [];
+    let refOrders = [];
     try {
-      const { data } = await sb.from('referral_orders').select('*').order('created_at', { ascending: false });
-      orders = data || [];
+      const { data: c } = await sb.from('customer_orders').select('*').order('created_at', { ascending: false });
+      custOrders = c || [];
+    } catch (e) { console.error(e); }
+    try {
+      const { data: r } = await sb.from('referral_orders').select('*').order('created_at', { ascending: false });
+      refOrders = r || [];
     } catch (e) { console.error(e); }
 
-    if (orders.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>لا توجد طلبات بعد</p></div>';
-      return;
+    let html = '';
+
+    // Customer Orders
+    html += `<h3 style="margin:0 0 1rem;font-weight:700;">طلبات العملاء</h3>`;
+    if (custOrders.length === 0) {
+      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات عملاء بعد</p>';
+    } else {
+      html += `<div class="orders-table-wrapper"><table class="orders-table">
+        <thead><tr><th>المنتج</th><th>العميل</th><th>المبلغ</th><th>طريقة الدفع</th><th>الحالة</th><th>التاريخ</th><th>تفاصيل</th><th>إجراء</th></tr></thead>
+        <tbody>${custOrders.map(o => {
+          const reqs = o.requirements_data || {};
+          const reqEntries = Object.entries(reqs);
+          const statusLabels = { pending: 'بانتظار', confirmed: 'مؤكد', completed: 'مكتمل' };
+          return `<tr>
+            <td>${o.product_name || '—'}</td>
+            <td><strong>${o.customer_name || '—'}</strong>${o.customer_email ? `<br><small>${o.customer_email}</small>` : ''}</td>
+            <td>${(o.amount||0)} ${o.currency||'USD'}</td>
+            <td>${o.payment_method || '—'}</td>
+            <td><span class="order-status ${o.status}">${statusLabels[o.status] || o.status}</span></td>
+            <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
+            <td>${reqEntries.length > 0 ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.75rem;" data-toggle-reqs="${o.id}">عرض</button><div class="req-details" id="reqs-${o.id}" style="display:none;margin-top:0.5rem;">${reqEntries.map(([k,v]) => `<div style="font-size:0.78rem;"><strong>${k}:</strong> ${v}</div>`).join('')}</div>` : '—'}</td>
+            <td>
+              <select class="cust-status-select" data-cust-id="${o.id}" style="padding:0.3rem;font-size:0.78rem;border-radius:4px;border:1px solid var(--border);">
+                <option value="pending" ${o.status==='pending'?'selected':''}>بانتظار</option>
+                <option value="confirmed" ${o.status==='confirmed'?'selected':''}>مؤكد</option>
+                <option value="completed" ${o.status==='completed'?'selected':''}>مكتمل</option>
+              </select>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
     }
 
-    container.innerHTML = `
-      <div class="orders-table-wrapper">
-        <table class="orders-table">
-          <thead><tr><th>المنتج</th><th>المبلغ</th><th>كود الريفيرال</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
-          <tbody>
-            ${orders.map(o => `
-              <tr>
-                <td>${o.product_name || '—'}</td>
-                <td>$${(o.amount||0).toFixed(2)}</td>
-                <td><code>${o.referral_code}</code></td>
-                <td><span class="order-status ${o.status}">${o.status === 'confirmed' ? 'مؤكد' : o.status === 'paid' ? 'مدفوع' : 'معلّق'}</span></td>
-                <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
-                <td>
-                  ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-order-id="${o.id}" data-action="confirm">تأكيد</button>` : ''}
-                  ${o.status === 'confirmed' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-order-id="${o.id}" data-action="pay">دفع عمولة</button>` : ''}
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+    // Referral Orders
+    html += `<h3 style="margin:2rem 0 1rem;font-weight:700;">طلبات الريفيرال</h3>`;
+    if (refOrders.length === 0) {
+      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات ريفيرال بعد</p>';
+    } else {
+      html += `<div class="orders-table-wrapper"><table class="orders-table">
+        <thead><tr><th>المنتج</th><th>المبلغ</th><th>كود الريفيرال</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+        <tbody>${refOrders.map(o => `<tr>
+          <td>${o.product_name || '—'}</td>
+          <td>$${(o.amount||0).toFixed(2)}</td>
+          <td><code>${o.referral_code}</code></td>
+          <td><span class="order-status ${o.status}">${o.status === 'confirmed' ? 'مؤكد' : o.status === 'paid' ? 'مدفوع' : 'معلّق'}</span></td>
+          <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
+          <td>
+            ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="confirm">تأكيد</button>` : ''}
+            ${o.status === 'confirmed' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="pay">دفع عمولة</button>` : ''}
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
 
-    container.querySelectorAll('[data-order-id]').forEach(btn => {
+    container.innerHTML = html;
+
+    // Toggle requirements details
+    container.querySelectorAll('[data-toggle-reqs]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.toggleReqs;
+        const el = document.getElementById('reqs-' + id);
+        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+
+    // Customer order status change
+    container.querySelectorAll('.cust-status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        try {
+          const { error } = await sb.from('customer_orders').update({ status: sel.value }).eq('id', sel.dataset.custId);
+          if (error) throw error;
+          showToast('تم تحديث حالة الطلب');
+        } catch (e) { showToast('فشل: ' + e.message); }
+      });
+    });
+
+    // Referral order actions
+    container.querySelectorAll('[data-ref-order-id]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const orderId = btn.dataset.orderId;
+        const orderId = btn.dataset.refOrderId;
         const action = btn.dataset.action;
         const newStatus = action === 'confirm' ? 'confirmed' : 'paid';
         try {
@@ -908,9 +969,7 @@
           if (error) throw error;
           showToast(action === 'confirm' ? 'تم تأكيد الطلب' : 'تم تسجيل الدفع');
           renderOrdersList();
-        } catch (e) {
-          showToast('فشل: ' + e.message);
-        }
+        } catch (e) { showToast('فشل: ' + e.message); }
       });
     });
   }
