@@ -622,12 +622,15 @@
   }
 
   // ===== PAYMENT MODAL =====
+  function getProductUrl(product) {
+    return `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+  }
+
   function buildOrderMessage(product, method) {
     const name = langVal(product, 'name');
     const desc = langVal(product, 'description');
     const order = pendingOrder || {};
     const hasReqs = order.customerName || Object.keys(order.requirements || {}).length > 0;
-    const siteUrl = window.location.origin + window.location.pathname;
 
     let lines = [];
     lines.push(`🛒 *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
@@ -637,16 +640,6 @@
     lines.push(`💰 ${product.price} ${product.currency || 'USD'}`);
     if (product.duration) lines.push(`⏱ ${product.duration}`);
     if (method) lines.push(`💳 ${method}`);
-
-    if (product.image) {
-      lines.push('');
-      lines.push(`🖼 ${currentLang === 'ar' ? 'صورة المنتج:' : 'Product image:'}`);
-      lines.push(product.image);
-    }
-
-    lines.push('');
-    lines.push(`🔗 ${currentLang === 'ar' ? 'رابط المتجر:' : 'Store link:'}`);
-    lines.push(`${siteUrl}?product=${product.id}`);
 
     if (hasReqs) {
       lines.push('');
@@ -665,6 +658,18 @@
     }
 
     return lines.join('\n');
+  }
+
+  async function fetchProductImage(imageUrl) {
+    try {
+      const resp = await fetch(imageUrl);
+      const blob = await resp.blob();
+      const ext = imageUrl.split('.').pop().split('?')[0] || 'jpg';
+      const mimeType = blob.type || `image/${ext}`;
+      return new File([blob], `product.${ext}`, { type: mimeType });
+    } catch (e) {
+      return null;
+    }
   }
 
   async function saveCustomerOrder(product, method) {
@@ -773,9 +778,25 @@
 
         if (opt.dataset.wa === 'true') {
           const msg = buildOrderMessage(product, 'WhatsApp');
+          const productLink = getProductUrl(product);
+          const fullMsg = msg + '\n\n' + productLink;
           const waNum = pay.whatsapp.number.replace(/[^0-9]/g, '');
-          const waLink = `https://api.whatsapp.com/send?phone=${waNum}&text=${encodeURIComponent(msg)}`;
-          window.location.href = waLink;
+
+          let shared = false;
+          if (navigator.share && product.image) {
+            try {
+              const imgFile = await fetchProductImage(product.image);
+              if (imgFile && navigator.canShare && navigator.canShare({ files: [imgFile] })) {
+                await navigator.share({ text: fullMsg, files: [imgFile] });
+                shared = true;
+              }
+            } catch (e) {
+              if (e.name === 'AbortError') { return; }
+            }
+          }
+          if (!shared) {
+            window.location.href = `https://api.whatsapp.com/send?phone=${waNum}&text=${encodeURIComponent(fullMsg)}`;
+          }
         } else if (opt.dataset.email === 'true') {
           const msg = buildOrderMessage(product, 'Email');
           const subject = encodeURIComponent(txt('emailSubject') + ' - ' + name);
