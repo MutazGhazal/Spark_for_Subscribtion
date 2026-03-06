@@ -805,17 +805,23 @@
           const encoded = encodeURIComponent(fullMsg);
 
           const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-          if (isMobile) {
-            const appLink = `whatsapp://send?phone=${waNum}&text=${encoded}`;
-            const webLink = `https://api.whatsapp.com/send?phone=${waNum}&text=${encoded}`;
-            const start = Date.now();
-            window.location.href = appLink;
-            setTimeout(() => {
-              if (Date.now() - start < 2500) window.location.href = webLink;
-            }, 1500);
-          } else {
-            window.open(`https://web.whatsapp.com/send?phone=${waNum}&text=${encoded}`, '_blank');
-          }
+          const webLink = isMobile
+            ? `https://api.whatsapp.com/send?phone=${waNum}&text=${encoded}`
+            : `https://web.whatsapp.com/send?phone=${waNum}&text=${encoded}`;
+
+          const appLink = `whatsapp://send?phone=${waNum}&text=${encoded}`;
+          const hiddenFrame = document.createElement('iframe');
+          hiddenFrame.style.display = 'none';
+          hiddenFrame.src = appLink;
+          document.body.appendChild(hiddenFrame);
+
+          setTimeout(() => {
+            hiddenFrame.remove();
+            if (!document.hidden) {
+              if (isMobile) window.location.href = webLink;
+              else window.open(webLink, '_blank');
+            }
+          }, 1500);
         } else if (opt.dataset.email === 'true') {
           const msg = buildOrderMessage(product, 'Email');
           const subject = encodeURIComponent(txt('emailSubject') + ' - ' + name);
