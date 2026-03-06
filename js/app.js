@@ -179,15 +179,36 @@
     return new Date(s + 'Z').getTime();
   }
 
+  let gitHubLastCommit = null;
+
+  async function fetchGitHubLastCommit() {
+    try {
+      const cached = localStorage.getItem('gh_last_commit');
+      const cachedTime = localStorage.getItem('gh_last_commit_ts');
+      if (cached && cachedTime && Date.now() - Number(cachedTime) < 5 * 60 * 1000) {
+        gitHubLastCommit = parseUTC(cached);
+        return;
+      }
+      const res = await fetch('https://api.github.com/repos/MutazGhazal/Spark_for_Subscribtion/commits?per_page=1');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data[0]?.commit?.committer?.date) {
+        const d = data[0].commit.committer.date;
+        gitHubLastCommit = parseUTC(d);
+        localStorage.setItem('gh_last_commit', d);
+        localStorage.setItem('gh_last_commit_ts', String(Date.now()));
+      }
+    } catch (e) {}
+  }
+
   function renderLastUpdated() {
     const bar = document.getElementById('lastUpdatedBar');
     if (!bar) return;
 
     const timestamps = [];
 
-    if (settings.last_modified) {
-      timestamps.push(parseUTC(settings.last_modified));
-    }
+    if (settings.last_modified) timestamps.push(parseUTC(settings.last_modified));
+    if (gitHubLastCommit) timestamps.push(gitHubLastCommit);
 
     products.forEach(p => {
       if (p.updated_at) timestamps.push(parseUTC(p.updated_at));
@@ -1194,7 +1215,7 @@
     initSupabase();
     initTheme();
     visitorCurrency = detectVisitorCurrency();
-    await Promise.all([loadData(), loadExchangeRates()]);
+    await Promise.all([loadData(), loadExchangeRates(), fetchGitHubLastCommit()]);
     initLang();
     renderCategories();
     renderProducts();
