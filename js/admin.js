@@ -14,6 +14,10 @@
   let currentTab = 'products';
   let isBootstrap = false;
 
+  async function updateLastModified() {
+    try { await sb.from('site_settings').upsert({ key: 'last_modified', value: new Date().toISOString() }); } catch (e) {}
+  }
+
   // ===== AUTH =====
   async function checkBootstrap() {
     const { data, error } = await sb.rpc('admin_count');
@@ -429,6 +433,7 @@
       }
       setSaveStatus('saved', 'تم الحفظ');
       showToast('تم حفظ المنتج بنجاح');
+      updateLastModified();
       renderProductsList();
       closeProductModal();
     } catch (e) {
@@ -445,6 +450,7 @@
       if (error) throw error;
       products.splice(index, 1);
       showToast('تم حذف المنتج');
+      updateLastModified();
       renderProductsList();
     } catch (e) {
       showToast('فشل الحذف: ' + e.message);
@@ -617,6 +623,7 @@
       socialSettings = socialVal;
       setSaveStatus('saved', 'تم الحفظ');
       showToast('تم حفظ الإعدادات');
+      updateLastModified();
     } catch (e) {
       setSaveStatus('error', 'فشل الحفظ');
       showToast('فشل الحفظ: ' + e.message);
@@ -677,6 +684,7 @@
       paymentSettings = payVal;
       setSaveStatus('saved', 'تم الحفظ');
       showToast('تم حفظ طرق الدفع');
+      updateLastModified();
     } catch (e) {
       setSaveStatus('error', 'فشل الحفظ');
       showToast('فشل الحفظ: ' + e.message);

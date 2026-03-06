@@ -182,17 +182,22 @@
   function renderLastUpdated() {
     const bar = document.getElementById('lastUpdatedBar');
     if (!bar) return;
-    if (!products || products.length === 0) { bar.style.display = 'none'; return; }
 
-    const timestamps = products
-      .map(p => p.updated_at || p.created_at)
-      .filter(Boolean)
-      .map(parseUTC)
-      .filter(t => !isNaN(t));
+    const timestamps = [];
 
-    if (timestamps.length === 0) { bar.style.display = 'none'; return; }
+    if (settings.last_modified) {
+      timestamps.push(parseUTC(settings.last_modified));
+    }
 
-    const latest = new Date(Math.max(...timestamps));
+    products.forEach(p => {
+      if (p.updated_at) timestamps.push(parseUTC(p.updated_at));
+      else if (p.created_at) timestamps.push(parseUTC(p.created_at));
+    });
+
+    const valid = timestamps.filter(t => !isNaN(t));
+    if (valid.length === 0) { bar.style.display = 'none'; return; }
+
+    const latest = new Date(Math.max(...valid));
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const opts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: tz };
     const formatted = latest.toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', opts);
@@ -349,12 +354,13 @@
   async function loadData() {
     if (typeof sb !== 'undefined' && typeof isSupabaseConfigured === 'function' && isSupabaseConfigured()) {
       try {
-        const [prodRes, catRes, storeRes, payRes, socialRes] = await Promise.all([
+        const [prodRes, catRes, storeRes, payRes, socialRes, lastModRes] = await Promise.all([
           sb.from('products').select('*').order('sort_order'),
           sb.from('categories').select('*').order('sort_order'),
           sb.from('site_settings').select('value').eq('key', 'store').maybeSingle(),
           sb.from('site_settings').select('value').eq('key', 'payment').maybeSingle(),
-          sb.from('site_settings').select('value').eq('key', 'social').maybeSingle()
+          sb.from('site_settings').select('value').eq('key', 'social').maybeSingle(),
+          sb.from('site_settings').select('value').eq('key', 'last_modified').maybeSingle()
         ]);
 
         products = prodRes.data || [];
@@ -363,6 +369,7 @@
           store: storeRes.data?.value || {},
           payment: payRes.data?.value || {},
           social: socialRes.data?.value || {},
+          last_modified: lastModRes.data?.value || null,
           categories: [{ id: 'all', name_ar: 'الكل', name_en: 'All', icon: 'grid' }, ...cats]
         };
         return true;
