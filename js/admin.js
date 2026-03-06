@@ -221,6 +221,7 @@
         <div class="admin-product-details">
           <h4>${p.name_ar || p.name_en || 'بدون اسم'}</h4>
           <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span></p>
+          ${p.source_url ? `<a href="${p.source_url}" target="_blank" class="source-link" title="مصدر الشراء" onclick="event.stopPropagation()">🔗 مصدر الشراء</a>` : ''}
         </div>
         <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
         <div class="admin-product-actions">
@@ -246,7 +247,7 @@
     const isNew = index === -1;
     const p = isNew ? {
       id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
-      features_ar: '', features_en: '',
+      features_ar: '', features_en: '', source_url: '',
       price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
       duration_ar: '', duration_en: '', available: true, featured: false,
       payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
@@ -307,6 +308,10 @@
         <div class="form-row">
           <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pAvailable" ${p.available!==false?'checked':''}> متوفر للبيع</label></div>
           <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pFeatured" ${p.featured?'checked':''}> منتج مميز</label></div>
+        </div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label>🔗 رابط مصدر الشراء <small style="color:var(--text-muted)">(للأدمن فقط - لا يظهر للزائر)</small></label>
+          <input type="text" id="pSourceUrl" value="${p.source_url || ''}" placeholder="https://example.com/buy/subscription" dir="ltr">
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -375,6 +380,7 @@
       description_en: $('#pDescEn').value.trim(),
       features_ar: $('#pFeatAr').value.trim(),
       features_en: $('#pFeatEn').value.trim(),
+      source_url: $('#pSourceUrl').value.trim(),
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
       category: $('#pCategory').value,

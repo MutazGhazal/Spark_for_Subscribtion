@@ -987,6 +987,27 @@
   color: var(--primary);
 }
 
+/* ===== SOURCE LINK ===== */
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  margin-top: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.08);
+  transition: all 0.2s;
+}
+
+.source-link:hover {
+  background: rgba(99, 102, 241, 0.18);
+  color: var(--secondary);
+}
+
 /* ===== SPINNER ===== */
 .spinner {
   display: inline-block;

@@ -8,6 +8,7 @@
 -- ============================================================
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_ar TEXT DEFAULT '';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features_en TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS source_url TEXT DEFAULT '';
 -- ============================================================
 
 -- 1. TABLES
@@ -32,6 +33,7 @@ CREATE TABLE public.products (
   description_en TEXT DEFAULT '',
   features_ar TEXT DEFAULT '',
   features_en TEXT DEFAULT '',
+  source_url TEXT DEFAULT '',
   price NUMERIC NOT NULL DEFAULT 0,
   currency TEXT DEFAULT 'USD',
   category TEXT DEFAULT 'streaming',
