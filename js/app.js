@@ -779,35 +779,48 @@
 
     const social = settings.social || {};
     const emailAddr = social.email;
+    const waNum = pay.whatsapp?.number?.replace(/[^0-9]/g, '') || '';
 
-    // PayPal
-    const paypalActive = pay.paypal?.enabled;
-    const paypalLink = pl.paypal || (pay.paypal?.link ? pay.paypal.link + '/' + product.price : '');
-    html += `<div class="payment-option ${paypalActive ? 'pay-clickable' : 'disabled'}" data-method="PayPal" ${paypalActive && paypalLink ? `data-href="${paypalLink}"` : ''}>
-      <div class="payment-icon paypal"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg></div>
-      <div class="payment-info"><h4>PayPal</h4><p>${txt('paypalDesc')}</p></div>
-    </div>`;
-
-    // Stripe
-    const stripeActive = pay.stripe?.enabled;
-    html += `<div class="payment-option ${stripeActive ? 'pay-clickable' : 'disabled'}" data-method="Stripe" ${stripeActive && pl.stripe ? `data-href="${pl.stripe}"` : ''}>
-      <div class="payment-icon stripe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-      <div class="payment-info"><h4>${langVal(pay.stripe || {}, 'label') || 'Stripe'}</h4><p>${txt('stripeDesc')}</p></div>
-    </div>`;
-
-    // WhatsApp
+    // Step 1: WhatsApp only
     const waActive = pay.whatsapp?.enabled && pay.whatsapp?.number;
+    html += `<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.5rem;">${currentLang === 'ar' ? 'أرسل طلبك أولاً عبر واتساب' : 'Send your order first via WhatsApp'}</p>`;
     html += `<div class="payment-option ${waActive ? 'pay-clickable' : 'disabled'}" data-method="WhatsApp" data-wa="true">
       <div class="payment-icon whatsapp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></div>
       <div class="payment-info"><h4>${txt('sendVia')}</h4><p>${txt('whatsappDesc')}</p></div>
     </div>`;
 
+    // Step 2: Other payment methods (hidden initially, shown after WhatsApp)
+    html += `<div id="otherPayMethods" style="display:none;">
+      <div class="proof-divider"></div>
+      <p style="text-align:center;color:var(--success);font-weight:600;font-size:0.9rem;margin-bottom:0.8rem;">${currentLang === 'ar' ? '✅ تم إرسال الطلب — اختر طريقة الدفع' : '✅ Order sent — Choose payment method'}</p>`;
+
+    // PayPal
+    const paypalActive = pay.paypal?.enabled;
+    const paypalLink = pl.paypal || (pay.paypal?.link ? pay.paypal.link + '/' + product.price : '');
+    if (paypalActive) {
+      html += `<div class="payment-option pay-clickable" data-method="PayPal" ${paypalLink ? `data-href="${paypalLink}"` : ''}>
+        <div class="payment-icon paypal"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg></div>
+        <div class="payment-info"><h4>PayPal</h4><p>${txt('paypalDesc')}</p></div>
+      </div>`;
+    }
+
+    // Stripe
+    const stripeActive = pay.stripe?.enabled;
+    if (stripeActive) {
+      html += `<div class="payment-option pay-clickable" data-method="Stripe" ${pl.stripe ? `data-href="${pl.stripe}"` : ''}>
+        <div class="payment-icon stripe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <div class="payment-info"><h4>${langVal(pay.stripe || {}, 'label') || 'Stripe'}</h4><p>${txt('stripeDesc')}</p></div>
+      </div>`;
+    }
+
     // Email
     const emailActive = pay.email?.enabled && emailAddr;
-    html += `<div class="payment-option ${emailActive ? 'pay-clickable' : 'disabled'}" data-method="Email" ${emailActive ? 'data-email="true"' : ''}>
-      <div class="payment-icon email" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-      <div class="payment-info"><h4>${txt('sendViaEmail')}</h4><p>${emailActive ? emailAddr : (currentLang === 'ar' ? 'غير مفعّل' : 'Disabled')}</p></div>
-    </div>`;
+    if (emailActive) {
+      html += `<div class="payment-option pay-clickable" data-method="Email" data-email="true">
+        <div class="payment-icon email" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div class="payment-info"><h4>${txt('sendViaEmail')}</h4><p>${emailAddr}</p></div>
+      </div>`;
+    }
 
     // Crypto
     const wallets = pay.crypto?.wallets || {};
@@ -815,24 +828,22 @@
     const binanceOn = wallets.binance_enabled !== false && wallets.binance_id;
     const hasAnyWallet = usdtOn || binanceOn;
     const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
-    html += `
-      <div class="payment-option ${cryptoActive ? '' : 'disabled'}" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
-        <div style="display:flex;align-items:center;gap:1rem;${cryptoActive ? 'margin-bottom:0.75rem;' : ''}">
-          <div class="payment-icon crypto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-          <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt(cryptoActive ? 'cryptoInstructions' : 'cryptoDesc')}</p></div>
-        </div>
-        ${cryptoActive ? `<div class="crypto-addresses">
-          ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
-          ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
-        </div>` : ''}
-      </div>
-    `;
+    if (cryptoActive) {
+      html += `
+        <div class="payment-option" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">
+            <div class="payment-icon crypto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt('cryptoInstructions')}</p></div>
+          </div>
+          <div class="crypto-addresses">
+            ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
+            ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
+          </div>
+        </div>`;
+    }
 
-    // Proof of payment section (hidden initially)
-    const waNum = pay.whatsapp?.number?.replace(/[^0-9]/g, '') || '';
-    html += `<div class="proof-section" id="proofSection" style="display:none;">
-      <div class="proof-divider"></div>
-      <div class="proof-status">${txt('proofDone')}</div>
+    // Proof of payment section
+    html += `<div class="proof-divider"></div>
       <div class="proof-box">
         <h4>${txt('proofTitle')}</h4>
         <p>${txt('proofMsg')}</p>
@@ -844,16 +855,6 @@
     </div>`;
 
     body.innerHTML = html;
-
-    function showProofSection(method) {
-      const proof = document.getElementById('proofSection');
-      if (proof) {
-        proof.style.display = '';
-        const statusEl = proof.querySelector('.proof-status');
-        if (statusEl) statusEl.textContent = txt('proofDone') + ' — ' + method;
-        proof.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }
 
     function openWhatsApp(msgText) {
       const encoded = encodeURIComponent(msgText);
@@ -875,6 +876,14 @@
       }, 1500);
     }
 
+    function revealOtherMethods() {
+      const otherSection = document.getElementById('otherPayMethods');
+      if (otherSection) {
+        otherSection.style.display = '';
+        otherSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
     // Proof WhatsApp button
     const proofBtn = document.getElementById('proofWaBtn');
     if (proofBtn) {
@@ -890,38 +899,40 @@
       opt.style.cursor = 'pointer';
       opt.addEventListener('click', async () => {
         const method = opt.dataset.method;
-        saveCustomerOrder(product, method);
 
         if (opt.dataset.wa === 'true') {
+          saveCustomerOrder(product, 'WhatsApp');
           const msg = buildOrderMessage(product, 'WhatsApp');
           const productLink = getProductUrl(product);
           const fullMsg = msg + '\n\n' + productLink;
           openWhatsApp(fullMsg);
+          opt.classList.add('selected');
+          showToast(txt('orderSaved'));
+          revealOtherMethods();
         } else if (opt.dataset.email === 'true') {
+          saveCustomerOrder(product, 'Email');
           const msg = buildOrderMessage(product, 'Email');
           const subject = encodeURIComponent(txt('emailSubject') + ' - ' + name);
           const emailBody = encodeURIComponent(msg);
           window.location.href = `mailto:${emailAddr}?subject=${subject}&body=${emailBody}`;
+          opt.classList.add('selected');
         } else if (opt.dataset.href) {
+          saveCustomerOrder(product, method);
           window.open(opt.dataset.href, '_blank');
+          opt.classList.add('selected');
         }
-
-        opt.classList.add('selected');
-        showToast(txt('orderSaved'));
-        showProofSection(method);
       });
     });
 
     if (cryptoActive) {
       body.querySelectorAll('.crypto-copy-row button').forEach(btn => {
-const origClick = btn.getAttribute('onclick');
+        const origClick = btn.getAttribute('onclick');
         btn.removeAttribute('onclick');
         btn.addEventListener('click', () => {
           const input = btn.parentElement.querySelector('input');
           if (input) window.copyToClipboard(input.value);
           saveCustomerOrder(product, 'Crypto');
-          showToast(txt('orderSaved'));
-          showProofSection('Crypto');
+          showToast(txt('copied'));
         });
       });
     }
