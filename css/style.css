@@ -1292,6 +1292,11 @@ body.rtl {
   gap: 0.4rem;
   margin-bottom: 0.7rem;
 }
+.usdt-net-btn,
+.crypto-copy-btn {
+  pointer-events: auto;
+  cursor: pointer;
+}
 .usdt-net-btn {
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--border);
@@ -1300,7 +1305,6 @@ body.rtl {
   color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 600;
-  cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
 }
