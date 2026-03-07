@@ -19,6 +19,45 @@
     try { await sb.from('site_settings').upsert({ key: 'last_modified', value: new Date().toISOString() }); } catch (e) {}
   }
 
+  // ===== TRANSLATE HELPERS =====
+  function debounce(fn, delay) {
+    let timer;
+    return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+  }
+
+  async function translateText(text, from, to) {
+    if (!text || !text.trim()) return '';
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${from}|${to}`);
+      if (!res.ok) return '';
+      const data = await res.json();
+      return data.responseData?.translatedText || '';
+    } catch(e) { return ''; }
+  }
+
+  function setupBilingualFields(arEl, enEl) {
+    if (!arEl || !enEl) return;
+    arEl.addEventListener('input', debounce(async () => {
+      if (!arEl.value.trim() || enEl.value.trim()) return;
+      const t = await translateText(arEl.value, 'ar', 'en');
+      if (t && !enEl.value.trim()) enEl.value = t;
+    }, 700));
+    enEl.addEventListener('input', debounce(async () => {
+      if (!enEl.value.trim() || arEl.value.trim()) return;
+      const t = await translateText(enEl.value, 'en', 'ar');
+      if (t && !arEl.value.trim()) arEl.value = t;
+    }, 700));
+  }
+
+  const AR_DURATIONS = ['شهر', 'شهرين', '3 أشهر', '4 أشهر', '5 أشهر', '6 أشهر', '7 أشهر', '8 أشهر', '9 أشهر', '10 أشهر', '11 شهر', 'سنة'];
+  const EN_DURATIONS = ['1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', '7 Months', '8 Months', '9 Months', '10 Months', '11 Months', '1 Year'];
+  function getNextDurationLabel(count) {
+    return {
+      ar: AR_DURATIONS[count] || `${count + 1} أشهر`,
+      en: EN_DURATIONS[count] || `${count + 1} Months`
+    };
+  }
+
   // ===== AUTH =====
   async function checkBootstrap() {
     const { data, error } = await sb.rpc('admin_count');
@@ -432,26 +471,38 @@
       await saveProduct(isNew, index);
     });
 
-    // Plans: add row
+    // Plans: add row with auto-fill duration
     $('#addPlanBtn').addEventListener('click', () => {
       const container = $('#plansContainer');
+      const existingCount = container.querySelectorAll('.plan-row').length;
+      const nextDur = getNextDurationLabel(existingCount);
       const row = document.createElement('div');
       row.className = 'plan-row';
       row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 80px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
       row.innerHTML = `
-        <input type="text" class="plan-label-ar" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-label-en" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-price" value="0" min="0" step="0.01" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="text" class="plan-source" placeholder="https://رابط الشراء" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       `;
       row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      setupBilingualFields(row.querySelector('.plan-label-ar'), row.querySelector('.plan-label-en'));
       container.appendChild(row);
     });
 
     // Plans: remove existing rows
     $('#plansContainer').querySelectorAll('.remove-plan').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.plan-row').remove());
+    });
+
+    // Auto-translate for main fields
+    setupBilingualFields($('#pNameAr'), $('#pNameEn'));
+    setupBilingualFields($('#pDescAr'), $('#pDescEn'));
+
+    // Auto-translate for existing plan rows
+    $('#plansContainer').querySelectorAll('.plan-row').forEach(row => {
+      setupBilingualFields(row.querySelector('.plan-label-ar'), row.querySelector('.plan-label-en'));
     });
 
     $('#productModal').classList.add('active');

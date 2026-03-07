@@ -914,7 +914,10 @@
       <div style="background:var(--bg-secondary);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.2rem;border-right:3px solid var(--primary);">
         <label style="display:flex;align-items:center;gap:0.7rem;cursor:pointer;">
           <input type="checkbox" id="readDetailsCheck" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
-          <span style="font-size:0.9rem;font-weight:600;line-height:1.4;">${currentLang === 'ar' ? 'قرأت تفاصيل الاشتراك وأوافق عليها' : 'I have read the subscription details and agree'}</span>
+          <span style="font-size:0.9rem;font-weight:600;line-height:1.4;">${currentLang === 'ar'
+            ? `قرأت <a id="detailsLink" href="#" style="color:var(--primary);text-decoration:underline;">تفاصيل الاشتراك</a> وأوافق عليها`
+            : `I have read the <a id="detailsLink" href="#" style="color:var(--primary);text-decoration:underline;">subscription details</a> and agree`
+          }</span>
         </label>
       </div>
       <button id="durationContinueBtn" class="btn btn-primary" style="width:100%;opacity:0.45;cursor:not-allowed;" disabled>
@@ -925,6 +928,18 @@
 
     const continueBtn = body.querySelector('#durationContinueBtn');
     const checkbox = body.querySelector('#readDetailsCheck');
+
+    // "تفاصيل الاشتراك" link opens product detail modal
+    const detailsLink = body.querySelector('#detailsLink');
+    if (detailsLink) {
+      detailsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => openProductDetail(product.id), 200);
+      });
+    }
 
     function updateBtn() {
       const ok = selectedPlanIndex >= 0 && checkbox.checked;
