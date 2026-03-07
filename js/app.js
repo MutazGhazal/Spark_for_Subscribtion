@@ -878,6 +878,30 @@
 
     body.innerHTML = html;
 
+    // Bind crypto buttons directly (avoids delegation issues)
+    body.querySelectorAll('.usdt-net-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
+        body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
+        btn.classList.add('active');
+        const item = body.querySelector(`.usdt-addr-item[data-net="${btn.dataset.net}"]`);
+        if (item) item.classList.add('active');
+      });
+    });
+    body.querySelectorAll('.crypto-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = btn.parentElement?.querySelector('input');
+        if (input) {
+          navigator.clipboard.writeText(input.value).then(() => showToast(txt('copied'))).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = input.value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            showToast(txt('copied'));
+          });
+        }
+        if (currentPaymentProduct) saveCustomerOrder(currentPaymentProduct, 'Crypto');
+      });
+    });
+
     function openWhatsApp(msgText) {
       const encoded = encodeURIComponent(msgText);
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1320,35 +1344,7 @@
     $('#langToggle').addEventListener('click', toggleLang);
     $('#modalClose').addEventListener('click', closePaymentModal);
     $('#paymentModal').addEventListener('click', (e) => {
-      if (e.target === $('#paymentModal')) { closePaymentModal(); return; }
-      const netBtn = e.target.closest('.usdt-net-btn');
-      const copyBtn = e.target.closest('.crypto-copy-btn');
-      if (netBtn) {
-        e.preventDefault();
-        const body = $('#modalBody');
-        if (!body) return;
-        body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
-        body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
-        netBtn.classList.add('active');
-        const item = body.querySelector(`.usdt-addr-item[data-net="${netBtn.dataset.net}"]`);
-        if (item) item.classList.add('active');
-        return;
-      }
-      if (copyBtn) {
-        e.preventDefault();
-        const input = copyBtn.parentElement?.querySelector('input');
-        if (input) {
-          navigator.clipboard.writeText(input.value).then(() => {
-            showToast(txt('copied'));
-          }).catch(() => {
-            const ta = document.createElement('textarea');
-            ta.value = input.value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-            showToast(txt('copied'));
-          });
-        }
-        if (currentPaymentProduct) saveCustomerOrder(currentPaymentProduct, 'Crypto');
-        return;
-      }
+      if (e.target === $('#paymentModal')) closePaymentModal();
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePaymentModal(); });
 
