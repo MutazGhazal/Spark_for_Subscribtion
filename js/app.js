@@ -876,15 +876,17 @@
 
     body.innerHTML = html;
 
-    // USDT network tab switching
-    body.querySelectorAll('.usdt-net-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
-        body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
-        btn.classList.add('active');
-        const item = body.querySelector(`.usdt-addr-item[data-net="${btn.dataset.net}"]`);
-        if (item) item.classList.add('active');
-      });
+    // USDT network tab switching (event delegation)
+    body.addEventListener('click', (e) => {
+      const btn = e.target.closest('.usdt-net-btn');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
+      body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
+      btn.classList.add('active');
+      const item = body.querySelector(`.usdt-addr-item[data-net="${btn.dataset.net}"]`);
+      if (item) item.classList.add('active');
     });
 
     function openWhatsApp(msgText) {
