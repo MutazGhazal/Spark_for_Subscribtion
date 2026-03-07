@@ -676,7 +676,6 @@
         enabled: $('#payCryptoEnabled').checked,
         wallets: {
           usdt_trc20: $('#payCryptoUsdt').value.trim(), usdt_enabled: $('#payCryptoUsdtEnabled').checked,
-          btc: $('#payCryptoBtc').value.trim(),
           binance_id: $('#payCryptoBinance').value.trim(), binance_enabled: $('#payCryptoBinanceEnabled').checked
         },
         label_ar: 'عملات رقمية', label_en: 'Cryptocurrency'
