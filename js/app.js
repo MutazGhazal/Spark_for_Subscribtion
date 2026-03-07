@@ -836,8 +836,8 @@
             <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt('cryptoInstructions')}</p></div>
           </div>
           <div class="crypto-addresses">
-            ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
-            ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
+            ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div></div>` : ''}
+            ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div></div>` : ''}
           </div>
         </div>`;
     }
@@ -924,18 +924,19 @@
       });
     });
 
-    if (cryptoActive) {
-      body.querySelectorAll('.crypto-copy-row button').forEach(btn => {
-        const origClick = btn.getAttribute('onclick');
-        btn.removeAttribute('onclick');
-        btn.addEventListener('click', () => {
-          const input = btn.parentElement.querySelector('input');
-          if (input) window.copyToClipboard(input.value);
-          saveCustomerOrder(product, 'Crypto');
-          showToast(txt('copied'));
-        });
+    body.querySelectorAll('.crypto-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = btn.parentElement.querySelector('input');
+        if (input) {
+          navigator.clipboard.writeText(input.value).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = input.value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+          });
+        }
+        saveCustomerOrder(product, 'Crypto');
+        showToast(txt('copied'));
       });
-    }
+    });
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
