@@ -317,6 +317,29 @@
   function txt(key) { return t[currentLang]?.[key] || t.ar[key] || key; }
   function langVal(obj, field) { return obj[field + '_' + currentLang] || obj[field + '_ar'] || ''; }
 
+  // Global handlers for crypto (inline onclick - works when delegation fails)
+  window.switchUsdtTab = function(btn) {
+    const body = document.getElementById('modalBody');
+    if (!body) return;
+    body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
+    body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
+    btn.classList.add('active');
+    const item = body.querySelector('.usdt-addr-item[data-net="' + (btn.getAttribute('data-net') || '') + '"]');
+    if (item) item.classList.add('active');
+  };
+  window.handleCryptoCopy = function(btn) {
+    const row = btn.closest('.crypto-copy-row');
+    const input = row && row.querySelector('input');
+    if (input) {
+      navigator.clipboard.writeText(input.value).then(() => showToast(txt('copied'))).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = input.value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        showToast(txt('copied'));
+      });
+    }
+    if (currentPaymentProduct) saveCustomerOrder(currentPaymentProduct, 'Crypto');
+  };
+
   // ===== THEME =====
   function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -842,17 +865,17 @@
         cryptoInner += `<div class="crypto-usdt-section">
           <label style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem;display:block;">USDT — ${currentLang === 'ar' ? 'اختر الشبكة:' : 'Choose network:'}</label>
           <div class="usdt-network-tabs">
-            ${usdtNetworks.map((n, i) => `<button type="button" class="usdt-net-btn ${i === 0 ? 'active' : ''}" data-net="${n.key}">${n.label}</button>`).join('')}
+            ${usdtNetworks.map((n, i) => `<button type="button" class="usdt-net-btn ${i === 0 ? 'active' : ''}" data-net="${n.key}" onclick="window.switchUsdtTab(this)">${n.label}</button>`).join('')}
           </div>
           <div class="usdt-address-display">
             ${usdtNetworks.map((n, i) => `<div class="usdt-addr-item ${i === 0 ? 'active' : ''}" data-net="${n.key}">
-              <div class="crypto-copy-row"><input type="text" value="${wallets[n.key + '_addr']}" readonly><button type="button" class="crypto-copy-btn">${txt('copy')}</button></div>
+              <div class="crypto-copy-row"><input type="text" value="${wallets[n.key + '_addr']}" readonly><button type="button" class="crypto-copy-btn" onclick="window.handleCryptoCopy(this)">${txt('copy')}</button></div>
             </div>`).join('')}
           </div>
         </div>`;
       }
       if (binanceOn) {
-        cryptoInner += `<div class="crypto-address-item" style="margin-top:0.8rem;"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button type="button" class="crypto-copy-btn">${txt('copy')}</button></div></div>`;
+        cryptoInner += `<div class="crypto-address-item" style="margin-top:0.8rem;"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button type="button" class="crypto-copy-btn" onclick="window.handleCryptoCopy(this)">${txt('copy')}</button></div></div>`;
       }
       html += `
         <div class="payment-option" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
@@ -877,30 +900,6 @@
     </div>`;
 
     body.innerHTML = html;
-
-    // Bind crypto buttons directly (avoids delegation issues)
-    body.querySelectorAll('.usdt-net-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
-        body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
-        btn.classList.add('active');
-        const item = body.querySelector(`.usdt-addr-item[data-net="${btn.dataset.net}"]`);
-        if (item) item.classList.add('active');
-      });
-    });
-    body.querySelectorAll('.crypto-copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const input = btn.parentElement?.querySelector('input');
-        if (input) {
-          navigator.clipboard.writeText(input.value).then(() => showToast(txt('copied'))).catch(() => {
-            const ta = document.createElement('textarea');
-            ta.value = input.value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-            showToast(txt('copied'));
-          });
-        }
-        if (currentPaymentProduct) saveCustomerOrder(currentPaymentProduct, 'Crypto');
-      });
-    });
 
     function openWhatsApp(msgText) {
       const encoded = encodeURIComponent(msgText);
