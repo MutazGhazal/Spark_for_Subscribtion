@@ -658,10 +658,21 @@
       <div class="settings-section">
         <h3>عملات رقمية</h3>
         <div class="switch-wrapper"><span>تفعيل العملات الرقمية</span><label class="switch"><input type="checkbox" id="payCryptoEnabled" ${pay.crypto?.enabled?'checked':''}><span class="switch-slider"></span></label></div>
-        <div class="switch-wrapper" style="margin-top:0.5rem;padding-right:1rem;"><span>USDT (TRC20)</span><label class="switch"><input type="checkbox" id="payCryptoUsdtEnabled" ${pay.crypto?.wallets?.usdt_enabled !== false ?'checked':''}><span class="switch-slider"></span></label></div>
-        <div class="form-group"><label>عنوان USDT (TRC20)</label><input type="text" id="payCryptoUsdt" value="${pay.crypto?.wallets?.usdt_trc20||''}" placeholder="TXxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
-        <div class="switch-wrapper" style="margin-top:0.5rem;padding-right:1rem;"><span>Binance ID (Pay)</span><label class="switch"><input type="checkbox" id="payCryptoBinanceEnabled" ${pay.crypto?.wallets?.binance_enabled !== false ?'checked':''}><span class="switch-slider"></span></label></div>
-        <div class="form-group"><label>Binance ID (Pay)</label><input type="text" id="payCryptoBinance" value="${pay.crypto?.wallets?.binance_id||''}" placeholder="123456789"></div>
+        <h4 style="margin:1rem 0 0.5rem;color:var(--text-secondary);">شبكات USDT</h4>
+        ${['trc20','bep20','apt','pol','sol'].map(net => {
+          const labels = {trc20:'TRC20 (Tron)',bep20:'BEP20 (BSC)',apt:'Aptos (APT)',pol:'Polygon (POL)',sol:'Solana (SOL)'};
+          const placeholders = {trc20:'TXxxx...',bep20:'0xxxx...',apt:'0xxxx...',pol:'0xxxx...',sol:'xxx...'};
+          const w = pay.crypto?.wallets || {};
+          return `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:0.8rem;margin-bottom:0.5rem;">
+            <div class="switch-wrapper" style="margin:0;"><span>${labels[net]}</span><label class="switch"><input type="checkbox" class="usdt-net-toggle" data-net="${net}" ${w[net+'_enabled']?'checked':''}><span class="switch-slider"></span></label></div>
+            <div class="form-group" style="margin-top:0.5rem;margin-bottom:0;"><input type="text" class="usdt-net-addr" data-net="${net}" value="${w[net+'_addr']||w['usdt_'+net]||''}" placeholder="${placeholders[net]}"></div>
+          </div>`;
+        }).join('')}
+        <h4 style="margin:1rem 0 0.5rem;color:var(--text-secondary);">Binance</h4>
+        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:0.8rem;">
+          <div class="switch-wrapper" style="margin:0;"><span>Binance ID (Pay)</span><label class="switch"><input type="checkbox" id="payCryptoBinanceEnabled" ${pay.crypto?.wallets?.binance_enabled?'checked':''}><span class="switch-slider"></span></label></div>
+          <div class="form-group" style="margin-top:0.5rem;margin-bottom:0;"><input type="text" id="payCryptoBinance" value="${pay.crypto?.wallets?.binance_id||''}" placeholder="123456789"></div>
+        </div>
       </div>
     `;
   }
@@ -674,10 +685,12 @@
       email: { enabled: $('#payEmailEnabled').checked, label_ar: 'البريد الإلكتروني', label_en: 'Email' },
       crypto: {
         enabled: $('#payCryptoEnabled').checked,
-        wallets: {
-          usdt_trc20: $('#payCryptoUsdt').value.trim(), usdt_enabled: $('#payCryptoUsdtEnabled').checked,
-          binance_id: $('#payCryptoBinance').value.trim(), binance_enabled: $('#payCryptoBinanceEnabled').checked
-        },
+        wallets: (() => {
+          const w = { binance_id: $('#payCryptoBinance').value.trim(), binance_enabled: $('#payCryptoBinanceEnabled').checked };
+          document.querySelectorAll('.usdt-net-toggle').forEach(el => { w[el.dataset.net + '_enabled'] = el.checked; });
+          document.querySelectorAll('.usdt-net-addr').forEach(el => { w[el.dataset.net + '_addr'] = el.value.trim(); });
+          return w;
+        })(),
         label_ar: 'عملات رقمية', label_en: 'Cryptocurrency'
       }
     };

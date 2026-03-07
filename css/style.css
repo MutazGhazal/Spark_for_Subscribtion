@@ -1285,6 +1285,46 @@ body.rtl {
   box-shadow: 0 4px 12px rgba(37,211,102,0.3);
 }
 
+/* USDT Network Tabs */
+.usdt-network-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+.usdt-net-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.usdt-net-btn:hover {
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+.usdt-net-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.usdt-addr-item {
+  display: none;
+}
+.usdt-addr-item.active {
+  display: block;
+}
+.crypto-usdt-section {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+}
+
 /* Crypto modal */
 .crypto-addresses {
   margin-top: 1rem;

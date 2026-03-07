@@ -824,21 +824,41 @@
 
     // Crypto
     const wallets = pay.crypto?.wallets || {};
-    const usdtOn = wallets.usdt_enabled !== false && wallets.usdt_trc20;
-    const binanceOn = wallets.binance_enabled !== false && wallets.binance_id;
-    const hasAnyWallet = usdtOn || binanceOn;
+    const usdtNetworks = [
+      { key: 'trc20', label: 'TRC20 (Tron)' },
+      { key: 'bep20', label: 'BEP20 (BSC)' },
+      { key: 'apt', label: 'Aptos (APT)' },
+      { key: 'pol', label: 'Polygon (POL)' },
+      { key: 'sol', label: 'Solana (SOL)' }
+    ].filter(n => wallets[n.key + '_enabled'] && wallets[n.key + '_addr']);
+    const binanceOn = wallets.binance_enabled && wallets.binance_id;
+    const hasAnyWallet = usdtNetworks.length > 0 || binanceOn;
     const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
     if (cryptoActive) {
+      let cryptoInner = '';
+      if (usdtNetworks.length > 0) {
+        cryptoInner += `<div class="crypto-usdt-section">
+          <label style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem;display:block;">USDT — ${currentLang === 'ar' ? 'اختر الشبكة:' : 'Choose network:'}</label>
+          <div class="usdt-network-tabs">
+            ${usdtNetworks.map((n, i) => `<button class="usdt-net-btn ${i === 0 ? 'active' : ''}" data-net="${n.key}">${n.label}</button>`).join('')}
+          </div>
+          <div class="usdt-address-display">
+            ${usdtNetworks.map((n, i) => `<div class="usdt-addr-item ${i === 0 ? 'active' : ''}" data-net="${n.key}">
+              <div class="crypto-copy-row"><input type="text" value="${wallets[n.key + '_addr']}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }
+      if (binanceOn) {
+        cryptoInner += `<div class="crypto-address-item" style="margin-top:0.8rem;"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div></div>`;
+      }
       html += `
         <div class="payment-option" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
           <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">
             <div class="payment-icon crypto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt('cryptoInstructions')}</p></div>
           </div>
-          <div class="crypto-addresses">
-            ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div></div>` : ''}
-            ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button class="crypto-copy-btn">${txt('copy')}</button></div></div>` : ''}
-          </div>
+          <div class="crypto-addresses">${cryptoInner}</div>
         </div>`;
     }
 
@@ -855,6 +875,17 @@
     </div>`;
 
     body.innerHTML = html;
+
+    // USDT network tab switching
+    body.querySelectorAll('.usdt-net-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
+        body.querySelectorAll('.usdt-addr-item').forEach(a => a.classList.remove('active'));
+        btn.classList.add('active');
+        const item = body.querySelector(`.usdt-addr-item[data-net="${btn.dataset.net}"]`);
+        if (item) item.classList.add('active');
+      });
+    });
 
     function openWhatsApp(msgText) {
       const encoded = encodeURIComponent(msgText);
@@ -980,7 +1011,8 @@
     html += `<div class="payment-card ${emOk ? '' : 'disabled'}"><div class="payment-card-icon email" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><h3>${txt('sendViaEmail')}</h3><p>${emOk ? emSocial.email : ''}</p>${emOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
     const crWallets = pay.crypto?.wallets || {};
-    const crOk = pay.crypto?.enabled && (crWallets.usdt_trc20 || crWallets.binance_id);
+    const crHasUsdt = ['trc20','bep20','apt','pol','sol'].some(n => crWallets[n+'_enabled'] && crWallets[n+'_addr']);
+    const crOk = pay.crypto?.enabled && (crHasUsdt || crWallets.binance_enabled && crWallets.binance_id);
     html += `<div class="payment-card ${crOk ? '' : 'disabled'}"><div class="payment-card-icon crypto"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>${langVal(pay.crypto || {}, 'label') || 'Crypto'}</h3><p>${txt('cryptoDesc')}</p>${crOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
     grid.innerHTML = html;
