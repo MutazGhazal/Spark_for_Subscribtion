@@ -11,6 +11,7 @@
   let paymentSettings = {};
   let socialSettings = {};
   let admins = [];
+  let allReviews = [];
   let currentTab = 'products';
   let isBootstrap = false;
 
@@ -183,6 +184,10 @@
       paymentSettings = payRes.data?.value || {};
       socialSettings = socialRes.data?.value || {};
 
+      // Load all reviews
+      const { data: revData } = await sb.from('reviews').select('*').order('created_at', { ascending: false });
+      allReviews = revData || [];
+
       if (currentAdmin?.role === 'super_admin') {
         const { data: adminsData } = await sb.from('admins').select('*').order('created_at');
         admins = adminsData || [];
@@ -205,6 +210,7 @@
 
         if (currentTab === 'referral') renderReferralDashboard();
         if (currentTab === 'orders') renderOrdersList();
+        if (currentTab === 'reviews') renderReviewsDashboard();
       });
     });
   }
@@ -803,6 +809,87 @@
       showToast('فشل الحذف: ' + e.message);
     }
   }
+
+  // ===== REVIEWS MANAGEMENT =====
+  window.renderReviewsDashboard = function() {
+    const list = $('#reviewsDashboardList');
+    if (!list) return;
+
+    if (allReviews.length === 0) {
+      list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>لا توجد مراجعات حتى الآن.</p></div>`;
+      return;
+    }
+
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const dateOpts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: tz };
+
+    list.innerHTML = allReviews.map(r => {
+      const p = products.find(prod => prod.id === r.product_id);
+      const pName = p ? (p.name_ar || p.name_en) : r.product_id;
+      
+      const full = Math.floor(r.rating || 0);
+      const half = (r.rating || 0) - full >= 0.5 ? 1 : 0;
+      const empty = 5 - full - half;
+      const starSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      const emptyStarSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      const starsHtml = starSvg.repeat(full) + (half ? starSvg : '') + emptyStarSvg.repeat(empty);
+
+      return `
+        <div class="admin-review-card ${!r.is_approved ? 'unapproved' : ''}" data-id="${r.id}">
+          <div class="review-card-header">
+            <div>
+              <div class="review-author">${r.author_name}</div>
+              <div class="review-date">${new Date(r.created_at).toLocaleString('ar-EG', dateOpts)}</div>
+            </div>
+            <div class="review-product-badge">${pName}</div>
+          </div>
+          <div class="review-stars-val" style="display:flex; gap:2px; margin:0.5rem 0;">${starsHtml}</div>
+          <p class="review-comment-val">${r.comment || '<i>بدون تعليق</i>'}</p>
+          <div class="review-actions">
+            <button class="btn btn-sm ${r.is_approved ? 'btn-secondary' : 'btn-success'}" onclick="window.toggleReviewApproval('${r.id}', ${r.is_approved})">
+              ${r.is_approved ? 'إخفاء (عدم الموافقة)' : 'موافقة وعرض'}
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="window.deleteReview('${r.id}')">حذف</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.toggleReviewApproval = async function(id, currentStatus) {
+    if (!confirm(`هل تريد ${currentStatus ? 'إخفاء' : 'الموافقة على'} هذا التقييم؟`)) return;
+    try {
+      setSaveStatus('saving', 'جاري التحديث...');
+      const { error } = await sb.from('reviews').update({ is_approved: !currentStatus }).eq('id', id);
+      if (error) throw error;
+      
+      const idx = allReviews.findIndex(r => r.id === id);
+      if (idx !== -1) allReviews[idx].is_approved = !currentStatus;
+      
+      setSaveStatus('saved', 'تم التحديث');
+      renderReviewsDashboard();
+    } catch (e) {
+      setSaveStatus('error', 'فشل التحديث');
+      showToast('فشل التحديث: ' + e.message);
+    }
+  };
+
+  window.deleteReview = async function(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا التقييم نهائياً؟')) return;
+    try {
+      setSaveStatus('saving', 'جاري الحذف...');
+      const { error } = await sb.from('reviews').delete().eq('id', id);
+      if (error) throw error;
+      
+      allReviews = allReviews.filter(r => r.id !== id);
+      
+      setSaveStatus('saved', 'تم الحذف');
+      renderReviewsDashboard();
+    } catch (e) {
+      setSaveStatus('error', 'فشل الحذف');
+      showToast('فشل الحذف: ' + e.message);
+    }
+  };
 
   // ===== REFERRAL DASHBOARD =====
   async function renderReferralDashboard() {

@@ -285,7 +285,16 @@
       proofTitle: '📸 إثبات الدفع',
       proofMsg: 'بعد إتمام الدفع، يرجى إرسال صورة أو لقطة شاشة لعملية الدفع عبر واتساب لتأكيد طلبك',
       proofBtn: 'إرسال إثبات الدفع عبر واتساب',
-      proofDone: '✅ تم اختيار طريقة الدفع'
+      proofDone: '✅ تم اختيار طريقة الدفع',
+      reviewsTitle: 'التقييمات والمراجعات',
+      addReviewTitle: 'أضف تقييمك',
+      reviewNameLabel: 'الاسم',
+      reviewRatingLabel: 'التقييم',
+      reviewCommentLabel: 'التعليق (اختياري)',
+      btnSubmitReview: 'إرسال التقييم',
+      noReviews: 'لا توجد تقييمات حتى الآن. كن الأول!',
+      reviewSuccess: 'تم إرسال التقييم بنجاح. قد يحتاج لموافقة الإدارة ليظهر.',
+      reviewError: 'حدث خطأ أثناء إرسال التقييم. حاول مرة أخرى.'
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -310,7 +319,16 @@
       proofTitle: '📸 Payment Proof',
       proofMsg: 'After completing payment, please send a screenshot of the transaction via WhatsApp to confirm your order',
       proofBtn: 'Send Payment Proof via WhatsApp',
-      proofDone: '✅ Payment method selected'
+      proofDone: '✅ Payment method selected',
+      reviewsTitle: 'Reviews & Ratings',
+      addReviewTitle: 'Add your review',
+      reviewNameLabel: 'Name',
+      reviewRatingLabel: 'Rating',
+      reviewCommentLabel: 'Comment (Optional)',
+      btnSubmitReview: 'Submit Review',
+      noReviews: 'No reviews yet. Be the first!',
+      reviewSuccess: 'Review submitted successfully. It may require admin approval.',
+      reviewError: 'An error occurred while submitting. Please try again.'
     }
   };
 
@@ -397,6 +415,20 @@
     $('#noResultsText').textContent = txt('noResults');
     $('#paymentTitle').textContent = txt('paymentTitle');
     $('#paymentSubtitle').textContent = txt('paymentSubtitle');
+    
+    // Reviews Translation
+    const reviewsTitle = $('#reviewsTitle');
+    if(reviewsTitle) reviewsTitle.textContent = txt('reviewsTitle');
+    const addReviewTitle = $('#addReviewTitle');
+    if(addReviewTitle) addReviewTitle.textContent = txt('addReviewTitle');
+    const reviewNameLabel = $('#reviewNameLabel');
+    if(reviewNameLabel) reviewNameLabel.textContent = txt('reviewNameLabel');
+    const reviewRatingLabel = $('#reviewRatingLabel');
+    if(reviewRatingLabel) reviewRatingLabel.textContent = txt('reviewRatingLabel');
+    const reviewCommentLabel = $('#reviewCommentLabel');
+    if(reviewCommentLabel) reviewCommentLabel.textContent = txt('reviewCommentLabel');
+    const btnSubmitReview = $('#btnSubmitReview');
+    if(btnSubmitReview) btnSubmitReview.textContent = txt('btnSubmitReview');
 
     $$('[data-ar]').forEach(el => {
       el.textContent = currentLang === 'ar' ? el.dataset.ar : el.dataset.en;
@@ -418,6 +450,21 @@
 
         products = prodRes.data || [];
         const cats = catRes.data || [];
+        
+        // Fetch average ratings and counts for products concurrently
+        const ratingPromises = products.map(async (p) => {
+          try {
+            const { data, error } = await sb.rpc('get_product_rating', { pid: p.id });
+            const { data: countData } = await sb.rpc('get_product_review_count', { pid: p.id });
+            p.avg_rating = !error && data !== null ? parseFloat(data) : 0;
+            p.review_count = countData || 0;
+          } catch (err) {
+            p.avg_rating = 0;
+            p.review_count = 0;
+          }
+        });
+        await Promise.all(ratingPromises);
+
         settings = {
           store: storeRes.data?.value || {},
           payment: payRes.data?.value || {},
@@ -526,6 +573,10 @@
             <span class="product-category">${getCategoryLabel(p.category)}</span>
             <h3 class="product-name">${name}</h3>
             <p class="product-desc">${desc}</p>
+            <div class="product-rating">
+              ${renderStars(p.avg_rating)} 
+              <span class="review-count">(${p.review_count || 0})</span>
+            </div>
             <div class="product-meta">
               <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(p.price, p.currency) ? `<span class="local-price">${formatLocalPrice(p.price, p.currency)}</span>` : ''}</span>
               <span class="product-duration">${duration}</span>
@@ -583,6 +634,12 @@
       <div class="pd-body">
         <div class="pd-category">${getCategoryLabel(product.category)}</div>
         <h2 class="pd-name">${name}</h2>
+        
+        <div class="pd-rating" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+          ${renderStars(product.avg_rating)}
+          <span class="review-count" style="font-size:0.85rem; color:var(--text-secondary)">(${product.review_count || 0} ${currentLang === 'ar' ? 'تقييم' : 'reviews'})</span>
+        </div>
+
         ${desc ? `<p class="pd-desc">${desc}</p>` : ''}
         ${featuresList.length > 0 ? `
           <div class="pd-features">
@@ -624,6 +681,109 @@
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    
+    // Load Reviews
+    loadProductReviews(productId);
+    
+    // Handle Review Submit
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+      reviewForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const rName = document.getElementById('reviewName').value.trim();
+        const rComment = document.getElementById('reviewComment').value.trim();
+        const rRating = document.querySelector('input[name="rating"]:checked').value;
+        const submitBtn = document.getElementById('btnSubmitReview');
+
+        if (!rName || !rRating) return;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid; border-radius:50%; border-right-color:transparent; animation:spin 1s linear infinite;"></span>';
+
+        try {
+          const { error } = await sb.from('reviews').insert({
+            product_id: productId,
+            author_name: rName,
+            rating: parseInt(rRating),
+            comment: rComment,
+            is_approved: true // Typically handled by trigger or defaults, assumed true for now
+          });
+
+          if (error) throw error;
+          
+          showToast(txt('reviewSuccess'));
+          reviewForm.reset();
+          loadProductReviews(productId); // Reload reviews
+        } catch (err) {
+          console.error("Review submit error", err);
+          showToast(txt('reviewError'));
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = txt('btnSubmitReview');
+        }
+      };
+    }
+  }
+
+  // ===== REVIEWS HELPER =====
+  function renderStars(rating) {
+    const full = Math.floor(rating || 0);
+    const half = (rating || 0) - full >= 0.5 ? 1 : 0;
+    const empty = 5 - full - half;
+    
+    const fullStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    const halfStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="url(#halfGrad)" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="halfGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="50%" stop-color="#f59e0b"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    const emptyStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+    return `<div class="stars-container" style="display:flex; gap:2px; color:#f59e0b;" title="${rating || 0} / 5">` + 
+      fullStar.repeat(full) + 
+      (half ? halfStar : '') + 
+      emptyStar.repeat(empty) + 
+      `</div>`;
+  }
+
+  async function loadProductReviews(productId) {
+    const reviewsList = document.getElementById('reviewsList');
+    if (!reviewsList || typeof sb === 'undefined') return;
+    
+    reviewsList.innerHTML = `<div style="text-align:center; padding:1rem;"><span class="spinner" style="display:inline-block; width:24px; height:24px; border:3px solid var(--primary); border-radius:50%; border-right-color:transparent; animation:spin 1s linear infinite;"></span></div>`;
+    
+    try {
+      const { data, error } = await sb
+        .from('reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        reviewsList.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:1rem 0;">${txt('noReviews')}</p>`;
+        return;
+      }
+      
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const opts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: tz };
+      
+      reviewsList.innerHTML = data.map(r => `
+        <div class="review-item" style="padding:1rem 0; border-bottom:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+            <div>
+              <strong style="display:block; font-size:0.95rem;">${r.author_name}</strong>
+              ${renderStars(r.rating)}
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${new Date(r.created_at).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', opts)}</span>
+          </div>
+          ${r.comment ? `<p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem; line-height:1.5;">${r.comment}</p>` : ''}
+        </div>
+      `).join('');
+      
+    } catch (err) {
+      console.warn("Failed to load reviews:", err);
+      reviewsList.innerHTML = `<p style="text-align:center; color:#ef4444; padding:1rem 0;">Failed to load reviews.</p>`;
+    }
   }
 
   // ===== BUY FLOW =====

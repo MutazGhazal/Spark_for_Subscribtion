@@ -1016,6 +1016,88 @@
   color: var(--secondary);
 }
 
+/* ===== ADMIN REVIEWS CARDS ===== */
+.admin-review-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: all var(--transition);
+}
+
+.admin-review-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--primary-light);
+}
+
+.admin-review-card.unapproved {
+  border-right: 4px solid var(--accent-pink);
+  opacity: 0.8;
+}
+
+[dir="rtl"] .admin-review-card.unapproved {
+  border-right: none;
+  border-left: 4px solid var(--accent-pink);
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-author {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.review-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.review-product-badge {
+  background: var(--bg-secondary);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.review-comment-val {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+}
+
+.btn-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  background: #10b981;
+  color: white;
+}
+
 /* ===== SPINNER ===== */
 .spinner {
   display: inline-block;

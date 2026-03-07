@@ -2231,6 +2231,45 @@ body.rtl {
   font-weight: 700;
 }
 
+/* ===== REVIEWS STYLES ===== */
+.product-rating {
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.star-rating-input {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+.star-rating-input input {
+  display: none;
+}
+
+.star-rating-input label {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  transition: transform 0.2s;
+}
+
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label,
+.star-rating-input input:checked ~ label {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/%3e%3c/svg%3e");
+}
+
+.star-rating-input label:hover {
+  transform: scale(1.15);
+}
+
 @media (max-width: 768px) {
   .product-detail-modal {
     max-width: 100%;
