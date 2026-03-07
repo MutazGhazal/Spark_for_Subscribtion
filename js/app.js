@@ -1277,19 +1277,37 @@
 
     animId = requestAnimationFrame(animate);
 
-    setTimeout(() => {
+    let splashHidden = false;
+    const hideSplash = () => {
+      if (splashHidden || !splash.parentNode) return;
+      splashHidden = true;
       splash.classList.add('done');
-      setTimeout(() => { cancelAnimationFrame(animId); splash.remove(); }, 900);
-    }, 2800);
+      setTimeout(() => { try { cancelAnimationFrame(animId); } catch(e){} splash.remove(); }, 900);
+    };
+    setTimeout(hideSplash, 2800);
+    setTimeout(hideSplash, 4500);
+    splash.addEventListener('click', hideSplash, { once: true });
   }
 
   // ===== INIT =====
+  function forceSplashHide() {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('done');
+      setTimeout(() => splash.remove(), 900);
+    }
+  }
+
   async function init() {
     initFireSplash();
     initSupabase();
     initTheme();
     visitorCurrency = detectVisitorCurrency();
-    await Promise.all([loadData(), loadExchangeRates(), fetchGitHubLastCommit()]);
+    try {
+      await Promise.all([loadData(), loadExchangeRates(), fetchGitHubLastCommit()]);
+    } catch (e) {
+      console.warn('Init load warning:', e);
+    }
     initLang();
     renderCategories();
     renderProducts();
