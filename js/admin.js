@@ -658,8 +658,9 @@
       <div class="settings-section">
         <h3>عملات رقمية</h3>
         <div class="switch-wrapper"><span>تفعيل العملات الرقمية</span><label class="switch"><input type="checkbox" id="payCryptoEnabled" ${pay.crypto?.enabled?'checked':''}><span class="switch-slider"></span></label></div>
+        <div class="switch-wrapper" style="margin-top:0.5rem;padding-right:1rem;"><span>USDT (TRC20)</span><label class="switch"><input type="checkbox" id="payCryptoUsdtEnabled" ${pay.crypto?.wallets?.usdt_enabled !== false ?'checked':''}><span class="switch-slider"></span></label></div>
         <div class="form-group"><label>عنوان USDT (TRC20)</label><input type="text" id="payCryptoUsdt" value="${pay.crypto?.wallets?.usdt_trc20||''}" placeholder="TXxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
-        <div class="form-group"><label>عنوان BTC</label><input type="text" id="payCryptoBtc" value="${pay.crypto?.wallets?.btc||''}" placeholder="bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
+        <div class="switch-wrapper" style="margin-top:0.5rem;padding-right:1rem;"><span>Binance ID (Pay)</span><label class="switch"><input type="checkbox" id="payCryptoBinanceEnabled" ${pay.crypto?.wallets?.binance_enabled !== false ?'checked':''}><span class="switch-slider"></span></label></div>
         <div class="form-group"><label>Binance ID (Pay)</label><input type="text" id="payCryptoBinance" value="${pay.crypto?.wallets?.binance_id||''}" placeholder="123456789"></div>
       </div>
     `;
@@ -673,7 +674,11 @@
       email: { enabled: $('#payEmailEnabled').checked, label_ar: 'البريد الإلكتروني', label_en: 'Email' },
       crypto: {
         enabled: $('#payCryptoEnabled').checked,
-        wallets: { usdt_trc20: $('#payCryptoUsdt').value.trim(), btc: $('#payCryptoBtc').value.trim(), binance_id: $('#payCryptoBinance').value.trim() },
+        wallets: {
+          usdt_trc20: $('#payCryptoUsdt').value.trim(), usdt_enabled: $('#payCryptoUsdtEnabled').checked,
+          btc: $('#payCryptoBtc').value.trim(),
+          binance_id: $('#payCryptoBinance').value.trim(), binance_enabled: $('#payCryptoBinanceEnabled').checked
+        },
         label_ar: 'عملات رقمية', label_en: 'Cryptocurrency'
       }
     };

@@ -811,7 +811,9 @@
 
     // Crypto
     const wallets = pay.crypto?.wallets || {};
-    const hasAnyWallet = wallets.usdt_trc20 || wallets.binance_id;
+    const usdtOn = wallets.usdt_enabled !== false && wallets.usdt_trc20;
+    const binanceOn = wallets.binance_enabled !== false && wallets.binance_id;
+    const hasAnyWallet = usdtOn || binanceOn;
     const cryptoActive = pay.crypto?.enabled && hasAnyWallet;
     html += `
       <div class="payment-option ${cryptoActive ? '' : 'disabled'}" data-method="Crypto" style="cursor:default; flex-direction:column; align-items:stretch;">
@@ -820,8 +822,8 @@
           <div class="payment-info"><h4>${txt('cryptoTitle')}</h4><p>${txt(cryptoActive ? 'cryptoInstructions' : 'cryptoDesc')}</p></div>
         </div>
         ${cryptoActive ? `<div class="crypto-addresses">
-          ${wallets.usdt_trc20 ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
-          ${wallets.binance_id ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
+          ${usdtOn ? `<div class="crypto-address-item"><label>USDT (TRC20)</label><div class="crypto-copy-row"><input type="text" value="${wallets.usdt_trc20}" readonly><button onclick="copyToClipboard('${wallets.usdt_trc20}')">${txt('copy')}</button></div></div>` : ''}
+          ${binanceOn ? `<div class="crypto-address-item"><label>Binance ID (Pay)</label><div class="crypto-copy-row"><input type="text" value="${wallets.binance_id}" readonly><button onclick="copyToClipboard('${wallets.binance_id}')">${txt('copy')}</button></div></div>` : ''}
         </div>` : ''}
       </div>
     `;
