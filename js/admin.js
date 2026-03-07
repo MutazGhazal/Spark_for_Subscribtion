@@ -223,31 +223,79 @@
       return;
     }
 
-    list.innerHTML = products.map((p, i) => `
-      <div class="admin-product-card ${p.source_url ? 'has-source' : ''}" data-index="${i}">
-        <div class="admin-product-img">
-          <img src="${p.image}" alt="" onerror="this.style.display='none'">
+    list.innerHTML = products.map((p, i) => {
+      const plans = p.subscription_plans || [];
+      const hasPlans = plans.length > 0;
+      const hasSource = hasPlans || p.source_url;
+      return `
+        <div class="admin-product-card ${hasSource ? 'has-source' : ''}" data-index="${i}">
+          <div class="admin-product-img">
+            <img src="${p.image}" alt="" onerror="this.style.display='none'">
+          </div>
+          <div class="admin-product-details">
+            <h4>${p.name_ar || p.name_en || 'بدون اسم'}</h4>
+            <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span></p>
+            ${hasPlans
+              ? `<span class="source-link" style="cursor:pointer;" onclick="event.stopPropagation();window._showPlans(${i})">🔗 ${plans.length} مدة اشتراك</span>`
+              : (p.source_url ? `<a href="${p.source_url}" target="_blank" class="source-link" title="مصدر الشراء" onclick="event.stopPropagation()">🔗 مصدر الشراء</a>` : '')
+            }
+          </div>
+          <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
+          <div class="admin-product-actions">
+            <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <button class="btn-icon edit" data-index="${i}" title="تعديل"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="btn-icon delete" data-index="${i}" title="حذف"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          </div>
         </div>
-        <div class="admin-product-details">
-          <h4>${p.name_ar || p.name_en || 'بدون اسم'}</h4>
-          <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span></p>
-          ${p.source_url ? `<a href="${p.source_url}" target="_blank" class="source-link" title="مصدر الشراء" onclick="event.stopPropagation()">🔗 مصدر الشراء</a>` : ''}
+      `;
+    }).join('');
+
+    // Global helper to show plans popup in admin
+    window._showPlans = function(idx) {
+      const p = products[idx];
+      if (!p) return;
+      const plans = p.subscription_plans || [];
+      if (plans.length === 0) return;
+      const existing = document.getElementById('adminPlansPopup');
+      if (existing) existing.remove();
+      const popup = document.createElement('div');
+      popup.id = 'adminPlansPopup';
+      popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      popup.innerHTML = `
+        <div style="background:var(--bg-card);border-radius:16px;padding:1.5rem;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 style="margin:0;font-size:1.1rem;">📋 ${p.name_ar || p.name_en} — مدد الاشتراك</h3>
+            <button onclick="document.getElementById('adminPlansPopup').remove()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;">
+            ${plans.map((plan, i) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--bg-secondary);border-radius:10px;">
+                <div>
+                  <div style="font-weight:700;">${plan.label_ar || plan.label_en}</div>
+                  <div style="font-size:0.85rem;color:var(--text-muted);">${plan.label_en || ''}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                  <span style="font-weight:800;color:var(--primary);">${plan.price} ${p.currency || 'USD'}</span>
+                  ${plan.source_url ? `<a href="${plan.source_url}" target="_blank" style="background:var(--primary);color:#fff;padding:0.3rem 0.8rem;border-radius:8px;text-decoration:none;font-size:0.85rem;">🔗 فتح</a>` : '<span style="color:var(--text-muted);font-size:0.8rem;">بدون رابط</span>'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
-        <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
-        <div class="admin-product-actions">
-          <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-          <button class="btn-icon edit" data-index="${i}" title="تعديل"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button class="btn-icon delete" data-index="${i}" title="حذف"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-        </div>
-      </div>
-    `).join('');
+      `;
+      popup.addEventListener('click', (e) => { if (e.target === popup) popup.remove(); });
+      document.body.appendChild(popup);
+    };
 
     list.querySelectorAll('.admin-product-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-icon') || e.target.closest('.source-link')) return;
+        if (e.target.closest('.btn-icon') || e.target.closest('.source-link') || e.target.closest('a')) return;
         const idx = parseInt(card.dataset.index);
         const p = products[idx];
-        if (p?.source_url) {
+        const plans = p?.subscription_plans || [];
+        if (plans.length > 0) {
+          window._showPlans(idx);
+        } else if (p?.source_url) {
           window.open(p.source_url, '_blank');
         }
       });
@@ -281,6 +329,7 @@
         requirements_ar: '', requirements_en: '',
         price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
         duration_ar: '', duration_en: '', available: true, featured: false,
+        subscription_plans: [],
         payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
       };
     } else {
@@ -347,9 +396,23 @@
           <div class="form-group"><label>متطلبات الاشتراك (عربي) <small style="color:var(--text-muted)">سطر لكل متطلب</small></label><textarea id="pReqAr" rows="3" placeholder="الإيميل&#10;كلمة المرور&#10;نوع الجهاز">${p.requirements_ar || ''}</textarea></div>
           <div class="form-group"><label>Requirements (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pReqEn" rows="3" placeholder="Email&#10;Password&#10;Device type">${p.requirements_en || ''}</textarea></div>
         </div>
-        <div class="form-group" style="margin-top:0.5rem;">
-          <label>🔗 رابط مصدر الشراء <small style="color:var(--text-muted)">(للأدمن فقط - لا يظهر للزائر)</small></label>
-          <input type="text" id="pSourceUrl" value="${p.source_url || ''}" placeholder="https://example.com/buy/subscription" dir="ltr">
+        <div class="form-group" style="margin-top:1rem;border-top:1px dashed var(--border);padding-top:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <label style="margin:0;">📋 مدد الاشتراك <small style="color:var(--text-muted)">لكل مدة رابط مصدر خاص (للأدمن فقط)</small></label>
+            <button type="button" class="btn btn-secondary" id="addPlanBtn" style="padding:0.35rem 0.8rem;font-size:0.85rem;">+ إضافة مدة</button>
+          </div>
+          <div id="plansContainer">
+            ${(p.subscription_plans || []).map((plan, i) => `
+              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 80px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
+                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="0" min="0" step="0.01" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="https://رابط المصدر" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            `).join('')}
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | سعر | رابط المصدر</p>
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -367,6 +430,28 @@
     $('#productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       await saveProduct(isNew, index);
+    });
+
+    // Plans: add row
+    $('#addPlanBtn').addEventListener('click', () => {
+      const container = $('#plansContainer');
+      const row = document.createElement('div');
+      row.className = 'plan-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 80px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.innerHTML = `
+        <input type="text" class="plan-label-ar" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-en" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="number" class="plan-price" value="0" min="0" step="0.01" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-source" placeholder="https://رابط الشراء" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+      `;
+      row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      container.appendChild(row);
+    });
+
+    // Plans: remove existing rows
+    $('#plansContainer').querySelectorAll('.remove-plan').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.plan-row').remove());
     });
 
     $('#productModal').classList.add('active');
@@ -425,6 +510,19 @@
       }
     }
 
+    // Collect subscription plans
+    const planRows = document.querySelectorAll('#plansContainer .plan-row');
+    const subscriptionPlans = [];
+    planRows.forEach(row => {
+      const labelAr = row.querySelector('.plan-label-ar')?.value.trim() || '';
+      const labelEn = row.querySelector('.plan-label-en')?.value.trim() || '';
+      const price = parseFloat(row.querySelector('.plan-price')?.value) || 0;
+      const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
+      if (labelAr || labelEn) {
+        subscriptionPlans.push({ label_ar: labelAr, label_en: labelEn, price, source_url: sourceUrl });
+      }
+    });
+
     const productData = {
       id,
       name_ar: nameAr, name_en: nameEn,
@@ -434,7 +532,7 @@
       features_en: $('#pFeatEn').value.trim(),
       requirements_ar: $('#pReqAr').value.trim(),
       requirements_en: $('#pReqEn').value.trim(),
-      source_url: $('#pSourceUrl').value.trim(),
+      source_url: subscriptionPlans.length > 0 ? subscriptionPlans[0].source_url : '',
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
       category: $('#pCategory').value,
@@ -443,6 +541,7 @@
       duration_en: $('#pDurEn').value.trim(),
       available: $('#pAvailable').checked,
       featured: $('#pFeatured').checked,
+      subscription_plans: subscriptionPlans,
       payment_links: {
         paypal: $('#pPaypal').value.trim(),
         stripe: $('#pStripe').value.trim(),

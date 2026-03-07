@@ -796,12 +796,17 @@
     const reqs = langVal(product, 'requirements');
     const reqList = reqs ? reqs.split('\n').filter(r => r.trim()) : [];
 
-    pendingOrder = { productId, customerName: '', customerEmail: '', requirements: {} };
+    pendingOrder = { productId, customerName: '', customerEmail: '', requirements: {}, selectedPlan: null };
 
     if (reqList.length > 0) {
       openRequirementsForm(product, reqList);
     } else {
-      openPaymentModal(productId);
+      const plans = product.subscription_plans || [];
+      if (plans.length > 0) {
+        openDurationModal(product);
+      } else {
+        openPaymentModal(productId);
+      }
     }
   }
 
@@ -866,6 +871,88 @@
 
       modal.classList.remove('active');
       document.body.style.overflow = '';
+
+      const plans = product.subscription_plans || [];
+      if (plans.length > 0) {
+        setTimeout(() => openDurationModal(product), 200);
+      } else {
+        setTimeout(() => openPaymentModal(product.id), 200);
+      }
+    });
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // ===== DURATION SELECTION MODAL =====
+  function openDurationModal(product) {
+    const modal = document.getElementById('durationModal');
+    const body = document.getElementById('durationModalBody');
+    const titleEl = document.getElementById('durationModalTitle');
+    const closeBtn = document.getElementById('durationModalClose');
+    const plans = product.subscription_plans || [];
+    const name = langVal(product, 'name');
+
+    titleEl.textContent = (currentLang === 'ar' ? 'اختر مدة الاشتراك' : 'Choose Duration') + ' — ' + name;
+    closeBtn.onclick = () => { modal.classList.remove('active'); document.body.style.overflow = ''; };
+
+    let selectedPlanIndex = -1;
+
+    body.innerHTML = `
+      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${currentLang === 'ar' ? 'اختر المدة المناسبة لك:' : 'Choose the duration that suits you:'}</p>
+      <div id="plansList" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.2rem;">
+        ${plans.map((plan, i) => {
+          const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
+          return `
+            <div class="plan-option" data-index="${i}" style="border:2px solid var(--border);border-radius:12px;padding:0.9rem 1rem;cursor:pointer;transition:border-color 0.18s,background 0.18s;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:700;font-size:0.97rem;">${label}</span>
+              <span style="font-size:1.1rem;font-weight:800;color:var(--primary);">${plan.price} ${product.currency || 'USD'}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.2rem;border-right:3px solid var(--primary);">
+        <label style="display:flex;align-items:center;gap:0.7rem;cursor:pointer;">
+          <input type="checkbox" id="readDetailsCheck" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+          <span style="font-size:0.9rem;font-weight:600;line-height:1.4;">${currentLang === 'ar' ? 'قرأت تفاصيل الاشتراك وأوافق عليها' : 'I have read the subscription details and agree'}</span>
+        </label>
+      </div>
+      <button id="durationContinueBtn" class="btn btn-primary" style="width:100%;opacity:0.45;cursor:not-allowed;" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        ${currentLang === 'ar' ? 'متابعة للدفع' : 'Continue to Payment'}
+      </button>
+    `;
+
+    const continueBtn = body.querySelector('#durationContinueBtn');
+    const checkbox = body.querySelector('#readDetailsCheck');
+
+    function updateBtn() {
+      const ok = selectedPlanIndex >= 0 && checkbox.checked;
+      continueBtn.disabled = !ok;
+      continueBtn.style.opacity = ok ? '1' : '0.45';
+      continueBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    }
+
+    body.querySelectorAll('.plan-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        body.querySelectorAll('.plan-option').forEach(o => {
+          o.style.borderColor = 'var(--border)';
+          o.style.background = '';
+        });
+        opt.style.borderColor = 'var(--primary)';
+        opt.style.background = 'color-mix(in srgb, var(--primary) 8%, transparent)';
+        selectedPlanIndex = parseInt(opt.dataset.index);
+        updateBtn();
+      });
+    });
+
+    checkbox.addEventListener('change', updateBtn);
+
+    continueBtn.addEventListener('click', () => {
+      if (selectedPlanIndex < 0 || !checkbox.checked) return;
+      pendingOrder.selectedPlan = plans[selectedPlanIndex];
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
       setTimeout(() => openPaymentModal(product.id), 200);
     });
 
@@ -884,13 +971,20 @@
     const order = pendingOrder || {};
     const hasReqs = order.customerName || Object.keys(order.requirements || {}).length > 0;
 
+    // Use selected plan if available
+    const plan = order.selectedPlan;
+    const displayPrice = plan ? `${plan.price} ${product.currency || 'USD'}` : `${product.price} ${product.currency || 'USD'}`;
+    const displayDuration = plan
+      ? (currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar))
+      : langVal(product, 'duration');
+
     let lines = [];
-    lines.push(`🛒 *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
+    lines.push(`🛍️ *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
     lines.push(`━━━━━━━━━━━━━━━`);
     lines.push(`📦 *${name}*`);
     if (desc) lines.push(`📝 ${desc}`);
-    lines.push(`💰 ${product.price} ${product.currency || 'USD'}`);
-    if (product.duration) lines.push(`⏱ ${product.duration}`);
+    lines.push(`💰 ${displayPrice}`);
+    if (displayDuration) lines.push(`⏱ ${displayDuration}`);
     if (method) lines.push(`💳 ${method}`);
 
     if (hasReqs) {
@@ -952,9 +1046,16 @@
 
     $('#modalTitle').textContent = txt('choosePay') + ' - ' + name;
 
-    const priceDisplay = `${product.price} ${product.currency || 'USD'}`;
-    const localEquiv = formatLocalPrice(product.price, product.currency);
-    const usdEquiv = formatUSDEquiv(product.price, product.currency);
+    const priceDisplay = pendingOrder?.selectedPlan
+      ? `${pendingOrder.selectedPlan.price} ${product.currency || 'USD'}`
+      : `${product.price} ${product.currency || 'USD'}`;
+    const localEquiv = pendingOrder?.selectedPlan
+      ? formatLocalPrice(pendingOrder.selectedPlan.price, product.currency)
+      : formatLocalPrice(product.price, product.currency);
+    const usdEquiv = pendingOrder?.selectedPlan
+      ? formatUSDEquiv(pendingOrder.selectedPlan.price, product.currency)
+      : formatUSDEquiv(product.price, product.currency);
+    const effectivePrice = pendingOrder?.selectedPlan ? pendingOrder.selectedPlan.price : product.price;
 
     let html = `<div class="modal-price-summary">
       <span class="modal-price-main">${priceDisplay}</span>
@@ -981,7 +1082,7 @@
 
     // PayPal
     const paypalActive = pay.paypal?.enabled;
-    const paypalLink = pl.paypal || (pay.paypal?.link ? pay.paypal.link + '/' + product.price : '');
+    const paypalLink = pl.paypal || (pay.paypal?.link ? pay.paypal.link + '/' + effectivePrice : '');
     if (paypalActive) {
       html += `<div class="payment-option pay-clickable" data-method="PayPal" ${paypalLink ? `data-href="${paypalLink}"` : ''}>
         <div class="payment-icon paypal"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.408-1.13.964L7.076 21.337z"/></svg></div>
