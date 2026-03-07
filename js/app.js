@@ -756,8 +756,6 @@
     }
   }
 
-  let currentPaymentProduct = null;
-
   function openPaymentModal(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
