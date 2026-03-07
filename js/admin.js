@@ -235,6 +235,7 @@
         </div>
         <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
         <div class="admin-product-actions">
+          <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
           <button class="btn-icon edit" data-index="${i}" title="تعديل"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="btn-icon delete" data-index="${i}" title="حذف"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
@@ -255,6 +256,9 @@
     list.querySelectorAll('.btn-icon.edit').forEach(btn => {
       btn.addEventListener('click', (e) => { e.stopPropagation(); openProductModal(parseInt(btn.dataset.index)); });
     });
+    list.querySelectorAll('.btn-icon.duplicate').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); duplicateProduct(parseInt(btn.dataset.index)); });
+    });
     list.querySelectorAll('.btn-icon.delete').forEach(btn => {
       btn.addEventListener('click', (e) => { e.stopPropagation(); deleteProduct(parseInt(btn.dataset.index)); });
     });
@@ -264,18 +268,26 @@
     return categories.filter(c => c.id !== 'all');
   }
 
-  function openProductModal(index) {
+  function openProductModal(index, duplicateData = null) {
     const isNew = index === -1;
-    const p = isNew ? {
-      id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
-      features_ar: '', features_en: '', source_url: '',
-      requirements_ar: '', requirements_en: '',
-      price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
-      duration_ar: '', duration_en: '', available: true, featured: false,
-      payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
-    } : { ...products[index], payment_links: { ...(products[index].payment_links || {}) } };
+    let p;
+    
+    if (duplicateData) {
+      p = { ...duplicateData, id: '' };
+    } else if (isNew) {
+      p = {
+        id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
+        features_ar: '', features_en: '', source_url: '',
+        requirements_ar: '', requirements_en: '',
+        price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
+        duration_ar: '', duration_en: '', available: true, featured: false,
+        payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
+      };
+    } else {
+      p = { ...products[index], payment_links: { ...(products[index].payment_links || {}) } };
+    }
 
-    $('#productModalTitle').textContent = isNew ? 'إضافة منتج جديد' : 'تعديل المنتج';
+    $('#productModalTitle').textContent = duplicateData ? 'تدبيل المنتج (إضافة نسخة)' : (isNew ? 'إضافة منتج جديد' : 'تعديل المنتج');
     const body = $('#productModalBody');
     const cats = getCustomCategories();
 
@@ -359,6 +371,20 @@
 
     $('#productModal').classList.add('active');
     document.body.style.overflow = 'hidden';
+  }
+
+  function duplicateProduct(index) {
+    const source = products[index];
+    if (!source) return;
+    
+    const copy = { 
+      ...source, 
+      name_ar: source.name_ar + ' (نسخة)',
+      name_en: source.name_en + ' (Copy)',
+      payment_links: { ...(source.payment_links || {}) }
+    };
+    
+    openProductModal(-1, copy);
   }
 
   function handleImagePreview(e) {
