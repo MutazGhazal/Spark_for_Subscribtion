@@ -28,11 +28,15 @@
   async function translateText(text, from, to) {
     if (!text || !text.trim()) return '';
     try {
-      const q = text.trim().slice(0, 500);
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${from}|${to}`);
+      const q = text.trim().slice(0, 400);
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url);
       if (!res.ok) return '';
       const data = await res.json();
-      return data.responseData?.translatedText || '';
+      // Response: [[[translatedText, originalText, ...]]]
+      const parts = data[0];
+      if (!parts) return '';
+      return parts.map(p => p[0] || '').join('');
     } catch(e) { return ''; }
   }
 
