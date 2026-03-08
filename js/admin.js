@@ -28,7 +28,8 @@
   async function translateText(text, from, to) {
     if (!text || !text.trim()) return '';
     try {
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${from}|${to}`);
+      const q = text.trim().slice(0, 500);
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${from}|${to}`);
       if (!res.ok) return '';
       const data = await res.json();
       return data.responseData?.translatedText || '';
