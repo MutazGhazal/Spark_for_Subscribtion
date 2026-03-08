@@ -27,17 +27,29 @@
 
   async function translateText(text, from, to) {
     if (!text || !text.trim()) return '';
-    try {
-      const q = text.trim().slice(0, 400);
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(q)}`;
-      const res = await fetch(url);
-      if (!res.ok) return '';
-      const data = await res.json();
-      // Response: [[[translatedText, originalText, ...]]]
-      const parts = data[0];
-      if (!parts) return '';
-      return parts.map(p => p[0] || '').join('');
-    } catch(e) { return ''; }
+
+    async function translateChunk(chunk) {
+      if (!chunk.trim()) return chunk;
+      try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(chunk.trim())}`;
+        const res = await fetch(url);
+        if (!res.ok) return '';
+        const data = await res.json();
+        const parts = data[0];
+        if (!parts) return '';
+        return parts.map(p => p[0] || '').join('');
+      } catch(e) { return ''; }
+    }
+
+    // If multiline text, translate each line separately to preserve full content
+    if (text.includes('\n')) {
+      const lines = text.split('\n');
+      const translated = await Promise.all(lines.map(line => line.trim() ? translateChunk(line) : Promise.resolve('')));
+      return translated.join('\n');
+    }
+
+    // Single line: translate up to 1500 chars
+    return translateChunk(text.slice(0, 1500));
   }
 
   function setupBilingualFields(arEl, enEl) {
