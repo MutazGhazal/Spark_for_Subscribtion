@@ -499,6 +499,7 @@
     // Auto-translate for main fields
     setupBilingualFields($('#pNameAr'), $('#pNameEn'));
     setupBilingualFields($('#pDescAr'), $('#pDescEn'));
+    setupBilingualFields($('#pFeatAr'), $('#pFeatEn'));
 
     // Auto-translate for existing plan rows
     $('#plansContainer').querySelectorAll('.plan-row').forEach(row => {
