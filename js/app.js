@@ -294,7 +294,19 @@
       btnSubmitReview: 'إرسال التقييم',
       noReviews: 'لا توجد تقييمات حتى الآن. كن الأول!',
       reviewSuccess: 'تم إرسال التقييم بنجاح. قد يحتاج لموافقة الإدارة ليظهر.',
-      reviewError: 'حدث خطأ أثناء إرسال التقييم. حاول مرة أخرى.'
+      reviewError: 'حدث خطأ أثناء إرسال التقييم. حاول مرة أخرى.',
+      durationTitle: 'اختر مدة الاشتراك',
+      durationPrompt: 'اختر المدة المناسبة لك:',
+      durationReadAgree: 'قرأت',
+      durationDetailsLink: 'تفاصيل الاشتراك',
+      durationAgreeEnd: 'وأوافق عليها',
+      durationContinue: 'متابعة للدفع',
+      chooseNetwork: 'اختر الشبكة:',
+      newOrder: 'طلب جديد',
+      sendOrderFirst: 'أرسل طلبك أولاً عبر واتساب',
+      orderSentChoose: '✅ تم إرسال الطلب — اختر طريقة الدفع',
+      reviewsCount: 'تقييم',
+      proofPrefix: 'إثبات دفع للطلب:'
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -328,7 +340,19 @@
       btnSubmitReview: 'Submit Review',
       noReviews: 'No reviews yet. Be the first!',
       reviewSuccess: 'Review submitted successfully. It may require admin approval.',
-      reviewError: 'An error occurred while submitting. Please try again.'
+      reviewError: 'An error occurred while submitting. Please try again.',
+      durationTitle: 'Choose Duration',
+      durationPrompt: 'Choose the duration that suits you:',
+      durationReadAgree: 'I have read the',
+      durationDetailsLink: 'subscription details',
+      durationAgreeEnd: 'and agree',
+      durationContinue: 'Continue to Payment',
+      chooseNetwork: 'Choose network:',
+      newOrder: 'New Order',
+      sendOrderFirst: 'Send your order first via WhatsApp',
+      orderSentChoose: '✅ Order sent — Choose payment method',
+      reviewsCount: 'reviews',
+      proofPrefix: 'Payment proof for:'
     }
   };
 
@@ -637,7 +661,7 @@
         
         <div class="pd-rating" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
           ${renderStars(product.avg_rating)}
-          <span class="review-count" style="font-size:0.85rem; color:var(--text-secondary)">(${product.review_count || 0} ${currentLang === 'ar' ? 'تقييم' : 'reviews'})</span>
+          <span class="review-count" style="font-size:0.85rem; color:var(--text-secondary)">(${product.review_count || 0} ${txt('reviewsCount')})</span>
         </div>
 
         ${desc ? `<p class="pd-desc">${desc}</p>` : ''}
@@ -893,13 +917,13 @@
     const plans = product.subscription_plans || [];
     const name = langVal(product, 'name');
 
-    titleEl.textContent = (currentLang === 'ar' ? 'اختر مدة الاشتراك' : 'Choose Duration') + ' — ' + name;
+    titleEl.textContent = txt('durationTitle') + ' — ' + name;
     closeBtn.onclick = () => { modal.classList.remove('active'); document.body.style.overflow = ''; };
 
     let selectedPlanIndex = -1;
 
     body.innerHTML = `
-      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${currentLang === 'ar' ? 'اختر المدة المناسبة لك:' : 'Choose the duration that suits you:'}</p>
+      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${txt('durationPrompt')}</p>
       <div id="plansList" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.2rem;">
         ${plans.map((plan, i) => {
           const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
@@ -914,15 +938,12 @@
       <div style="background:var(--bg-secondary);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.2rem;border-right:3px solid var(--primary);">
         <label style="display:flex;align-items:center;gap:0.7rem;cursor:pointer;">
           <input type="checkbox" id="readDetailsCheck" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
-          <span style="font-size:0.9rem;font-weight:600;line-height:1.4;">${currentLang === 'ar'
-            ? `قرأت <a id="detailsLink" href="#" style="color:var(--primary);text-decoration:underline;">تفاصيل الاشتراك</a> وأوافق عليها`
-            : `I have read the <a id="detailsLink" href="#" style="color:var(--primary);text-decoration:underline;">subscription details</a> and agree`
-          }</span>
+          <span style="font-size:0.9rem;font-weight:600;line-height:1.4;">${txt('durationReadAgree')} <a id="detailsLink" href="#" style="color:var(--primary);text-decoration:underline;">${txt('durationDetailsLink')}</a> ${txt('durationAgreeEnd')}</span>
         </label>
       </div>
       <button id="durationContinueBtn" class="btn btn-primary" style="width:100%;opacity:0.45;cursor:not-allowed;" disabled>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        ${currentLang === 'ar' ? 'متابعة للدفع' : 'Continue to Payment'}
+        ${txt('durationContinue')}
       </button>
     `;
 
@@ -994,7 +1015,7 @@
       : langVal(product, 'duration');
 
     let lines = [];
-    lines.push(`🛍️ *${currentLang === 'ar' ? 'طلب جديد' : 'New Order'}*`);
+    lines.push(`🛍️ *${txt('newOrder')}*`);
     lines.push(`━━━━━━━━━━━━━━━`);
     lines.push(`📦 *${name}*`);
     if (desc) lines.push(`📝 ${desc}`);
@@ -1084,7 +1105,7 @@
 
     // Step 1: WhatsApp only
     const waActive = pay.whatsapp?.enabled && pay.whatsapp?.number;
-    html += `<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.5rem;">${currentLang === 'ar' ? 'أرسل طلبك أولاً عبر واتساب' : 'Send your order first via WhatsApp'}</p>`;
+    html += `<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.5rem;">${txt('sendOrderFirst')}</p>`;
     html += `<div class="payment-option ${waActive ? 'pay-clickable' : 'disabled'}" data-method="WhatsApp" data-wa="true">
       <div class="payment-icon whatsapp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></div>
       <div class="payment-info"><h4>${txt('sendVia')}</h4><p>${txt('whatsappDesc')}</p></div>
@@ -1093,7 +1114,7 @@
     // Step 2: Other payment methods (hidden initially, shown after WhatsApp)
     html += `<div id="otherPayMethods" style="display:none;">
       <div class="proof-divider"></div>
-      <p style="text-align:center;color:var(--success);font-weight:600;font-size:0.9rem;margin-bottom:0.8rem;">${currentLang === 'ar' ? '✅ تم إرسال الطلب — اختر طريقة الدفع' : '✅ Order sent — Choose payment method'}</p>`;
+      <p style="text-align:center;color:var(--success);font-weight:600;font-size:0.9rem;margin-bottom:0.8rem;">${txt('orderSentChoose')}</p>`;
 
     // PayPal
     const paypalActive = pay.paypal?.enabled;
@@ -1139,7 +1160,7 @@
       let cryptoInner = '';
       if (usdtNetworks.length > 0) {
         cryptoInner += `<div class="crypto-usdt-section">
-          <label style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem;display:block;">USDT — ${currentLang === 'ar' ? 'اختر الشبكة:' : 'Choose network:'}</label>
+          <label style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem;display:block;">USDT — ${txt('chooseNetwork')}</label>
           <div class="usdt-network-tabs">
             ${usdtNetworks.map((n, i) => `<button type="button" class="usdt-net-btn ${i === 0 ? 'active' : ''}" data-net="${n.key}" onclick="window.switchUsdtTab(this)">${n.label}</button>`).join('')}
           </div>
@@ -1210,9 +1231,7 @@
     const proofBtn = document.getElementById('proofWaBtn');
     if (proofBtn) {
       proofBtn.addEventListener('click', () => {
-        const proofMsg = currentLang === 'ar'
-          ? `📸 إثبات دفع للطلب:\n📦 ${name}\n💰 ${product.price} ${product.currency || 'USD'}`
-          : `📸 Payment proof for:\n📦 ${name}\n💰 ${product.price} ${product.currency || 'USD'}`;
+        const proofMsg = `📸 ${txt('proofPrefix')}\n📦 ${name}\n💰 ${product.price} ${product.currency || 'USD'}`;
         openWhatsApp(proofMsg);
       });
     }
