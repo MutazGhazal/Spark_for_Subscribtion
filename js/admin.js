@@ -117,39 +117,40 @@
       if (isBootstrap) {
         console.log('[Auth] Bootstrap: signing up...');
         const { data: suData, error: suErr } = await sb.auth.signUp({ email, password });
-        console.log('[Auth] signUp result:', suErr ? suErr.message : 'OK', 'session:', !!suData?.session);
         if (suErr) throw suErr;
 
         if (!suData.session) {
-          console.log('[Auth] No session after signup, signing in...');
           const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
-          console.log('[Auth] signIn result:', siErr ? siErr.message : 'OK', 'session:', !!siData?.session);
           if (siErr) throw siErr;
         }
 
-        console.log('[Auth] Calling bootstrap_admin...');
         const { data: bData, error: bErr } = await sb.rpc('bootstrap_admin', {
           admin_name: name || email.split('@')[0],
           ref_code: email.split('@')[0]
         });
-        console.log('[Auth] bootstrap_admin result:', bErr ? bErr.message : JSON.stringify(bData));
         if (bErr) throw bErr;
         if (bData?.error) throw new Error(bData.error);
       } else {
         console.log('[Auth] Normal login: signing in...');
         const loginRes = await sb.auth.signInWithPassword({ email, password });
-        console.log('[Auth] signIn result:', loginRes.error ? loginRes.error.message : 'OK');
 
         if (loginRes.error) {
           const errMsg = loginRes.error.message || '';
+          // If the user doesn't exist at all in Auth, try to sign them up (auto-reg for new invited admins)
           if (errMsg.includes('Invalid login') || errMsg.includes('invalid_credentials')) {
-            console.log('[Auth] Login failed, trying signup...');
+            console.log('[Auth] Login failed, trying signup fallback...');
             const { data: suData, error: suErr } = await sb.auth.signUp({ email, password });
-            console.log('[Auth] signUp result:', suErr ? suErr.message : 'OK', 'session:', !!suData?.session);
-            if (suErr) throw suErr;
+            
+            if (suErr) {
+              // If signup also fails with "already registered", it means the password was just wrong
+              if (suErr.message.includes('already registered')) {
+                throw new Error('invalid_credentials');
+              }
+              throw suErr;
+            }
+            
             if (!suData.session) {
               const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
-              console.log('[Auth] signIn after signup:', siErr ? siErr.message : 'OK');
               if (siErr) throw siErr;
             }
           } else {
@@ -158,9 +159,7 @@
         }
       }
 
-      console.log('[Auth] Calling link_admin_user...');
       const { data: linkData, error: linkErr } = await sb.rpc('link_admin_user');
-      console.log('[Auth] link_admin_user result:', linkErr ? linkErr.message : JSON.stringify(linkData));
       if (linkErr) throw linkErr;
       if (linkData?.error) throw new Error(linkData.error);
 
@@ -170,10 +169,17 @@
     } catch (err) {
       console.error('[Auth] ERROR:', err.message, err);
       let msg = err.message || 'فشل تسجيل الدخول';
-      if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) msg = 'كلمة المرور غير صحيحة';
-      if (msg.includes('Not authorized')) msg = 'إيميلك غير مسجل. تواصل مع الأدمن الرئيسي لإضافتك';
-      if (msg.includes('already registered') || msg.includes('already been registered')) msg = 'الإيميل مسجل مسبقاً. جرب كلمة مرور مختلفة';
-      if (msg.includes('Email not confirmed')) msg = 'جاري التفعيل... أعد المحاولة';
+      
+      if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
+        msg = 'كلمة المرور غير صحيحة أو الحساب غير موجود';
+      } else if (msg.includes('Not authorized')) {
+        msg = 'إيميلك غير مسجل كأدمن. تواصل مع المدير لإضافتك';
+      } else if (msg.includes('already registered')) {
+        msg = 'هذا الإيميل مسجل بالفعل كأدمن. جرب تسجيل الدخول بكلمة المرور الصحيحة';
+      } else if (msg.includes('Email not confirmed')) {
+        msg = 'يرجى تأكيد الإيميل أو تفعيله من لوحة Supabase';
+      }
+      
       showToast(msg);
       btn.disabled = false;
       $('#loginBtnText').textContent = isBootstrap ? 'إنشاء الحساب' : 'دخول';
