@@ -37,16 +37,21 @@
 
   function setupBilingualFields(arEl, enEl) {
     if (!arEl || !enEl) return;
+    let lockAr = false, lockEn = false;
     arEl.addEventListener('input', debounce(async () => {
-      if (!arEl.value.trim() || enEl.value.trim()) return;
+      if (lockAr || !arEl.value.trim()) return;
+      lockEn = true;
       const t = await translateText(arEl.value, 'ar', 'en');
-      if (t && !enEl.value.trim()) enEl.value = t;
-    }, 700));
+      if (t) enEl.value = t;
+      lockEn = false;
+    }, 800));
     enEl.addEventListener('input', debounce(async () => {
-      if (!enEl.value.trim() || arEl.value.trim()) return;
+      if (lockEn || !enEl.value.trim()) return;
+      lockAr = true;
       const t = await translateText(enEl.value, 'en', 'ar');
-      if (t && !arEl.value.trim()) arEl.value = t;
-    }, 700));
+      if (t) arEl.value = t;
+      lockAr = false;
+    }, 800));
   }
 
   const AR_DURATIONS = ['شهر', 'شهرين', '3 أشهر', '4 أشهر', '5 أشهر', '6 أشهر', '7 أشهر', '8 أشهر', '9 أشهر', '10 أشهر', '11 شهر', 'سنة'];
