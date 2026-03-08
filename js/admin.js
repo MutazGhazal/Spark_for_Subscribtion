@@ -107,7 +107,7 @@
     btn.disabled = true;
     $('#loginBtnText').textContent = 'جاري الاتصال...';
 
-    const email = $('#adminEmail').value.trim();
+    const email = $('#adminEmail').value.trim().toLowerCase();
     const password = $('#adminPassword').value;
     const name = $('#adminName').value.trim();
 

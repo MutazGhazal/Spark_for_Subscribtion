@@ -188,9 +188,9 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'id', admin_record.id, 'role', admin_record.role, 'name', admin_record.name, 'referral_code', admin_record.referral_code);
   END IF;
 
-  -- Try to link by email
+  -- Try to link by email (Case-insensitive)
   UPDATE public.admins SET user_id = auth.uid()
-  WHERE email = current_email AND user_id IS NULL
+  WHERE LOWER(email) = LOWER(current_email) AND user_id IS NULL
   RETURNING * INTO admin_record;
 
   IF admin_record IS NOT NULL THEN
