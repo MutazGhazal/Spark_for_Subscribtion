@@ -633,6 +633,51 @@
     reader.readAsDataURL(file);
   }
 
+  function compressImage(file, maxSize = 1200) {
+    return new Promise((resolve) => {
+      // Don't compress SVGs
+      if (file.type === 'image/svg+xml') {
+        return resolve(file);
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = Math.floor((height * maxSize) / width);
+              width = maxSize;
+            } else {
+              width = Math.floor((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          // Draw image
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to webp with 90% quality
+          canvas.toBlob((blob) => {
+            const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+            const newFile = new File([blob], newName, { type: 'image/webp', lastModified: Date.now() });
+            resolve(newFile);
+          }, 'image/webp', 0.90);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function saveProduct(isNew, index) {
     const nameAr = $('#pNameAr').value.trim();
     const nameEn = $('#pNameEn').value.trim();
@@ -641,12 +686,16 @@
     const id = isNew ? generateId(nameEn || nameAr) : products[index].id;
 
     let imagePath = $('#pImageUrl').value.trim();
-    const imageFile = $('#pImageFile').files[0];
+    let imageFile = $('#pImageFile').files[0];
     if (imageFile) {
-      setSaveStatus('saving', 'جاري رفع الصورة...');
+      setSaveStatus('saving', 'جاري تجهيز الصورة...');
       try {
+        // Compress the image before uploading to preserve bandwidth and quality
+        imageFile = await compressImage(imageFile, 1200);
+        
+        setSaveStatus('saving', 'جاري الرفع...');
         const ext = imageFile.name.split('.').pop();
-        const filePath = `products/${id}.${ext}`;
+        const filePath = `products/${id}_${Date.now()}.${ext}`;
         const { error: upErr } = await sb.storage.from('images').upload(filePath, imageFile, { upsert: true });
         if (upErr) throw upErr;
         const { data: urlData } = sb.storage.from('images').getPublicUrl(filePath);
