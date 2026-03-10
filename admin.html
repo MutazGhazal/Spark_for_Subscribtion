@@ -50,7 +50,7 @@
       </form>
 
       <p class="login-note" style="margin-top:0.75rem;">
-        <a href="#" id="toggleForgot" style="color:var(--primary,#6366f1);text-decoration:none;font-size:0.85rem;">نسيت كلمة المرور؟</a>
+        <a href="javascript:void(0)" id="toggleForgot" onclick="if(window.toggleForgotMode) { window.toggleForgotMode(event); } else { document.getElementById('forgotForm').style.display='block'; document.getElementById('loginForm').style.display='none'; }" style="color:var(--primary,#6366f1);text-decoration:none;font-size:0.85rem;">نسيت كلمة المرور؟</a>
       </p>
       <p class="login-note" id="loginNote">أدخل بياناتك وسيتم التعرف عليك تلقائياً</p>
     </div>
@@ -263,6 +263,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/admin.js?v=2"></script>
 </body>
 </html>

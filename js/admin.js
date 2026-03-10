@@ -240,6 +240,8 @@
       }
     }
   }
+  
+  window.toggleForgotMode = toggleForgotMode;
 
   async function handleForgotPassword(e) {
     e.preventDefault();
