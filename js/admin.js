@@ -254,7 +254,7 @@
 
     try {
       // Build redirect URL to reset-password.html (same origin)
-      const currentUrl = window.location.href;
+      const currentUrl = window.location.href.split('#')[0].split('?')[0]; // Remove hash and search params
       const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
       const redirectTo = baseUrl + 'reset-password.html';
 
