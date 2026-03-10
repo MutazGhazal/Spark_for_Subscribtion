@@ -228,7 +228,16 @@
       $('#loginForm').style.display = '';
       $('#forgotForm').style.display = 'none';
       if (toggle) toggle.textContent = 'نسيت كلمة المرور؟';
-      checkBootstrap();
+      // Reset text based on bootstrap state without overriding display
+      if (isBootstrap) {
+        $('#loginTitle').textContent = 'إعداد Spark';
+        $('#loginSubtitle').textContent = 'أنشئ حساب الأدمن الرئيسي';
+        $('#loginNote').textContent = 'ستكون الأدمن الرئيسي (Super Admin) للمتجر';
+      } else {
+        $('#loginTitle').textContent = 'Spark - لوحة التحكم';
+        $('#loginSubtitle').textContent = 'أدخل إيميلك وكلمة المرور';
+        $('#loginNote').textContent = 'أدخل بياناتك وسيتم التعرف عليك تلقائياً';
+      }
     }
   }
 
