@@ -209,6 +209,61 @@
     await checkBootstrap();
   }
 
+  // ===== FORGOT PASSWORD =====
+  let isForgotMode = false;
+
+  function toggleForgotMode(e) {
+    if (e) e.preventDefault();
+    isForgotMode = !isForgotMode;
+    const toggle = $('#toggleForgot');
+
+    if (isForgotMode) {
+      $('#loginForm').style.display = 'none';
+      $('#forgotForm').style.display = '';
+      $('#loginTitle').textContent = 'استرداد كلمة المرور';
+      $('#loginSubtitle').textContent = 'أدخل إيميلك وسنرسل لك رابط لإعادة تعيين كلمة المرور';
+      $('#loginNote').textContent = 'سيصلك رابط على بريدك الإلكتروني';
+      if (toggle) toggle.textContent = 'رجوع لتسجيل الدخول';
+    } else {
+      $('#loginForm').style.display = '';
+      $('#forgotForm').style.display = 'none';
+      if (toggle) toggle.textContent = 'نسيت كلمة المرور؟';
+      checkBootstrap();
+    }
+  }
+
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = $('#forgotEmail').value.trim().toLowerCase();
+    if (!email) { showToast('أدخل بريدك الإلكتروني'); return; }
+
+    const btn = $('#forgotBtn');
+    btn.disabled = true;
+    $('#forgotBtnText').textContent = 'جاري الإرسال...';
+
+    try {
+      // Build redirect URL to reset-password.html (same origin)
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+      const redirectTo = baseUrl + 'reset-password.html';
+
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+
+      showToast('✅ تم إرسال رابط الاسترداد لبريدك! تفقد صندوق الوارد');
+      $('#forgotBtnText').textContent = 'تم الإرسال ✉️';
+      setTimeout(() => {
+        btn.disabled = false;
+        $('#forgotBtnText').textContent = 'إرسال رابط الاسترداد';
+      }, 5000);
+    } catch (err) {
+      console.error('[ForgotPassword] Error:', err);
+      showToast('خطأ: ' + (err.message || 'فشل إرسال الرابط'));
+      btn.disabled = false;
+      $('#forgotBtnText').textContent = 'إرسال رابط الاسترداد';
+    }
+  }
+
   function showDashboard() {
     $('#loginScreen').style.display = 'none';
     $('#dashboard').style.display = 'flex';
@@ -1448,6 +1503,8 @@
     $('#savePaymentBtn').addEventListener('click', collectAndSavePayment);
 
     $('#loginForm').addEventListener('submit', handleAuth);
+    $('#forgotForm').addEventListener('submit', handleForgotPassword);
+    $('#toggleForgot').addEventListener('click', toggleForgotMode);
 
     if (!isSupabaseConfigured()) {
       showToast('يجب إعداد Supabase أولاً - عدّل js/supabase-config.js');
