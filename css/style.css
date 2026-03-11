@@ -811,16 +811,18 @@ body.rtl {
 .product-image::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 40%, transparent 100%);
+  inset: auto 0 0 0; /* Only strictly attach to bottom */
+  height: 50%; /* Only cover bottom half */
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 60%, transparent 100%);
   pointer-events: none;
   z-index: 1;
   transition: all 0.4s ease;
 }
 
-/* On hover, make the background solid so the revealed text is very readable */
+/* On hover, make the background solid ONLY at the bottom so the revealed text is very readable */
 .product-card:hover .product-image::after {
-  background: rgba(15, 23, 42, 0.95);
+  height: 60%; /* Expand slightly on hover to cover the sliding text */
+  background: linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.9) 70%, transparent 100%);
 }
 
 .product-image img {
@@ -846,13 +848,14 @@ body.rtl {
 }
 
 .product-info {
-  padding: 1rem; /* Reduced padding from 1.5rem to push text closer to the edge */
+  padding: 1rem 1rem 0.5rem 1rem; /* Less padding at the top, standard padding elsewhere */
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 2;
   height: 100%;
   justify-content: flex-end; /* Push content to bottom */
+  padding-top: 15rem; /* Force text down to the bottom by adding top padding */
 }
 
 /* Ensure text on top of image is readable */
@@ -1694,11 +1697,12 @@ body.rtl {
   }
 
   .product-info {
-    padding: 1rem;
+    padding: 1rem 1rem 0.5rem 1rem;
     min-height: 200px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    padding-top: 10rem;
   }
 
   .product-desc {
