@@ -745,7 +745,6 @@ body.rtl {
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  min-height: 380px; /* Poster height */
 }
 
 .product-card::before {
@@ -799,33 +798,24 @@ body.rtl {
 }
 
 .product-image {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
+  height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-card); /* Match card background */
-  padding: 1.5rem;
+  background: var(--bg-secondary);
+  padding: 0;
+  position: relative;
   overflow: hidden;
-  z-index: 1;
 }
 
-/* Gradient overlay for text readability - only visible on hover */
+/* Give the image area a subtle gradient overlay at the bottom so it fades into the card */
 .product-image::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--bg-card);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  background: linear-gradient(180deg, transparent 60%, var(--bg-card) 100%);
   pointer-events: none;
-  z-index: 2;
-}
-
-.product-card:hover .product-image::after {
-  opacity: 0.95; /* Show nearly solid background on hover so text is clear */
 }
 
 .product-image img {
@@ -833,12 +823,12 @@ body.rtl {
   height: 100%;
   max-width: none;
   max-height: none;
-  object-fit: contain; /* Don't crop/zoom the image */
+  object-fit: cover;
   transition: transform var(--bounce);
 }
 
 .product-card:hover .product-image img {
-  transform: scale(1.05); /* Slight zoom, not too much */
+  transform: scale(1.1) rotate(-1deg);
 }
 
 .product-image .placeholder-icon {
@@ -846,33 +836,13 @@ body.rtl {
   height: 64px;
   color: var(--text-muted);
   opacity: 0.5;
-  z-index: 1;
 }
 
 .product-info {
   padding: 1.5rem;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 3;
-  width: 100%;
-  height: 100%;
-  justify-content: center; /* Center content when hovered */
-  opacity: 0; /* Hidden by default */
-  transform: translateY(20px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-}
-
-.product-card:hover .product-info {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-/* Base text colors inside overlay for readability */
-.product-info * {
-  text-shadow: none; /* No shadow needed since background will be solid */
 }
 
 .product-category {
@@ -882,29 +852,37 @@ body.rtl {
   letter-spacing: 0.08em;
   color: var(--primary);
   margin-bottom: 0.5rem;
-  text-align: center;
 }
 
 .product-name {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text);
   margin-bottom: 0.5rem;
-  text-align: center;
 }
 
 .product-desc {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
-  opacity: 0.95;
-  margin-bottom: 1rem;
+  opacity: 0.85;
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* Limit text length */
-  -webkit-box-orient: vertical;
+  
+  /* Details reveal on hover logic */
+  max-height: 0;
   overflow: hidden;
-  text-align: center;
+  margin-bottom: 0;
+  opacity: 0;
+  transition: all 0.4s ease;
+}
+
+.product-card:hover .product-desc {
+  max-height: 100px;
+  margin-bottom: 1rem;
+  opacity: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .product-meta {
@@ -1660,10 +1638,7 @@ body.rtl {
   }
 
   .product-image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    height: 140px;
     padding: 0;
   }
 
@@ -1673,11 +1648,17 @@ body.rtl {
   }
 
   .product-info {
-    padding: 1rem;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    padding: 1.25rem;
+  }
+
+  .product-desc {
+    font-size: 0.82rem;
+  }
+  
+  .product-card:hover .product-desc {
+    max-height: 80px;
+    margin-bottom: 0.85rem;
+    -webkit-line-clamp: 2;
   }
 
   .product-category {
