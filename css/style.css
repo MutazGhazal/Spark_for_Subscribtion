@@ -798,51 +798,69 @@ body.rtl {
 }
 
 .product-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 260px; /* Increased height to show more image */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  padding: 0;
-  position: relative;
+  height: 100%;
+  z-index: 0;
   overflow: hidden;
 }
 
-/* Give the image area a subtle gradient overlay at the bottom so it fades into the card */
+/* Gradient overlay at the bottom so price/buttons are readable on top of the image */
 .product-image::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 60%, var(--bg-card) 100%);
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 40%, transparent 100%);
   pointer-events: none;
+  z-index: 1;
+  transition: all 0.4s ease;
+}
+
+/* On hover, make the background solid so the revealed text is very readable */
+.product-card:hover .product-image::after {
+  background: rgba(15, 23, 42, 0.95);
 }
 
 .product-image img {
   width: 100%;
   height: 100%;
-  max-width: none;
-  max-height: none;
-  object-fit: cover;
+  object-fit: contain; /* Show full image */
   transition: transform var(--bounce);
 }
 
 .product-card:hover .product-image img {
-  transform: scale(1.1) rotate(-1deg);
+  transform: scale(1.05);
 }
 
 .product-image .placeholder-icon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
   width: 64px;
   height: 64px;
   color: var(--text-muted);
   opacity: 0.5;
+  z-index: 0;
 }
 
 .product-info {
   padding: 1.5rem;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  justify-content: flex-end; /* Push content to bottom */
+}
+
+/* Ensure text on top of image is readable */
+.product-info * {
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.product-card:hover .product-info * {
+  text-shadow: none; /* Remove shadow on hover since background becomes solid */
 }
 
 .product-category {
@@ -850,14 +868,14 @@ body.rtl {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--primary);
+  color: var(--primary-light);
   margin-bottom: 0.5rem;
 }
 
 .product-name {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: var(--text);
+  color: #fff;
   margin-bottom: 0;
   
   /* Details reveal on hover logic */
@@ -876,8 +894,8 @@ body.rtl {
 .product-desc {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-secondary);
-  opacity: 0.85;
+  color: #e2e8f0;
+  opacity: 0.95;
   line-height: 1.6;
   
   /* Details reveal on hover logic */
@@ -903,12 +921,17 @@ body.rtl {
   justify-content: space-between;
   margin-bottom: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 .product-price {
   font-size: 1.5rem;
   font-weight: 900;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover .product-price {
   background: linear-gradient(135deg, var(--primary), var(--accent-pink));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -924,8 +947,14 @@ body.rtl {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  -webkit-text-fill-color: var(--text-muted);
+  color: #cbd5e1;
   margin-top: 0.15rem;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover .product-price .local-price {
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
 }
 
 /* Modal price summary */
@@ -1013,15 +1042,16 @@ body.rtl {
 }
 
 .btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--border);
-  color: var(--text-secondary);
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: #fff;
+  text-shadow: none !important;
 }
 
 .btn-outline:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--glow);
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255,255,255,0.2);
 }
 
 .unavailable-overlay {
@@ -1650,7 +1680,10 @@ body.rtl {
   }
 
   .product-image {
-    height: 140px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     padding: 0;
   }
 
@@ -1660,7 +1693,11 @@ body.rtl {
   }
 
   .product-info {
-    padding: 1.25rem;
+    padding: 1rem;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
   }
 
   .product-desc {
