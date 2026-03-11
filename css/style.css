@@ -846,7 +846,7 @@ body.rtl {
 }
 
 .product-info {
-  padding: 1.5rem;
+  padding: 1rem; /* Reduced padding from 1.5rem to push text closer to the edge */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -920,8 +920,8 @@ body.rtl {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-top: 1rem;
+  margin-bottom: 0.75rem; /* Reduced margin */
+  padding-top: 0.75rem; /* Reduced padding */
   border-top: 1px solid rgba(255,255,255,0.15);
 }
 
