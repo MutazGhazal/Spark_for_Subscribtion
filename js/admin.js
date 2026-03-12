@@ -16,6 +16,7 @@
   let isBootstrap = false;
   // Controls product names language in admin list — always EN by default
   let adminNameLang = localStorage.getItem('adminNameLang') || 'en';
+  let adminSearchQuery = '';
 
   async function updateLastModified() {
     try { await sb.from('site_settings').upsert({ key: 'last_modified', value: new Date().toISOString() }); } catch (e) {}
@@ -308,6 +309,7 @@
     renderSettingsForm();
     renderPaymentForm();
     renderReferralDashboard();
+    initAdminSearch();
     if (isSuperAdmin) {
       renderAdminsList();
       renderOrdersList();
@@ -370,7 +372,22 @@
       return;
     }
 
-    list.innerHTML = products.map((p, i) => {
+    const filtered = adminSearchQuery
+      ? products.filter(p => {
+          const q = adminSearchQuery.toLowerCase();
+          return (p.name_ar || '').toLowerCase().includes(q) ||
+                 (p.name_en || '').toLowerCase().includes(q) ||
+                 (p.category || '').toLowerCase().includes(q);
+        })
+      : products;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="m8 8 6 6"/><path d="m14 8-6 6"/></svg><p>لا توجد نتائج لـ "${adminSearchQuery}"</p></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((p) => {
+      const i = products.indexOf(p); // real index in products array (for edit/delete)
       const plans = p.subscription_plans || [];
       const hasPlans = plans.length > 0;
       const hasSource = hasPlans || p.source_url;
@@ -456,6 +473,17 @@
     });
     list.querySelectorAll('.btn-icon.delete').forEach(btn => {
       btn.addEventListener('click', (e) => { e.stopPropagation(); deleteProduct(parseInt(btn.dataset.index)); });
+    });
+  }
+
+  function initAdminSearch() {
+    const input = document.getElementById('adminSearchInput');
+    const clearBtn = document.getElementById('adminSearchClear');
+    if (!input) return;
+    input.addEventListener('input', () => {
+      adminSearchQuery = input.value.trim();
+      if (clearBtn) clearBtn.style.display = adminSearchQuery ? '' : 'none';
+      renderProductsList();
     });
   }
 

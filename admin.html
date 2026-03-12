@@ -151,6 +151,11 @@
       <div class="tab-content active" id="tab-products">
         <div class="tab-header">
           <h2>المنتجات</h2>
+          <div class="admin-search-bar" style="display:flex;align-items:center;gap:0.5rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:0.4rem 0.8rem;flex:1;max-width:320px;margin:0 1rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--text-muted);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="adminSearchInput" placeholder="ابحث عن منتج..." autocomplete="off" style="border:none;background:transparent;color:var(--text);font-size:0.9rem;width:100%;outline:none;font-family:inherit;">
+            <button id="adminSearchClear" onclick="document.getElementById('adminSearchInput').value='';document.getElementById('adminSearchInput').dispatchEvent(new Event('input'));" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0;display:none;">&#10005;</button>
+          </div>
           <button class="btn btn-primary" id="addProductBtn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             إضافة منتج
