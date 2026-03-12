@@ -572,17 +572,21 @@
     },
   ];
 
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, skip = 0;
   console.log(`%c🔗 Spark - Fixing source_url (ad links) for ${fixes.length} products...`, 'color:#8b5cf6;font-size:14px;font-weight:bold');
 
   for (const fix of fixes) {
     try {
-      // 1. Fetch current product to update subscription_plans
-      const { data: row, error: fetchErr } = await sb.from('products').select('subscription_plans').eq('id', fix.id).single();
-      if (fetchErr) { console.error('❌ fetch', fix.id, fetchErr.message); fail++; continue; }
+      // Fetch current plans first (use maybeSingle to avoid 406 when row missing)
+      const { data: row } = await sb.from('products').select('subscription_plans').eq('id', fix.id).maybeSingle();
 
-      // 2. Update each plan's source_url by matching label_en
-      let plans = row?.subscription_plans || [];
+      if (!row) {
+        console.log('%c⏭️ skip (not in DB): ' + fix.id, 'color:#94a3b8');
+        skip++; continue;
+      }
+
+      // Update plans source_url by matching label_en
+      let plans = row.subscription_plans || [];
       if (plans.length > 0 && fix.plans?.length > 0) {
         plans = plans.map(p => {
           const match = fix.plans.find(fp => fp.label_en === p.label_en);
@@ -590,13 +594,15 @@
         });
       }
 
-      // 3. Save updated product
-      const { error } = await sb.from('products').update({ source_url: fix.source_url, subscription_plans: plans }).eq('id', fix.id);
+      const { error } = await sb.from('products')
+        .update({ source_url: fix.source_url, subscription_plans: plans })
+        .eq('id', fix.id);
+
       if (error) { console.error('❌', fix.id, error.message); fail++; }
       else { console.log('%c✅ ' + fix.id, 'color:#4ade80'); ok++; }
     } catch(e) { console.error('❌', fix.id, e.message); fail++; }
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 80));
   }
 
-  console.log(`%c🏁 Source URL Fix Done! ✅ ${ok} fixed | ❌ ${fail} failed`, `color:${fail === 0 ? '#4ade80' : '#f87171'};font-size:13px;font-weight:bold`);
+  console.log(`%c🏁 Source URL Fix Done! ✅ ${ok} fixed | ⏭️ ${skip} skipped | ❌ ${fail} failed`, `color:${fail === 0 ? '#4ade80' : '#f87171'};font-size:13px;font-weight:bold`);
 })();

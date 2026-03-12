@@ -14,10 +14,24 @@
   let allReviews = [];
   let currentTab = 'products';
   let isBootstrap = false;
+  // Controls product names language in admin list — always EN by default
+  let adminNameLang = localStorage.getItem('adminNameLang') || 'en';
 
   async function updateLastModified() {
     try { await sb.from('site_settings').upsert({ key: 'last_modified', value: new Date().toISOString() }); } catch (e) {}
   }
+
+  // Returns product name in adminNameLang (en by default)
+  function adminNameVal(p) { return p['name_' + adminNameLang] || p.name_en || p.name_ar || 'بدون اسم'; }
+
+  // Toggle product names EN ↔ AR in admin list
+  window.toggleAdminNameLang = function() {
+    adminNameLang = adminNameLang === 'en' ? 'ar' : 'en';
+    localStorage.setItem('adminNameLang', adminNameLang);
+    const btn = document.getElementById('adminNameToggle');
+    if (btn) btn.textContent = adminNameLang === 'en' ? 'AR أسماء' : 'EN Names';
+    renderProductsList();
+  };
 
   // ===== TRANSLATE HELPERS =====
   function debounce(fn, delay) {
@@ -366,7 +380,7 @@
             <img src="${p.image}" alt="" onerror="this.style.display='none'">
           </div>
           <div class="admin-product-details">
-            <h4>${p.name_ar || p.name_en || 'بدون اسم'}</h4>
+          <h4>${adminNameVal(p)}</h4>
             <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span></p>
             ${hasPlans
               ? `<span class="source-link" style="cursor:pointer;" onclick="event.stopPropagation();window._showPlans(${i})">🔗 ${plans.length} مدة اشتراك</span>`
