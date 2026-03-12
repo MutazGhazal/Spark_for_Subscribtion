@@ -4,7 +4,9 @@
   let products = [];
   let currentPaymentProduct = null;
   let settings = {};
-  let currentLang = localStorage.getItem('lang') || 'ar';
+  let currentLang = localStorage.getItem('lang') || 'en';
+  // nameLang controls ONLY product names display — always defaults to English
+  let nameLang = localStorage.getItem('nameLang') || 'en';
   let currentCategory = 'all';
   let searchQuery = '';
 
@@ -358,6 +360,17 @@
 
   function txt(key) { return t[currentLang]?.[key] || t.ar[key] || key; }
   function langVal(obj, field) { return obj[field + '_' + currentLang] || obj[field + '_ar'] || ''; }
+  // nameVal: uses nameLang (independent) — always English unless user toggles
+  function nameVal(obj) { return obj['name_' + nameLang] || obj['name_en'] || obj['name_ar'] || ''; }
+
+  // Toggle only product/card names EN <-> AR
+  window.toggleNameLang = function() {
+    nameLang = nameLang === 'en' ? 'ar' : 'en';
+    localStorage.setItem('nameLang', nameLang);
+    const btn = document.getElementById('nameToggle');
+    if (btn) btn.textContent = nameLang === 'en' ? 'AR أسماء' : 'EN Names';
+    renderProducts(); // re-render cards only
+  };
 
   // Global handlers for crypto (inline onclick - works when delegation fails)
   window.switchUsdtTab = function(btn) {
@@ -580,7 +593,7 @@
     noRes.style.display = 'none';
 
     grid.innerHTML = filtered.map(p => {
-      const name = langVal(p, 'name');
+      const name = nameVal(p); // always use nameLang for product names
       const desc = langVal(p, 'description');
       const duration = langVal(p, 'duration');
       const isAvailable = p.available !== false;
@@ -635,7 +648,7 @@
 
     const modal = $('#productDetailModal');
     const body = $('#productDetailBody');
-    const name = langVal(product, 'name');
+    const name = nameVal(product); // always use nameLang for product names
     const desc = langVal(product, 'description');
     const duration = langVal(product, 'duration');
     const features = langVal(product, 'features');
