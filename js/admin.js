@@ -541,6 +541,11 @@
           <div class="form-group"><label>رابط المصدر (WMCentre)</label><input type="text" id="pWmcUrl" value="${p.wmcentre_url || ''}" dir="ltr"></div>
         </div>
         <div class="form-row">
+          <div class="form-group"><label>سعر التكلفة (Cost)</label><input type="number" id="pCostPrice" value="${p.cost_price || 0}" step="0.01" min="0" oninput="window._updatePricePreview()"></div>
+          <div class="form-group"><label>نسبة الربح (Margin - مثال: 1.1)</label><input type="number" id="pProfitMargin" value="${p.profit_margin || ''}" step="0.01" min="1" placeholder="افتراضي: ${siteSettings.global_profit_margin || 1.1}" oninput="window._updatePricePreview()"></div>
+          <div class="form-group"><label>رسوم ثابتة (Fee)</label><input type="number" id="pFixedFee" value="${p.fixed_fee || ''}" step="0.01" min="0" placeholder="افتراضي: ${siteSettings.global_fixed_fee || 3}" oninput="window._updatePricePreview()"></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label>مصدر التوفر الحالي</label>
             <select id="pAvailSource">
               <option value="NONE" ${p.availability_source==='NONE'?'selected':''}>غير معروف</option>
@@ -553,9 +558,12 @@
             <input type="text" value="${p.last_availability_check ? new Date(p.last_availability_check).toLocaleString('ar-EG') : 'لم يتم الفحص بعد'}" readonly style="opacity:0.7">
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>السعر</label><input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required></div>
-          <div class="form-group"><label>العملة</label>
+        <div class="form-row" style="background:var(--bg-secondary);padding:1rem;border-radius:10px;margin-bottom:1rem;border:1px solid var(--primary-light);">
+          <div class="form-group" style="margin:0;"><label>سعر البيع النهائي (نتاج المعادلة)</label>
+            <input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required>
+            <p id="pricePreviewMsg" style="font-size:0.75rem;margin-top:0.4rem;color:var(--primary);"></p>
+          </div>
+          <div class="form-group" style="margin:0;"><label>العملة</label>
             <select id="pCurrency">
               ${['USD','EUR','SAR','AED','EGP'].map(c => `<option value="${c}" ${p.currency===c?'selected':''}>${c}</option>`).join('')}
             </select>
@@ -797,6 +805,9 @@
       source_url: subscriptionPlans.length > 0 ? subscriptionPlans[0].source_url : ($('#pSourceUrl').value.trim()),
       wmcentre_url: $('#pWmcUrl').value.trim(),
       availability_source: $('#pAvailSource').value,
+      cost_price: parseFloat($('#pCostPrice').value) || 0,
+      profit_margin: $('#pProfitMargin').value ? parseFloat($('#pProfitMargin').value) : null,
+      fixed_fee: $('#pFixedFee').value ? parseFloat($('#pFixedFee').value) : null,
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
       category: $('#pCategory').value,
@@ -987,6 +998,10 @@
           <div class="form-group"><label>نص البانر الفرعي (عربي)</label><textarea id="sHeroSubAr">${store.hero_sub_ar||''}</textarea></div>
           <div class="form-group"><label>Hero Subtitle (English)</label><textarea id="sHeroSubEn">${store.hero_sub_en||''}</textarea></div>
         </div>
+        <div class="form-row" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;">
+          <div class="form-group"><label>نسبة الربح الافتراضية (مثال: 1.10 تعني 10%)</label><input type="number" id="sGlobalMargin" value="${store.global_profit_margin||1.1}" step="0.01" min="1"></div>
+          <div class="form-group"><label>الرسوم الثابتة الافتراضية ($)</label><input type="number" id="sGlobalFee" value="${store.global_fixed_fee||3}" step="0.01" min="0"></div>
+        </div>
       </div>
       <div class="settings-section">
         <h3>روابط التواصل</h3>
@@ -1003,7 +1018,9 @@
       name_ar: $('#sNameAr').value.trim(), name_en: $('#sNameEn').value.trim(),
       description_ar: $('#sDescAr').value.trim(), description_en: $('#sDescEn').value.trim(),
       hero_ar: $('#sHeroAr').value.trim(), hero_en: $('#sHeroEn').value.trim(),
-      hero_sub_ar: $('#sHeroSubAr').value.trim(), hero_sub_en: $('#sHeroSubEn').value.trim()
+      hero_sub_ar: $('#sHeroSubAr').value.trim(), hero_sub_en: $('#sHeroSubEn').value.trim(),
+      global_profit_margin: parseFloat($('#sGlobalMargin').value) || 1.1,
+      global_fixed_fee: parseFloat($('#sGlobalFee').value) || 3
     };
     const socialVal = {
       whatsapp: $('#sSocialWa').value.trim(),
@@ -1655,4 +1672,26 @@
   } else {
     init();
   }
+
+  // Global helper for price calculation preview
+  window._updatePricePreview = function() {
+    const cost = parseFloat($('#pCostPrice')?.value) || 0;
+    const marginInput = $('#pProfitMargin')?.value;
+    const feeInput = $('#pFixedFee')?.value;
+
+    const margin = marginInput ? parseFloat(marginInput) : (siteSettings.global_profit_margin || 1.1);
+    const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
+
+    const finalPrice = (cost * margin) + fee;
+    const priceEl = $('#pPrice');
+    if (priceEl) {
+      priceEl.value = finalPrice.toFixed(2);
+      
+      const msgEl = $('#pricePreviewMsg');
+      if (msgEl) {
+        const isUsingGlobal = !marginInput || !feeInput;
+        msgEl.textContent = `(${cost}$ × ${margin}) + ${fee}$ = ${finalPrice.toFixed(2)}$ ${isUsingGlobal ? ' (مع استخدام القيم الافتراضية)' : ''}`;
+      }
+    }
+  };
 })();
