@@ -9,6 +9,8 @@ import json
 # In this environment, I'll look for supabase-config.js or similar to extract credentials if possible
 # Or I can ask the user to provide them. But let's assume they are available.
 
+import re
+
 # Try to load config from a local file if it exists
 SUPABASE_URL = ""
 SUPABASE_KEY = ""
@@ -19,11 +21,14 @@ def load_config():
         # Check if there's a js config we can parse
         with open('js/supabase-config.js', 'r', encoding='utf-8') as f:
             content = f.read()
-            # Simple extraction from JS
-            if "supabaseUrl =" in content:
-                SUPABASE_URL = content.split("supabaseUrl = '")[1].split("'")[0]
-            if "supabaseKey =" in content:
-                SUPABASE_KEY = content.split("supabaseKey = '")[1].split("'")[0]
+            # More robust extraction using regex
+            url_match = re.search(r"SUPABASE_URL\s*=\s*(['\"])(.*?)\1", content)
+            key_match = re.search(r"SUPABASE_ANON_KEY\s*=\s*(['\"])(.*?)\1", content)
+            
+            if url_match:
+                SUPABASE_URL = url_match.group(2)
+            if key_match:
+                SUPABASE_KEY = key_match.group(2)
     except Exception as e:
         print(f"Error loading config: {e}")
 
