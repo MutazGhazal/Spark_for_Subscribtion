@@ -5,48 +5,61 @@ from bs4 import BeautifulSoup
 from supabase import create_client, Client
 import json
 
-# Supabase Configuration (Assuming environment variables or a config file)
-# In this environment, I'll look for supabase-config.js or similar to extract credentials if possible
-# Or I can ask the user to provide them. But let's assume they are available.
+# Load .env if present (useful for local testing)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
-import re
-
-# Try to load config from a local file if it exists
+# Try to load config
 SUPABASE_URL = ""
 SUPABASE_KEY = ""
 
 def load_config():
     global SUPABASE_URL, SUPABASE_KEY
     
-    # Check environment variables first (for Server/GitHub Actions)
+    # 1. Check environment variables first (Standard for GitHub Actions)
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
     
     if SUPABASE_URL and SUPABASE_KEY:
+        print("✅ Credentials loaded from environment variables.")
         return
 
+    # 2. Fallback: Check if there's a js config we can parse (Standard for local development)
     try:
-        # Fallback: Check if there's a js config we can parse
-        if os.path.exists('js/supabase-config.js'):
-            with open('js/supabase-config.js', 'r', encoding='utf-8') as f:
+        config_path = 'js/supabase-config.js'
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 url_match = re.search(r"SUPABASE_URL\s*=\s*(['\"])(.*?)\1", content)
                 key_match = re.search(r"SUPABASE_ANON_KEY\s*=\s*(['\"])(.*?)\1", content)
                 
-                if url_match:
-                    SUPABASE_URL = url_match.group(2)
-                if key_match:
-                    SUPABASE_KEY = key_match.group(2)
+                if url_match: SUPABASE_URL = url_match.group(2)
+                if key_match: SUPABASE_KEY = key_match.group(2)
+                
+            if SUPABASE_URL and SUPABASE_KEY:
+                print(f"✅ Credentials loaded from {config_path}")
+                return
     except Exception as e:
-        print(f"Error loading config from file: {e}")
+        print(f"⚠️ Error reading local config file: {e}")
 
 load_config()
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("Supabase credentials not found. Set SUPABASE_URL and SUPABASE_KEY environment variables or update js/supabase-config.js")
+    print("❌ ERROR: Supabase credentials not found!")
+    if not SUPABASE_URL: print("   - Missing SUPABASE_URL")
+    if not SUPABASE_KEY: print("   - Missing SUPABASE_KEY")
+    print("\nPlease set them as Repository Secrets in GitHub Actions or in js/supabase-config.js locally.")
     exit(1)
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print("✅ Successfully connected to Supabase.")
+except Exception as e:
+    print(f"❌ ERROR: Failed to connect to Supabase: {e}")
+    exit(1)
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
