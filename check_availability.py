@@ -48,10 +48,17 @@ HEADERS = {
 def get_price_z2u(soup):
     try:
         # Common Z2U price selectors
-        price_el = soup.select_one('.price') or soup.select_one('.item-price')
+        price_el = soup.select_one('.price') or soup.select_one('.item-price') or soup.select_one('.price-num') or soup.select_one('.goods-price')
         if price_el:
             price_text = price_el.get_text(strip=True)
             match = re.search(r"(\d+\.?\d*)", price_text)
+            if match:
+                return float(match.group(1))
+        
+        # Fallback: search for any text containing $ and numbers
+        potential_prices = soup.find_all(string=re.compile(r"\$\s*\d+"))
+        for text in potential_prices:
+            match = re.search(r"(\d+\.?\d*)", str(text))
             if match:
                 return float(match.group(1))
     except: pass
@@ -60,7 +67,7 @@ def get_price_z2u(soup):
 def get_price_wmc(soup):
     try:
         # Common WMC price selectors
-        price_el = soup.select_one('.price_usd') or soup.select_one('.product-price')
+        price_el = soup.select_one('.price_usd') or soup.select_one('.product-price') or soup.select_one('.price')
         if price_el:
             price_text = price_el.get_text(strip=True)
             match = re.search(r"(\d+\.?\d*)", price_text)
@@ -126,28 +133,38 @@ def run_checker():
         
         is_available = False
         source = "NONE"
-        best_cost = p.get('cost_price', 0)
+        scraped_cost = None
         
         if z2u_status is True and wmc_status is True:
             is_available = True
             source = "BOTH"
             costs = [c for c in [z2u_price, wmc_price] if c]
-            best_cost = min(costs) if costs else best_cost
+            scraped_cost = min(costs) if costs else None
         elif z2u_status is True:
             is_available = True
             source = "Z2U"
-            best_cost = z2u_price if z2u_price else best_cost
+            scraped_cost = z2u_price
         elif wmc_status is True:
             is_available = True
             source = "WMC"
-            best_cost = wmc_price if wmc_price else best_cost
+            scraped_cost = wmc_price
         elif z2u_status is False or wmc_status is False:
             is_available = False
             source = "NONE"
+
+        # Determine best cost to use for calculation
+        db_cost = p.get('cost_price')
+        
+        # If we found a price on the site, that's our new cost.
+        # If not, use the current cost from DB.
+        # As a last resort (first run), use the selling price.
+        best_cost = scraped_cost if scraped_cost is not None else db_cost
+        if best_cost is None:
+            best_cost = p.get('price', 0)
             
         print(f"  Result: Available={is_available}, Source={source}, Cost={best_cost}$")
         
-        # Recalculate selling price
+        # Calculate selling price (always recalculate to reflect any changes in margins/fees)
         new_selling_price = calculate_selling_price(
             best_cost, 
             p.get('profit_margin'), 
@@ -157,13 +174,14 @@ def run_checker():
         )
         
         # Update database
-        supabase.table('products').update({
+        update_data = {
             'available': is_available,
             'availability_source': source,
             'cost_price': best_cost,
             'price': round(new_selling_price, 2),
             'last_availability_check': 'now()'
-        }).eq('id', p_id).execute()
+        }
+        supabase.table('products').update(update_data).eq('id', p_id).execute()
         
         # Be nice to the servers
         time.sleep(1)
