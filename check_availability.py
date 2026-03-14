@@ -17,25 +17,33 @@ SUPABASE_KEY = ""
 
 def load_config():
     global SUPABASE_URL, SUPABASE_KEY
+    
+    # Check environment variables first (for Server/GitHub Actions)
+    SUPABASE_URL = os.environ.get('SUPABASE_URL')
+    SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+    
+    if SUPABASE_URL and SUPABASE_KEY:
+        return
+
     try:
-        # Check if there's a js config we can parse
-        with open('js/supabase-config.js', 'r', encoding='utf-8') as f:
-            content = f.read()
-            # More robust extraction using regex
-            url_match = re.search(r"SUPABASE_URL\s*=\s*(['\"])(.*?)\1", content)
-            key_match = re.search(r"SUPABASE_ANON_KEY\s*=\s*(['\"])(.*?)\1", content)
-            
-            if url_match:
-                SUPABASE_URL = url_match.group(2)
-            if key_match:
-                SUPABASE_KEY = key_match.group(2)
+        # Fallback: Check if there's a js config we can parse
+        if os.path.exists('js/supabase-config.js'):
+            with open('js/supabase-config.js', 'r', encoding='utf-8') as f:
+                content = f.read()
+                url_match = re.search(r"SUPABASE_URL\s*=\s*(['\"])(.*?)\1", content)
+                key_match = re.search(r"SUPABASE_ANON_KEY\s*=\s*(['\"])(.*?)\1", content)
+                
+                if url_match:
+                    SUPABASE_URL = url_match.group(2)
+                if key_match:
+                    SUPABASE_KEY = key_match.group(2)
     except Exception as e:
-        print(f"Error loading config: {e}")
+        print(f"Error loading config from file: {e}")
 
 load_config()
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("Supabase credentials not found. Please set them in js/supabase-config.js")
+    print("Supabase credentials not found. Set SUPABASE_URL and SUPABASE_KEY environment variables or update js/supabase-config.js")
     exit(1)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
