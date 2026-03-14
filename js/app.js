@@ -572,6 +572,7 @@
     return products.filter(p => {
       const matchCat = currentCategory === 'all' || p.category === currentCategory;
       if (!matchCat) return false;
+      if (p.is_active === false) return false;
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return (p.name_ar || '').toLowerCase().includes(q) || (p.name_en || '').toLowerCase().includes(q) ||

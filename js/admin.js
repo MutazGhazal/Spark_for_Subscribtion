@@ -398,11 +398,16 @@
           </div>
           <div class="admin-product-details">
           <h4>${adminNameVal(p)}</h4>
-            <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span></p>
+            <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; 
+              <span class="status-badge ${p.is_active !== false ? '' : 'unavailable'}">${p.is_active !== false ? '' : 'مخفي/غير نشط &bull; '}</span>
+              <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span>
+            </p>
+            <p style="font-size:0.8rem; color:var(--text-muted);">${p.availability_source && p.availability_source !== 'NONE' ? `📍 مصدر التوفر: ${p.availability_source}` : ''}</p>
             ${hasPlans
-              ? `<span class="source-link" style="cursor:pointer;" onclick="event.stopPropagation();window._showPlans(${i})">🔗 ${plans.length} مدة اشتراك</span>`
-              : (p.source_url ? `<a href="${p.source_url}" target="_blank" class="source-link" title="مصدر الشراء" onclick="event.stopPropagation()">🔗 مصدر الشراء</a>` : '')
+               ? `<span class="source-link" style="cursor:pointer;" onclick="event.stopPropagation();window._showPlans(${i})">🔗 ${plans.length} مدة اشتراك</span>`
+               : (p.source_url ? `<a href="${p.source_url}" target="_blank" class="source-link" title="مصدر الشراء" onclick="event.stopPropagation()">🔗 Z2U</a>` : '')
             }
+            ${p.wmcentre_url ? `<a href="${p.wmcentre_url}" target="_blank" class="source-link" title="WMCentre" onclick="event.stopPropagation()" style="margin-right:8px;">🔗 WMC</a>` : ''}
           </div>
           <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
           <div class="admin-product-actions">
@@ -500,11 +505,13 @@
     } else if (isNew) {
       p = {
         id: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
-        features_ar: '', features_en: '', source_url: '',
+        features_ar: '', features_en: '', source_url: '', wmcentre_url: '',
         requirements_ar: '', requirements_en: '',
         price: 0, currency: 'USD', category: categories[0]?.id || 'streaming', image: '',
         duration_ar: '', duration_en: '', available: true, featured: false,
         subscription_plans: [],
+        availability_source: 'NONE',
+        is_active: true,
         payment_links: { paypal: '', stripe: '', whatsapp_message: '' }
       };
     } else {
@@ -528,6 +535,23 @@
         <div class="form-row">
           <div class="form-group"><label>تفاصيل الاشتراك (عربي) <small style="color:var(--text-muted)">سطر لكل تفصيل</small></label><textarea id="pFeatAr" rows="3" placeholder="اشتراك أصلي&#10;تفعيل فوري&#10;دعم فني">${p.features_ar || ''}</textarea></div>
           <div class="form-group"><label>Subscription Details (English) <small style="color:var(--text-muted)">one per line</small></label><textarea id="pFeatEn" rows="3" placeholder="Original subscription&#10;Instant activation&#10;Technical support">${p.features_en || ''}</textarea></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>رابط المصدر (Z2U)</label><input type="text" id="pSourceUrl" value="${p.source_url || ''}" dir="ltr"></div>
+          <div class="form-group"><label>رابط المصدر (WMCentre)</label><input type="text" id="pWmcUrl" value="${p.wmcentre_url || ''}" dir="ltr"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>مصدر التوفر الحالي</label>
+            <select id="pAvailSource">
+              <option value="NONE" ${p.availability_source==='NONE'?'selected':''}>غير معروف</option>
+              <option value="Z2U" ${p.availability_source==='Z2U'?'selected':''}>Z2U فقط</option>
+              <option value="WMC" ${p.availability_source==='WMC'?'selected':''}>WMC فقط</option>
+              <option value="BOTH" ${p.availability_source==='BOTH'?'selected':''}>كلاهما</option>
+            </select>
+          </div>
+          <div class="form-group"><label>آخر فحص توفر</label>
+            <input type="text" value="${p.last_availability_check ? new Date(p.last_availability_check).toLocaleString('ar-EG') : 'لم يتم الفحص بعد'}" readonly style="opacity:0.7">
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>السعر</label><input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required></div>
@@ -564,7 +588,8 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pAvailable" ${p.available!==false?'checked':''}> متوفر للبيع</label></div>
+          <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pAvailable" ${p.available!==false?'checked':''}> متوفر للبيع (مخزون)</label></div>
+          <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pIsActive" ${p.is_active!==false?'checked':''}> المنتج نشط (يظهر في المتجر)</label></div>
           <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="pFeatured" ${p.featured?'checked':''}> منتج مميز</label></div>
         </div>
         <div class="form-row">
@@ -769,7 +794,9 @@
       features_en: $('#pFeatEn').value.trim(),
       requirements_ar: $('#pReqAr').value.trim(),
       requirements_en: $('#pReqEn').value.trim(),
-      source_url: subscriptionPlans.length > 0 ? subscriptionPlans[0].source_url : '',
+      source_url: subscriptionPlans.length > 0 ? subscriptionPlans[0].source_url : ($('#pSourceUrl').value.trim()),
+      wmcentre_url: $('#pWmcUrl').value.trim(),
+      availability_source: $('#pAvailSource').value,
       price: parseFloat($('#pPrice').value) || 0,
       currency: $('#pCurrency').value,
       category: $('#pCategory').value,
@@ -777,6 +804,7 @@
       duration_ar: $('#pDurAr').value.trim(),
       duration_en: $('#pDurEn').value.trim(),
       available: $('#pAvailable').checked,
+      is_active: $('#pIsActive').checked,
       featured: $('#pFeatured').checked,
       subscription_plans: subscriptionPlans,
       payment_links: {
