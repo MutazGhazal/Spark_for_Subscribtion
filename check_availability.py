@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
 import json
+import re
 
 # Load .env if present (useful for local testing)
 try:
@@ -136,6 +137,39 @@ def calculate_selling_price(cost, profit_margin_p, fixed_fee_p, global_margin, g
     fee = fixed_fee_p if fixed_fee_p is not None else global_fee
     return (cost * margin) + fee
 
+def scrape_official_price(url):
+    """
+    Attempts to extract a price from an official website.
+    Since official sites vary, we use a generic regex search for price patterns.
+    """
+    if not url: return None
+    try:
+        print(f"  🔍 Scraping Official: {url}")
+        res = requests.get(url, headers=HEADERS, timeout=15)
+        if res.status_code != 200:
+            print(f"  ⚠️ Official site returned status {res.status_code}")
+            return None
+        
+        content = res.text
+        # Look for patterns like $19.99, £9.99, etc.
+        matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
+        matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        
+        prices = []
+        for m in matches:
+            try:
+                val = float(m.replace(',', '.'))
+                if 0.5 < val < 1000: prices.append(val)
+            except: continue
+            
+        if prices:
+            best = min(prices)
+            print(f"  ✨ Found official price: ${best}")
+            return best
+    except Exception as e:
+        print(f"  ⚠️ Error scraping official: {e}")
+    return None
+
 def run_checker():
     print("Starting availability & price check...")
     
@@ -159,8 +193,12 @@ def run_checker():
         name = p['name_en']
         z2u_url = p.get('source_url', '')
         wmc_url = p.get('wmcentre_url', '')
+        official_url = p.get('official_url', '')
         
-        print(f"Checking {name} ({p_id})...")
+        print(f"\n[{p_id}] Checking {name}...")
+        
+        # Scrape Official Price if URL exists
+        scraped_official = scrape_official_price(official_url)
         
         # Scrape Z2U
         z2u_status = None
@@ -234,9 +272,15 @@ def run_checker():
         if original_plans:
             for plan in original_plans:
                 plan_cost = plan.get('cost_price')
-                # If plan has no cost, we can't recalculate it accurately from here
-                # without knowing which plan on Z2U it corresponds to.
-                # However, if it HAS a cost_price, we update its selling price.
+                plan_official_url = plan.get('official_url')
+                
+                # Scrape official price for plan if URL exists
+                if plan_official_url:
+                    plan_scraped_official = scrape_official_price(plan_official_url)
+                    if plan_scraped_official:
+                        plan['official_price'] = plan_scraped_official
+
+                # If plan has a cost_price, update its selling price.
                 if plan_cost is not None:
                     plan_new_price = calculate_selling_price(
                         plan_cost,
@@ -254,6 +298,7 @@ def run_checker():
             'availability_source': source,
             'cost_price': best_cost,
             'price': round(new_selling_price, 2),
+            'official_price': scraped_official if scraped_official else p.get('official_price'),
             'subscription_plans': updated_plans if updated_plans else original_plans,
             'last_availability_check': 'now()'
         }

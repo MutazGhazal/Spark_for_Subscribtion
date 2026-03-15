@@ -553,6 +553,7 @@
         <div class="form-row">
           <div class="form-group"><label>رابط المصدر (Z2U)</label><input type="text" id="pSourceUrl" value="${p.source_url || ''}" dir="ltr"></div>
           <div class="form-group"><label>رابط المصدر (WMCentre)</label><input type="text" id="pWmcUrl" value="${p.wmcentre_url || ''}" dir="ltr"></div>
+          <div class="form-group"><label>رابط الموقع الرسمي</label><input type="text" id="pOfficialUrl" value="${p.official_url || ''}" dir="ltr" placeholder="https://..."></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>سعر التكلفة (Cost)</label><input type="number" id="pCostPrice" value="${p.cost_price || 0}" step="0.01" min="0" oninput="window._updatePricePreview()"></div>
@@ -626,10 +627,11 @@
           </div>
           <div id="plansContainer">
             ${(p.subscription_plans || []).map((plan, i) => `
-              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
+              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
                 <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="text" class="plan-official-url" value="${plan.official_url || ''}" placeholder="رابط رسمي" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
@@ -637,7 +639,7 @@
               </div>
             `).join('')}
           </div>
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | تكلفة | رسمي | بيع</p>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | الرابط الرسمي | تكلفة | رسمي | بيع</p>
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -664,11 +666,12 @@
       const nextDur = getNextDurationLabel(existingCount);
       const row = document.createElement('div');
       row.className = 'plan-row';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
       row.innerHTML = `
         <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="text" class="plan-source" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-official-url" placeholder="رابط رسمي" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-cost" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-official" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-price" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
@@ -814,6 +817,7 @@
       const cost = parseFloat(row.querySelector('.plan-cost')?.value) || 0;
       const official = parseFloat(row.querySelector('.plan-official')?.value) || 0;
       const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
+      const officialUrl = row.querySelector('.plan-official-url')?.value.trim() || '';
       if (labelAr || labelEn) {
         subscriptionPlans.push({ 
           label_ar: labelAr, 
@@ -821,7 +825,8 @@
           price, 
           cost_price: cost, 
           official_price: official, 
-          source_url: sourceUrl 
+          source_url: sourceUrl,
+          official_url: officialUrl
         });
       }
     });
@@ -837,6 +842,7 @@
       requirements_en: $('#pReqEn').value.trim(),
       source_url: subscriptionPlans.length > 0 ? subscriptionPlans[0].source_url : ($('#pSourceUrl').value.trim()),
       wmcentre_url: $('#pWmcUrl').value.trim(),
+      official_url: $('#pOfficialUrl').value.trim(),
       availability_source: $('#pAvailSource').value,
       cost_price: parseFloat($('#pCostPrice').value) || 0,
       official_price: parseFloat($('#pOfficialPrice').value) || 0,
