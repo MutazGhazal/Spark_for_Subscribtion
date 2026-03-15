@@ -4,3 +4,8 @@ supabase==2.13.0
 gotrue==2.12.0
 httpx==0.27.2
 python-dotenv>=1.0.1
+
+# Enhanced Scraper Dependencies (Optional but recommended)
+# Install with: pip install playwright && playwright install chromium
+playwright>=1.41.0
+lxml>=4.9.3

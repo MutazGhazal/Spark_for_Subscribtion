@@ -8,6 +8,14 @@ import json
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
 
+# Import enhanced scraper
+try:
+    from enhanced_scraper import EnhancedScraper, PLAYWRIGHT_AVAILABLE
+    ENHANCED_SCRAPER_AVAILABLE = True
+except ImportError:
+    ENHANCED_SCRAPER_AVAILABLE = False
+    PLAYWRIGHT_AVAILABLE = False
+
 # === CONFIGURATION ===
 # Try to load from .env file if exists
 if os.path.exists(".env"):
@@ -48,6 +56,15 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept-Language': 'en-US,en;q=0.9',
 }
+
+# Initialize enhanced scraper if available
+enhanced_scraper = None
+if ENHANCED_SCRAPER_AVAILABLE:
+    try:
+        enhanced_scraper = EnhancedScraper(use_proxy=True, use_headless=PLAYWRIGHT_AVAILABLE)
+        print("✅ Enhanced scraper initialized (Playwright: " + ("Yes" if PLAYWRIGHT_AVAILABLE else "No") + ")")
+    except Exception as e:
+        print(f"⚠️ Failed to initialize enhanced scraper: {e}")
 
 def get_price_z2u(soup, content=None):
     try:
@@ -128,10 +145,26 @@ def calculate_selling_price(cost, profit_margin_p, fixed_fee_p, global_margin, g
     fee = fixed_fee_p if fixed_fee_p is not None else global_fee
     return (cost * margin) + fee
 
-def scrape_official_price(url):
+def scrape_official_price(url, product_name=None):
+    """Scrape official price using enhanced scraper with fallback to basic method"""
     if not url: return None
+    
+    # Try enhanced scraper first if available
+    if enhanced_scraper and product_name:
+        try:
+            print(f"  🔍 Trying enhanced scraper for: {product_name}")
+            result = enhanced_scraper.scrape_official_price(product_name, url)
+            if result.price:
+                print(f"    ✅ Enhanced scraper found: ${result.price} (via {result.method_used})")
+                return result.price
+            else:
+                print(f"    ⚠️ Enhanced scraper failed: {result.error}")
+        except Exception as e:
+            print(f"    ⚠️ Enhanced scraper error: {e}")
+    
+    # Fallback to basic scraping
+    print(f"  🔍 Falling back to basic scraping: {url}")
     try:
-        print(f"  🔍 Scraping Official: {url}")
         res = requests.get(url, headers=HEADERS, timeout=15)
         if res.status_code != 200: 
             print(f"    ⚠️ Official page failed: {res.status_code}")
@@ -143,7 +176,7 @@ def scrape_official_price(url):
             
         soup = BeautifulSoup(content, 'html.parser')
 
-        # 1. Specialized JSON-LD check (Already good, but let's be thorough)
+        # 1. Specialized JSON-LD check
         json_ld = soup.find_all('script', type='application/ld+json')
         for script in json_ld:
             try:
@@ -158,11 +191,12 @@ def scrape_official_price(url):
                     if offers:
                         if isinstance(offers, list): offers = offers[0]
                         price = offers.get('price') or offers.get('lowPrice') or offers.get('priceSpecification', {}).get('price')
-                        if price: return float(str(price).replace(',', '').replace('$', '').replace(' ', ''))
+                        if price: 
+                            print(f"    ✅ Found via JSON-LD: ${price}")
+                            return float(str(price).replace(',', '').replace('$', '').replace(' ', ''))
             except: continue
 
-        # 2. Targeted Selectors for common sites
-        # Spotify, Disney, Netflix often use headings or specific price spans
+        # 2. Targeted Selectors
         selectors = [
             'span[data-testid="price-amount"]', '.pricing-card__price', 
             '.price-text', '.amount', '.price-value', '.plan-price', 
@@ -175,11 +209,11 @@ def scrape_official_price(url):
                 match = re.search(r"(\d+\.?\d*)", txt.replace(',', '.'))
                 if match:
                     val = float(match.group(1))
-                    if 0.5 < val < 1000: return val
+                    if 0.5 < val < 1000: 
+                        print(f"    ✅ Found via selector {sel}: ${val}")
+                        return val
 
-        # 3. Regex Fallback (More aggressive)
-        # Look for patterns like $19.99, 19,99 €, etc.
-        # We look for prices followed by /mo, /month, or preceded by $
+        # 3. Regex Fallback
         patterns = [
             r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)',
             r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]',
@@ -195,8 +229,9 @@ def scrape_official_price(url):
                 except: continue
         
         if prices:
-            # We take the minimum that isn't too low (e.g. avoided $0.0 if any)
-            return min(prices)
+            best = min(prices)
+            print(f"    ✅ Found via regex: ${best}")
+            return best
 
     except Exception as e:
         print(f"    ⚠️ Error official ({url}): {e}")
@@ -227,30 +262,44 @@ def run_checker():
         print(f"\n[{p_id}] {name}...")
 
         # 1. Official Price
-        scraped_official = scrape_official_price(official_url)
+        scraped_official = scrape_official_price(official_url, name)
         
         # 2. Z2U Scrape
         z2u_status, z2u_price = None, None
         if z2u_url:
             try:
-                res = requests.get(z2u_url, headers=HEADERS, timeout=15)
-                if res.status_code == 200:
-                    content = res.text
-                    # Check for soft 404
-                    if "Request error" in content or "Product does not exist" in content:
-                        print("    🚩 Z2U page: Product Not Found (404)")
-                        z2u_status = False
-                    elif "item-detail" in content or "product" in content or "z2u" in content:
-                        soup = BeautifulSoup(content, 'html.parser')
-                        z2u_status = not (soup.find(string=re.compile("Sold out")) or soup.select_one('.soldOut'))
-                        z2u_price = get_price_z2u(soup, content)
-                        if z2u_price: print(f"    ✅ Z2U price: ${z2u_price}")
+                # Try enhanced scraper with Playwright first for Z2U
+                if enhanced_scraper and PLAYWRIGHT_AVAILABLE:
+                    print("    🔍 Trying Z2U with Playwright...")
+                    result = enhanced_scraper.scrape_z2u_price(z2u_url)
+                    if result.price:
+                        z2u_price = result.price
+                        z2u_status = True
+                        print(f"    ✅ Z2U price (Playwright): ${z2u_price}")
                     else:
-                        print("    🚩 Z2U page might be blocked or empty structure")
-                elif res.status_code == 404:
-                    print("    🚩 Z2U page: 404 Not Found")
-                    z2u_status = False
-                else: print(f"    ⚠️ Z2U status: {res.status_code}")
+                        print(f"    ⚠️ Playwright failed: {result.error}")
+                
+                # Fallback to basic requests
+                if z2u_price is None:
+                    print("    🔍 Trying Z2U with requests...")
+                    res = requests.get(z2u_url, headers=HEADERS, timeout=15)
+                    if res.status_code == 200:
+                        content = res.text
+                        # Check for soft 404
+                        if "Request error" in content or "Product does not exist" in content:
+                            print("    🚩 Z2U page: Product Not Found (404)")
+                            z2u_status = False
+                        elif "item-detail" in content or "product" in content or "z2u" in content:
+                            soup = BeautifulSoup(content, 'html.parser')
+                            z2u_status = not (soup.find(string=re.compile("Sold out")) or soup.select_one('.soldOut'))
+                            z2u_price = get_price_z2u(soup, content)
+                            if z2u_price: print(f"    ✅ Z2U price: ${z2u_price}")
+                        else:
+                            print("    🚩 Z2U page might be blocked or empty structure")
+                    elif res.status_code == 404:
+                        print("    🚩 Z2U page: 404 Not Found")
+                        z2u_status = False
+                    else: print(f"    ⚠️ Z2U status: {res.status_code}")
             except Exception as e: print(f"    ❌ Z2U error: {e}")
 
         # 3. WMC Scrape

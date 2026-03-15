@@ -1,0 +1,263 @@
+{
+  "_metadata": {
+    "last_updated": "2025-03-16",
+    "note": "Manual prices for services that block scraping"
+  },
+  "services": {
+    "youtube": {
+      "name": "YouTube Premium",
+      "plans": {
+        "1_month": {
+          "price": 13.99,
+          "currency": "USD",
+          "url": "https://www.youtube.com/premium"
+        },
+        "1_year": {
+          "price": 139.99,
+          "currency": "USD",
+          "url": "https://www.youtube.com/premium"
+        }
+      }
+    },
+    "youtube_family": {
+      "name": "YouTube Premium Family",
+      "plans": {
+        "1_month": {
+          "price": 22.99,
+          "currency": "USD",
+          "url": "https://www.youtube.com/premium"
+        }
+      }
+    },
+    "youtube_student": {
+      "name": "YouTube Premium Student",
+      "plans": {
+        "1_month": {
+          "price": 7.99,
+          "currency": "USD",
+          "url": "https://www.youtube.com/premium"
+        }
+      }
+    },
+    "netflix_standard": {
+      "name": "Netflix Standard",
+      "plans": {
+        "1_month": {
+          "price": 15.49,
+          "currency": "USD",
+          "url": "https://www.netflix.com/signup/planform"
+        }
+      }
+    },
+    "netflix_premium": {
+      "name": "Netflix Premium",
+      "plans": {
+        "1_month": {
+          "price": 22.99,
+          "currency": "USD",
+          "url": "https://www.netflix.com/signup/planform"
+        }
+      }
+    },
+    "netflix_basic": {
+      "name": "Netflix Basic with Ads",
+      "plans": {
+        "1_month": {
+          "price": 6.99,
+          "currency": "USD",
+          "url": "https://www.netflix.com/signup/planform"
+        }
+      }
+    },
+    "spotify_individual": {
+      "name": "Spotify Premium Individual",
+      "plans": {
+        "1_month": {
+          "price": 10.99,
+          "currency": "USD",
+          "url": "https://www.spotify.com/us/premium/"
+        }
+      }
+    },
+    "spotify_family": {
+      "name": "Spotify Premium Family",
+      "plans": {
+        "1_month": {
+          "price": 16.99,
+          "currency": "USD",
+          "url": "https://www.spotify.com/us/premium/"
+        }
+      }
+    },
+    "spotify_student": {
+      "name": "Spotify Premium Student",
+      "plans": {
+        "1_month": {
+          "price": 5.99,
+          "currency": "USD",
+          "url": "https://www.spotify.com/us/premium/"
+        }
+      }
+    },
+    "spotify_duo": {
+      "name": "Spotify Premium Duo",
+      "plans": {
+        "1_month": {
+          "price": 14.99,
+          "currency": "USD",
+          "url": "https://www.spotify.com/us/premium/"
+        }
+      }
+    },
+    "disney_plus": {
+      "name": "Disney+",
+      "plans": {
+        "1_month": {
+          "price": 7.99,
+          "currency": "USD",
+          "url": "https://www.disneyplus.com/"
+        },
+        "1_year": {
+          "price": 79.99,
+          "currency": "USD",
+          "url": "https://www.disneyplus.com/"
+        }
+      }
+    },
+    "hbo_max": {
+      "name": "HBO Max",
+      "plans": {
+        "1_month": {
+          "price": 9.99,
+          "currency": "USD",
+          "url": "https://www.max.com/"
+        }
+      }
+    },
+    "amazon_prime": {
+      "name": "Amazon Prime Video",
+      "plans": {
+        "1_month": {
+          "price": 8.99,
+          "currency": "USD",
+          "url": "https://www.amazon.com/gp/video/getstarted"
+        },
+        "1_year": {
+          "price": 139.00,
+          "currency": "USD",
+          "url": "https://www.amazon.com/gp/video/getstarted"
+        }
+      }
+    },
+    "apple_tv": {
+      "name": "Apple TV+",
+      "plans": {
+        "1_month": {
+          "price": 9.99,
+          "currency": "USD",
+          "url": "https://tv.apple.com/"
+        }
+      }
+    },
+    "crunchyroll": {
+      "name": "Crunchyroll Premium",
+      "plans": {
+        "1_month": {
+          "price": 9.99,
+          "currency": "USD",
+          "url": "https://www.crunchyroll.com/welcome"
+        }
+      }
+    },
+    "xbox_game_pass": {
+      "name": "Xbox Game Pass Ultimate",
+      "plans": {
+        "1_month": {
+          "price": 16.99,
+          "currency": "USD",
+          "url": "https://www.xbox.com/en-US/xbox-game-pass"
+        }
+      }
+    },
+    "playstation_plus": {
+      "name": "PlayStation Plus Essential",
+      "plans": {
+        "1_month": {
+          "price": 9.99,
+          "currency": "USD",
+          "url": "https://www.playstation.com/en-us/ps-plus/"
+        }
+      }
+    },
+    "nordvpn": {
+      "name": "NordVPN",
+      "plans": {
+        "1_month": {
+          "price": 12.99,
+          "currency": "USD",
+          "url": "https://nordvpn.com/pricing/"
+        },
+        "1_year": {
+          "price": 59.88,
+          "currency": "USD",
+          "url": "https://nordvpn.com/pricing/"
+        }
+      }
+    },
+    "expressvpn": {
+      "name": "ExpressVPN",
+      "plans": {
+        "1_month": {
+          "price": 12.95,
+          "currency": "USD",
+          "url": "https://www.expressvpn.com/pricing"
+        }
+      }
+    },
+    "canva_pro": {
+      "name": "Canva Pro",
+      "plans": {
+        "1_month": {
+          "price": 12.99,
+          "currency": "USD",
+          "url": "https://www.canva.com/pro/"
+        },
+        "1_year": {
+          "price": 119.99,
+          "currency": "USD",
+          "url": "https://www.canva.com/pro/"
+        }
+      }
+    },
+    "adobe_creative_cloud": {
+      "name": "Adobe Creative Cloud",
+      "plans": {
+        "1_month": {
+          "price": 54.99,
+          "currency": "USD",
+          "url": "https://www.adobe.com/creativecloud.html"
+        }
+      }
+    },
+    "chatgpt_plus": {
+      "name": "ChatGPT Plus",
+      "plans": {
+        "1_month": {
+          "price": 20.00,
+          "currency": "USD",
+          "url": "https://chat.openai.com/"
+        }
+      }
+    },
+    "midjourney": {
+      "name": "Midjourney",
+      "plans": {
+        "1_month": {
+          "price": 10.00,
+          "currency": "USD",
+          "url": "https://www.midjourney.com/"
+        }
+      }
+    }
+  }
+}
