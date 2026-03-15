@@ -157,36 +157,52 @@ def scrape_official_price(url):
         json_ld = soup.find_all('script', type='application/ld+json')
         for script in json_ld:
             try:
+                if not script.string: continue
                 data = json.loads(script.string)
                 # Handle single object or list of objects
                 items = data if isinstance(data, list) else [data]
                 for item in items:
                     # Look for Price Specification or Offers
                     offers = item.get('offers')
+                    if not offers and '@graph' in item: # Handle complex JSON-LD
+                        items.extend(item['@graph'])
+                        continue
+                        
                     if offers:
                         if isinstance(offers, list): offers = offers[0]
-                        price = offers.get('price')
+                        # Support multiple price field names
+                        price = offers.get('price') or offers.get('lowPrice') or offers.get('priceSpecification', {}).get('price')
                         if price: 
                             print(f"  ✨ Found price in JSON-LD: ${price}")
-                            return float(price)
+                            return float(str(price).replace(',', ''))
             except: continue
 
         # 2. Improved Regex search
         # Look for patterns like "price": 19.99 or price:19.99
-        data_matches = re.findall(r'price["\']?\s*:\s*["\']?(\d{1,4}(?:[.,]\d{2})?)["\']?', content, re.IGNORECASE)
+        data_matches = re.findall(r'price["\']?\s*[:=]\s*["\']?(\d{1,4}(?:[.,]\d{2})?)["\']?', content, re.IGNORECASE)
         
-        # Look for visible patterns like $19.99 or 19.99$
-        visible_matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
-        visible_matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        # Look for currency symbols followed/preceded by price
+        visible_matches = re.findall(r'[\$€£]\s?(\d{0,4}(?:[.,]\d{2}))', content)
+        visible_matches += re.findall(r'(\d{0,4}(?:[.,]\d{2}))\s?[\$€£]', content)
         
-        all_matches = data_matches + visible_matches
+        # Look for "monthly" or "/mo" patterns
+        monthly_matches = re.findall(r'(?:month|mo|mo\.)\s?[\$€£]?\s?(\d{1,4}(?:[.,]\d{2})?)', content, re.IGNORECASE)
+        
+        all_matches = data_matches + visible_matches + monthly_matches
         
         prices = []
         for m in all_matches:
             try:
-                # Clean up: replace comma with dot, remove any extra chars
-                val = float(m.replace(',', '.'))
-                if 0.5 < val < 1000: prices.append(val)
+                # Clean up: replace comma with dot if it's not a thousands separator, remove any extra chars
+                clean_m = m.replace(',', '.')
+                # If there are multiple dots, it might be 1.200.00 -> 1200.00
+                if clean_m.count('.') > 1:
+                    parts = clean_m.split('.')
+                    clean_m = "".join(parts[:-1]) + "." + parts[-1]
+                
+                val = float(clean_m)
+                # Filter out obvious non-prices or excessively high/low values
+                if 0.5 < val < 500: prices.append(val)
             except: continue
             
         if prices:
