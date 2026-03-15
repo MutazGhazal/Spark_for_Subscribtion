@@ -389,10 +389,24 @@
     list.innerHTML = filtered.map((p) => {
       const i = products.indexOf(p); // real index in products array (for edit/delete)
       const plans = p.subscription_plans || [];
-      const hasPlans = plans.length > 0;
+      const hasPlans = plans && plans.length > 0;
+      
+      const getAdminMinPrice = (prod) => {
+        if (prod.subscription_plans && prod.subscription_plans.length > 0) {
+          const prices = prod.subscription_plans.map(pl => pl.price).filter(v => v > 0);
+          if (prices.length > 0) return Math.min(...prices);
+        }
+        return prod.price || 0;
+      };
+
+      const displayPrice = getAdminMinPrice(p);
+      const displayCost = p.subscription_plans && p.subscription_plans.length > 0 
+        ? (p.subscription_plans[0].cost_price || 0) 
+        : (p.cost_price || 0);
+
       const hasSource = hasPlans || p.source_url;
       
-      const isOverpriced = p.official_price && p.price > p.official_price;
+      const isOverpriced = p.official_price && displayPrice > p.official_price;
       const plansAreOverpriced = plans.some(plan => plan.official_price && plan.price > plan.official_price);
       const isWarning = isOverpriced || plansAreOverpriced;
 
@@ -416,8 +430,8 @@
             ${p.wmcentre_url ? `<a href="${p.wmcentre_url}" target="_blank" class="source-link" title="WMCentre" onclick="event.stopPropagation()" style="margin-right:8px;">🔗 WMC</a>` : ''}
           </div>
           <div class="admin-product-price-box" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-            <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${p.price}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${p.cost_price || 0}</span>
+            <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost}</span>
             <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${p.official_price || '-'}</span>
           </div>
           <div class="admin-product-actions">
