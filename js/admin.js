@@ -448,20 +448,10 @@
             ${p.wmcentre_url ? `<a href="${p.wmcentre_url}" target="_blank" class="source-link" title="WMCentre" onclick="event.stopPropagation()" style="margin-right:8px;">🔗 WMC</a>` : ''}
           </div>
           <div class="admin-product-price-box" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-            ${hasPlans 
-              ? plans.map((plan, idx) => `
-                <div style="display:flex; flex-direction:column; align-items:flex-end; ${idx > 0 ? 'margin-top:4px; padding-top:4px; border-top:1px solid var(--border);' : ''}">
-                  <span style="font-size:0.7rem; color:var(--text-muted);">${plan.label_ar || plan.label_en}</span>
-                  <span class="admin-product-price" style="font-size:0.9rem; ${plan.official_price && plan.price > plan.official_price ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع">$${plan.price}</span>
-                  ${plan.official_price ? `<span style="font-size:0.7rem; color:var(--text-muted); ${plan.price > plan.official_price ? 'color:#ef4444;' : ''}" title="السعر الرسمي">🏷️ $${plan.official_price}</span>` : ''}
-                </div>
-              `).join('')
-              : `
-                <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
-                <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost || 0}</span>
-                <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${officialPrice}</span>
-              `
-            }
+            <!-- قبل الضغط: نعرض بس أقل سعر -->
+            <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost || 0}</span>
+            ${officialPrice && officialPrice !== '-' ? `<span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${officialPrice}</span>` : ''}
           </div>
           <div class="admin-product-actions">
             <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -509,12 +499,12 @@
                       <span style="font-size:0.85rem; color:#10b981; font-weight:600;">$${plan.cost_price || 0}</span>
                     </div>
                     <!-- السعر الرسمي -->
-                    ${plan.official_price ? `
+                    ${plan.official_price && plan.official_price > 0 ? `
                     <div style="display:flex; align-items:center; gap:4px;">
                       <span style="font-size:0.7rem; color:var(--text-muted);">رسمي:</span>
                       <span style="font-size:0.85rem; color:#3b82f6; font-weight:600; ${plan.price > plan.official_price ? 'color:#ef4444; text-decoration:line-through;' : ''}">$${plan.official_price}</span>
                     </div>
-                    ` : ''}
+                    ` : '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:0.7rem; color:var(--text-muted);">رسمي:</span><span style="font-size:0.85rem; color:var(--text-muted);">غير متوفر</span></div>'}
                   </div>
                   ${plan.source_url ? `<a href="${plan.source_url}" target="_blank" style="background:var(--primary);color:#fff;padding:0.3rem 0.8rem;border-radius:8px;text-decoration:none;font-size:0.85rem;">🔗 فتح</a>` : '<span style="color:var(--text-muted);font-size:0.8rem;">بدون رابط</span>'}
                 </div>
