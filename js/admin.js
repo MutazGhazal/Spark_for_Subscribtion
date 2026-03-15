@@ -675,6 +675,11 @@
       setupBilingualFields(row.querySelector('.plan-label-ar'), row.querySelector('.plan-label-en'));
     });
 
+    // Initialize price preview
+    if (window._updatePricePreview) {
+      setTimeout(() => window._updatePricePreview(), 100);
+    }
+
     $('#productModal').classList.add('active');
     document.body.style.overflow = 'hidden';
   }
@@ -1009,6 +1014,13 @@
         <div class="form-group"><label>يوزر تيليجرام</label><input type="text" id="sSocialTg" value="${social.telegram||''}" placeholder="username"></div>
         <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="sSocialEmail" value="${social.email||''}" placeholder="contact@example.com"></div>
       </div>
+      <div class="settings-section" style="border: 2px dashed var(--primary); background: var(--bg-secondary);">
+        <h3>أدوات صيانة الأسعار</h3>
+        <p style="font-size:0.85rem; margin-bottom:1rem;">استخدم هذا الزر لتطبيق هوامش الربح العالمية على جميع المنتجات فوراً (بدون انتظار التحديث التلقائي).</p>
+        <button class="btn btn-primary" onclick="window.recalculateAllPrices()" id="recalcPricesBtn">
+          🔄 إعادة حساب جميع الأسعار الآن
+        </button>
+      </div>
     `;
   }
 
@@ -1040,6 +1052,37 @@
     } catch (e) {
       setSaveStatus('error', 'فشل الحفظ');
       showToast('فشل الحفظ: ' + e.message);
+    }
+  }
+
+  async function recalculateAllPrices() {
+    if (!confirm('سيتم إعادة حساب أسعار جميع المنتجات بناءً على الأسعار العالمية الحالية وهامش الربح. هل أنت متأكد؟')) return;
+    
+    setSaveStatus('saving', 'جاري إعادة الحساب...');
+    try {
+      const margin = siteSettings.global_profit_margin || 1.1;
+      const fee = siteSettings.global_fixed_fee || 3;
+      
+      const updates = products.map(p => {
+        const pMargin = (p.profit_margin !== null && p.profit_margin !== undefined && p.profit_margin !== '') ? p.profit_margin : margin;
+        const pFee = (p.fixed_fee !== null && p.fixed_fee !== undefined && p.fixed_fee !== '') ? p.fixed_fee : fee;
+        const cost = p.cost_price || p.price || 0;
+        const newPrice = Number((cost * pMargin + pFee).toFixed(2));
+        return { ...p, price: newPrice };
+      });
+
+      // Update in chunks to avoid large request issues
+      for (const p of updates) {
+        await sb.from('products').update({ price: p.price }).eq('id', p.id);
+      }
+      
+      products = updates;
+      setSaveStatus('saved', 'تم تحديث جميع الأسعار');
+      showToast('✅ تم تحديث جميع أسعار المنتجات بنجاح');
+      renderProductsList();
+    } catch (e) {
+      setSaveStatus('error', 'فشل التحديث');
+      showToast('خطأ: ' + e.message);
     }
   }
 
@@ -1647,6 +1690,7 @@
     if ($('#addOrderBtn')) $('#addOrderBtn').addEventListener('click', openOrderModal);
 
     $('#saveSettingsBtn').addEventListener('click', collectAndSaveSettings);
+    window.recalculateAllPrices = recalculateAllPrices;
     $('#savePaymentBtn').addEventListener('click', collectAndSavePayment);
 
     $('#loginForm').addEventListener('submit', handleAuth);
