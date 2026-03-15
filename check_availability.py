@@ -47,6 +47,20 @@ def load_config():
 
 load_config()
 
+# Debug: Print library versions to identify conflicts
+try:
+    import pkg_resources
+    libs = ['supabase', 'gotrue', 'postgrest', 'httpx']
+    print("--- Library Versions ---")
+    for lib in libs:
+        try:
+            version = pkg_resources.get_distribution(lib).version
+            print(f"{lib}: {version}")
+        except:
+            print(f"{lib}: Not found via pkg_resources")
+except:
+    print("Could not import pkg_resources for version checking.")
+
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("❌ ERROR: Supabase credentials not found!")
     if not SUPABASE_URL: print("   - Missing SUPABASE_URL")
@@ -55,8 +69,25 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     exit(1)
 
 try:
+    # Attempt connection with default options
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     print("✅ Successfully connected to Supabase.")
+except TypeError as te:
+    if "proxy" in str(te):
+        print(f"❌ ERROR: Known Supabase Library Conflict Detected: {te}")
+        print("This is likely a version mismatch between supabase-py and gotrue-py on the server.")
+        print("Attempting to bypass by forcing older initialization...")
+        try:
+            # Last ditch effort: try manually creating client if direct create_client fails
+            from supabase.lib.client_options import ClientOptions
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=ClientOptions())
+            print("✅ Successfully connected using ClientOptions override.")
+        except Exception as e2:
+            print(f"❌ Failed fallback connection: {e2}")
+            exit(1)
+    else:
+        print(f"❌ ERROR: TypeError during connection: {te}")
+        exit(1)
 except Exception as e:
     print(f"❌ ERROR: Failed to connect to Supabase: {e}")
     exit(1)
