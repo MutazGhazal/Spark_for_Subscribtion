@@ -142,7 +142,8 @@ def scrape_official_price(url):
             return None
             
         soup = BeautifulSoup(content, 'html.parser')
-        # Check JSON-LD
+
+        # 1. Specialized JSON-LD check (Already good, but let's be thorough)
         json_ld = soup.find_all('script', type='application/ld+json')
         for script in json_ld:
             try:
@@ -157,23 +158,48 @@ def scrape_official_price(url):
                     if offers:
                         if isinstance(offers, list): offers = offers[0]
                         price = offers.get('price') or offers.get('lowPrice') or offers.get('priceSpecification', {}).get('price')
-                        if price: return float(str(price).replace(',', '').replace('$', ''))
+                        if price: return float(str(price).replace(',', '').replace('$', '').replace(' ', ''))
             except: continue
 
-        # Regex fallback
-        data_matches = re.findall(r'price["\']?\s*[:=]\s*["\']?(\d{1,4}(?:[.,]\d{2})?)["\']?', content, re.IGNORECASE)
-        visible_matches = re.findall(r'[\$€£]\s?(\d{0,4}(?:[.,]\d{2}))', content)
-        visible_matches += re.findall(r'(\d{0,4}(?:[.,]\d{2}))\s?[\$€£]', content)
-        all_matches = data_matches + visible_matches
+        # 2. Targeted Selectors for common sites
+        # Spotify, Disney, Netflix often use headings or specific price spans
+        selectors = [
+            'span[data-testid="price-amount"]', '.pricing-card__price', 
+            '.price-text', '.amount', '.price-value', '.plan-price', 
+            'h3.price', '.pricing__price', '#price', '.cost'
+        ]
+        for sel in selectors:
+            el = soup.select_one(sel)
+            if el:
+                txt = el.get_text(strip=True)
+                match = re.search(r"(\d+\.?\d*)", txt.replace(',', '.'))
+                if match:
+                    val = float(match.group(1))
+                    if 0.5 < val < 1000: return val
+
+        # 3. Regex Fallback (More aggressive)
+        # Look for patterns like $19.99, 19,99 €, etc.
+        # We look for prices followed by /mo, /month, or preceded by $
+        patterns = [
+            r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)',
+            r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]',
+            r'(\d{1,4}(?:[.,]\d{2})?)\s?/\s?(?:mo|month|year)',
+        ]
         prices = []
-        for m in all_matches:
-            try:
-                val = float(m.replace(',', '.'))
-                if 0.5 < val < 500: prices.append(val)
-            except: continue
-        if prices: return min(prices)
+        for p in patterns:
+            matches = re.findall(p, content)
+            for m in matches:
+                try:
+                    val = float(m.replace(',', '.'))
+                    if 0.5 < val < 500: prices.append(val)
+                except: continue
+        
+        if prices:
+            # We take the minimum that isn't too low (e.g. avoided $0.0 if any)
+            return min(prices)
+
     except Exception as e:
-        print(f"    ⚠️ Error official: {e}")
+        print(f"    ⚠️ Error official ({url}): {e}")
     return None
 
 def run_checker():
