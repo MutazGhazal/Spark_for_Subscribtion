@@ -1,0 +1,99 @@
+# Optimized Spark Availability Checker
+# Runs faster by checking only products that need updates
+name: Spark Optimized Checker
+
+on:
+  schedule:
+    # Runs every 6 hours (4 times a day)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of check'
+        required: true
+        default: 'quick'
+        type: choice
+        options:
+          - quick      # Check only products with issues (2-3 min)
+          - full       # Check all products (7-10 min)
+          - prices     # Update prices only
+          - urls       # Check URLs only
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  check-availability:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Quick Check (Products with Issues)
+        if: github.event.inputs.check_type == 'quick' || github.event_name == 'schedule'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          echo "🚀 Running QUICK check (products with missing URLs or prices)..."
+          python scripts/core/check_availability.py --quick
+          echo "✅ Quick check completed."
+
+      - name: Full Check (All Products)
+        if: github.event.inputs.check_type == 'full'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          echo "🚀 Running FULL check (all 268 products)..."
+          python scripts/core/check_availability.py
+          echo "✅ Full check completed."
+
+      - name: Update Prices Only
+        if: github.event.inputs.check_type == 'prices'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          echo "💰 Updating prices..."
+          python scripts/core/fix_plan_prices.py --update
+          echo "✅ Prices updated."
+
+      - name: Check URLs Only
+        if: github.event.inputs.check_type == 'urls'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          echo "🔗 Checking URLs..."
+          python scripts/utils/list_urls.py > url_check_results.txt
+          echo "✅ URL check completed."
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: check-results
+          path: |
+            *.log
+            *.txt
+          retention-days: 7

@@ -417,12 +417,18 @@
 
       const hasSource = hasPlans || p.source_url;
       
+      // Check if plans have missing URLs
+      const hasMissingPlanUrls = plans.some(plan => {
+        // Plan should have at least one source URL
+        return !plan.source_url && !plan.wmcentre_url;
+      });
+      
       const isOverpriced = p.official_price && displayPrice > p.official_price;
       const plansAreOverpriced = plans.some(plan => plan.official_price && plan.price > plan.official_price);
       const isWarning = isOverpriced || plansAreOverpriced;
 
       return `
-        <div class="admin-product-card ${hasSource ? 'has-source' : ''} ${isWarning ? 'overpriced-warning' : ''}" data-index="${i}">
+        <div class="admin-product-card ${hasSource ? 'has-source' : ''} ${isWarning ? 'overpriced-warning' : ''} ${hasMissingPlanUrls ? 'missing-urls' : ''}" data-index="${i}">
           <div class="admin-product-img">
             <img src="${p.image}" alt="" onerror="this.style.display='none'">
           </div>
@@ -432,6 +438,7 @@
               <span class="status-badge ${p.is_active !== false ? '' : 'unavailable'}">${p.is_active !== false ? '' : 'مخفي/غير نشط &bull; '}</span>
               <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span>
               ${isWarning ? '<span class="status-badge warning" style="background:rgba(239,68,68,0.1); color:#ef4444; margin-inline-start:0.4rem;">تنبيه سعر!</span>' : ''}
+              ${hasMissingPlanUrls ? '<span class="status-badge warning" style="background:rgba(245,158,11,0.1); color:#f59e0b; margin-inline-start:0.4rem;">⚠️ روابط ناقصة</span>' : ''}
             </p>
             <p style="font-size:0.8rem; color:var(--text-muted);">${p.availability_source && p.availability_source !== 'NONE' ? `📍 مصدر التوفر: ${p.availability_source}` : ''}</p>
             ${hasPlans

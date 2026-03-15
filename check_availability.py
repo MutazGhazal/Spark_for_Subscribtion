@@ -237,8 +237,40 @@ def scrape_official_price(url, product_name=None):
         print(f"    ⚠️ Error official ({url}): {e}")
     return None
 
-def run_checker():
+def needs_update(product):
+    """Check if product needs update (for quick mode)"""
+    plans = product.get('subscription_plans', [])
+    
+    # Check if any plan is missing URLs
+    if plans:
+        for plan in plans:
+            if not plan.get('source_url') and not plan.get('wmcentre_url'):
+                return True
+            # Check if prices are all the same (indicates problem)
+            prices = [pl.get('price') for pl in plans if pl.get('price')]
+            if len(prices) > 1 and len(set(prices)) == 1:
+                return True
+    else:
+        # No plans but also no main source URL
+        if not product.get('source_url') and not product.get('wmcentre_url'):
+            return True
+    
+    # Check if official price is missing
+    if not product.get('official_price'):
+        return True
+    
+    # Check if cost price is 0 or missing
+    if product.get('cost_price') == 0 or product.get('cost_price') is None:
+        return True
+    
+    return False
+
+
+def run_checker(quick_mode=False):
     print("\n🚀 Starting availability & price check...")
+    if quick_mode:
+        print("⚡ QUICK MODE: Checking only products with issues")
+    
     global_margin, global_fee = 1.1, 3.0
     try:
         settings_res = supabase.table('site_settings').select('value').eq('key', 'store').maybe_single().execute()
@@ -249,6 +281,11 @@ def run_checker():
         print(f"Error fetching settings: {e}")
 
     products = supabase.table('products').select('*').execute().data
+    
+    # Filter products in quick mode
+    if quick_mode:
+        products = [p for p in products if needs_update(p)]
+        print(f"⚡ Quick mode: Checking {len(products)} products with issues")
     
     # Check for dry run
     dry_run = "--dry-run" in sys.argv
@@ -387,4 +424,5 @@ def run_checker():
         time.sleep(1)
 
 if __name__ == "__main__":
-    run_checker()
+    quick_mode = "--quick" in sys.argv
+    run_checker(quick_mode=quick_mode)

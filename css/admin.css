@@ -308,6 +308,22 @@
   border-color: var(--primary);
 }
 
+/* Missing URLs warning - Yellow highlight */
+.admin-product-card.missing-urls {
+  border-left: 4px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+[dir="rtl"] .admin-product-card.missing-urls {
+  border-left: none;
+  border-right: 4px solid #f59e0b;
+}
+
+.admin-product-card.missing-urls:hover {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: #f59e0b;
+}
+
 .admin-product-img {
   width: 56px;
   height: 56px;
