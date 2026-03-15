@@ -1,0 +1,4 @@
+  File "D:\Subscribtions Sellers\check_availability.py", line 49
+    'Accept-Language': 'en-US,en;qdef get_price_z2u(soup, content=None):
+                       ^
+SyntaxError: unterminated string literal (detected at line 49)

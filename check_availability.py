@@ -51,10 +51,15 @@ HEADERS = {
 
 def get_price_z2u(soup, content=None):
     try:
-        if content and ("Request error" in content or "Product does not exist" in content):
-            return None # Detected soft 404
+        if content:
+            content_lower = content.lower()
+            if "request error" in content_lower or "product does not exist" in content_lower or "no results found" in content_lower:
+                return None # Detected soft 404
 
-        # 1. Try JSON-LD logic first
+        # 1. Collect ALL potential prices first
+        potential_prices = []
+
+        # JSON-LD
         if content:
             json_ld = soup.find_all('script', type='application/ld+json')
             for script in json_ld:
@@ -69,65 +74,41 @@ def get_price_z2u(soup, content=None):
                             price = offers.get('price')
                             if price:
                                 val = float(str(price).replace(',', '').replace('$', ''))
-                                if val > 0.1: return val
+                                potential_prices.append(val)
                 except: continue
 
-            # 2. Prefer specific span.priceTxt or elements with currency
-            price_spans = soup.select('span.priceTxt') or soup.select('.price-num') or soup.select('.item-price')
-            if price_spans:
-                valid_prices = []
-                for s in price_spans:
-                    match = re.search(r"(\d+\.?\d*)", s.get_text())
-                    if match:
-                        val = float(match.group(1))
-                        if 0.5 < val < 1000: valid_prices.append(val)
-                if valid_prices:
-                    # In subscription contexts, we usually want a mid-to-high price or specific one.
-                    # For now, let's filter out anything < 1.0 if there are larger prices
-                    high_prices = [v for v in valid_prices if v >= 1.0]
-                    return min(high_prices) if high_prices else min(valid_prices)
+        # Specific spans (most reliable)
+        price_spans = soup.select('span.priceTxt') or soup.select('.price-num') or soup.select('.item-price') or soup.select('.price')
+        if price_spans:
+            for s in price_spans:
+                match = re.search(r"(\d+\.?\d*)", s.get_text())
+                if match:
+                    potential_prices.append(float(match.group(1)))
 
-            # 3. Try Regex with currency symbol prefix/suffix (more likely to be actual price)
+        # Regex fallback with currency
+        if content:
             currency_matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
             currency_matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
-            if currency_matches:
-                prices = []
-                for m in currency_matches:
-                    try:
-                        val = float(m.replace(',', '.'))
-                        if 0.5 < val < 1000: prices.append(val)
-                    except: continue
-                if prices:
-                    high_prices = [v for v in prices if v >= 1.0]
-                    return min(high_prices) if high_prices else min(prices)
+            for m in currency_matches:
+                try: potential_prices.append(float(m.replace(',', '.')))
+                except: continue
 
-        # Fallback to general selectors if above failed
-        selectors = [
-            'span.d-pricing', '.price', '.item-price', '.price-num',
-            '.goods-price', '.price-now', '.price-box .price',
-            '.product-price', '.product_price_new', '.current-price',
-            '.productCardStyle-3 span', '.goods-info .price'
-        ]
-        for sel in selectors:
-            for el in soup.select(sel): # Try all matches for the selector
-                text = el.get_text(strip=True)
-                match = re.search(r"(\d+\.?\d*)", text)
-                if match:
-                    val = float(match.group(1))
-                    if 0.1 < val < 500: return val # Return the first valid price
+        # 2. Filter and Pick
+        # Ignore very low prices (likely fees) and very high (outliers)
+        # Typically, a subscription is > $0.80. Anything like $0.25 or $0.45 is usually a fee.
+        valid_prices = [v for v in potential_prices if 0.8 <= v < 1000]
         
-        # Fallback: Check for hidden inputs or data attributes
-        price_meta = soup.select_one('meta[property="product:price:amount"]')
-        if price_meta and price_meta.get('content'):
-            return float(price_meta['content'])
+        if valid_prices:
+            # If we found multiple prices, and some are $1.0 vs $10.0, 
+            # we should avoid the absolute minimum if it's suspicious.
+            # But for now, returning the minimum > $0.80 is the safest fix for "0 cost".
+            return min(valid_prices)
 
-        # Fallback: Text search
-        content = soup.get_text(separator=' ')
-        matches = re.findall(r"\$\s*(\d+\.?\d*)", content)
-        if matches:
-            for m in matches:
-                val = float(m)
-                if 0.5 < val < 500: return val
+        # 3. Last resort fallback (very relaxed)
+        if potential_prices:
+            relaxed = [v for v in potential_prices if 0.1 < v < 500]
+            if relaxed: return min(relaxed)
+
     except: pass
     return None
 
@@ -207,6 +188,12 @@ def run_checker():
         print(f"Error fetching settings: {e}")
 
     products = supabase.table('products').select('*').execute().data
+    
+    # Check for dry run
+    dry_run = "--dry-run" in sys.argv
+    if dry_run:
+        print("🚩 DRY RUN MODE: Database will not be updated.")
+
     for p in products:
         p_id = p['id']
         name = p['name_en']
@@ -223,13 +210,20 @@ def run_checker():
                 res = requests.get(z2u_url, headers=HEADERS, timeout=15)
                 if res.status_code == 200:
                     content = res.text
-                    if "item-detail" in content or "product" in content or "z2u" in content: # relaxed condition since some pages might not have product
+                    # Check for soft 404
+                    if "Request error" in content or "Product does not exist" in content:
+                        print("    🚩 Z2U page: Product Not Found (404)")
+                        z2u_status = False
+                    elif "item-detail" in content or "product" in content or "z2u" in content:
                         soup = BeautifulSoup(content, 'html.parser')
                         z2u_status = not (soup.find(string=re.compile("Sold out")) or soup.select_one('.soldOut'))
                         z2u_price = get_price_z2u(soup, content)
                         if z2u_price: print(f"    ✅ Z2U price: ${z2u_price}")
                     else:
                         print("    🚩 Z2U page might be blocked or empty structure")
+                elif res.status_code == 404:
+                    print("    🚩 Z2U page: 404 Not Found")
+                    z2u_status = False
                 else: print(f"    ⚠️ Z2U status: {res.status_code}")
             except Exception as e: print(f"    ❌ Z2U error: {e}")
 
@@ -242,51 +236,49 @@ def run_checker():
                     wmc_status = 'buy_nav' in res.text and not ("Product out of stock" in res.text)
                     wmc_price = get_price_wmc(BeautifulSoup(res.text, 'html.parser'))
                     if wmc_price: print(f"    ✅ WMC price: ${wmc_price}")
+                elif res.status_code == 404:
+                    wmc_status = False
             except: pass
         
         # 4. Determine Availability & Cost
-        is_available = False
-        source = "NONE"
+        is_available = p.get('available', False)
+        source = p.get('availability_source', 'NONE')
         scraped_cost = None
         
-        if z2u_status is True and wmc_status is True:
-            is_available, source = True, "BOTH"
+        # If we have explicit negative info (404 or sold out), mark as unavailable
+        if z2u_status is False and (not wmc_url or wmc_status is False):
+            is_available = False
+            print("    ⚠️ Product marked UNAVAILABLE (Sources confirmed empty/404)")
+        elif z2u_status is True or wmc_status is True:
+            is_available = True
+            source = "BOTH" if (z2u_status and wmc_status) else ("Z2U" if z2u_status else "WMC")
             scraped_cost = min([c for c in [z2u_price, wmc_price] if c]) if (z2u_price or wmc_price) else None
-        elif z2u_status is True:
-            is_available, source, scraped_cost = True, "Z2U", z2u_price
-        elif wmc_status is True:
-            is_available, source, scraped_cost = True, "WMC", wmc_price
-        else:
-            # If scrapers failed (None), keep current availability
-            is_available = p.get('available', False)
-
+        
         # 5. DANGEROUS FALLBACK FIX: Never use selling price as cost!
         best_cost = scraped_cost if scraped_cost is not None else p.get('cost_price')
-        if not best_cost: 
-            print("    ⚠️ Skip price calculation (no cost available)")
-            best_cost = p.get('cost_price', 0)
+        if not best_cost or best_cost == 0: 
+            print("    ⚠️ Note: No valid cost available for this product")
+            best_cost = 0
         
         # Only recalculate selling price if we actually have a cost > 0
         new_selling_price = p.get('price')
-        if best_cost and best_cost > 0:
+        if scraped_cost is not None:
+            # If we have a cost, recalculate main price
             new_val = calculate_selling_price(best_cost, p.get('profit_margin'), p.get('fixed_fee'), global_margin, global_fee)
-            # Inflation protection: Only update if the change is reasonable OR if we have a fresh scrape.
-            # If we didn't scrape anything, don't update the price at all.
-            if scraped_cost is not None:
-                new_selling_price = round(new_val, 2)
+            new_selling_price = round(new_val, 2)
         
-        # 6. Update Plans
+        # 6. Update Plans (Sync 1st plan or all 0 costs)
         updated_plans = []
         original_plans = p.get('subscription_plans', [])
         if original_plans:
             for i, plan in enumerate(original_plans):
-                plan_cost = plan.get('cost_price')
-                # Update 1st plan cost from main scrape if it was 0
-                if i == 0 and scraped_cost is not None:
-                    if not plan_cost or plan_cost == 0:
-                        plan['cost_price'] = scraped_cost
-                        plan_cost = scraped_cost
+                plan_cost = plan.get('cost_price', 0)
+                # If plan cost is 0, try to inherit from main scrape
+                if (not plan_cost or plan_cost == 0) and scraped_cost:
+                    plan['cost_price'] = scraped_cost
+                    plan_cost = scraped_cost
                 
+                # Recalculate price if we have a cost
                 if plan_cost and plan_cost > 0:
                     plan['price'] = round(calculate_selling_price(plan_cost, p.get('profit_margin'), p.get('fixed_fee'), global_margin, global_fee), 2)
                 updated_plans.append(plan)
@@ -301,9 +293,15 @@ def run_checker():
             'subscription_plans': updated_plans if updated_plans else original_plans,
             'last_availability_check': 'now()'
         }
+        
+        if dry_run:
+            print(f"    📊 Pre-update check: Price ${new_selling_price}, Available: {is_available}")
+            continue
+
         try:
             supabase.table('products').update(update_data).eq('id', p_id).execute()
-        except: print(f"    ❌ DB update failed for {p_id}")
+        except Exception as e: 
+            print(f"    ❌ DB update failed for {p_id}: {e}")
         time.sleep(1)
 
 if __name__ == "__main__":
