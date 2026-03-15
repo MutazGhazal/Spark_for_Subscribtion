@@ -299,10 +299,17 @@ def run_checker():
         if original_plans:
             for i, plan in enumerate(original_plans):
                 plan_cost = plan.get('cost_price', 0)
-                # If plan cost is 0, try to inherit from main scrape
+                # If plan cost is 0, try to inherit but ONLY if it's a 1-month/short duration plan
+                # to avoid applying 1-month cost to 12-month plans.
                 if (not plan_cost or plan_cost == 0) and scraped_cost:
-                    plan['cost_price'] = scraped_cost
-                    plan_cost = scraped_cost
+                    label = (plan.get('label_en') or "").lower()
+                    is_short = any(x in label for x in ['1 month', '30 day', '31 day', 'واحد', 'شهر'])
+                    # If it's short duration OR there's only one plan, allow inheritance
+                    if is_short or len(original_plans) == 1:
+                        plan['cost_price'] = scraped_cost
+                        plan_cost = scraped_cost
+                    else:
+                        print(f"    ℹ️ Skipping cost inheritance for plan: {plan.get('label_en')} (Not a 1-month plan)")
                 
                 # Recalculate price if we have a cost
                 if plan_cost and plan_cost > 0:
