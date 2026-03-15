@@ -573,6 +573,10 @@
       const matchCat = currentCategory === 'all' || p.category === currentCategory;
       if (!matchCat) return false;
       if (p.is_active === false) return false;
+      
+      // Stop Ad Logic: Hide if Selling Price > Official Price
+      if (p.official_price && p.price > p.official_price) return false;
+
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return (p.name_ar || '').toLowerCase().includes(q) || (p.name_en || '').toLowerCase().includes(q) ||
@@ -616,7 +620,9 @@
               <span class="review-count">(${p.review_count || 0})</span>
             </div>
             <div class="product-meta">
-              <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(p.price, p.currency) ? `<span class="local-price">${formatLocalPrice(p.price, p.currency)}</span>` : ''}</span>
+              <div class="product-price-box">
+                <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(p.price, p.currency) ? `<span class="local-price">${formatLocalPrice(p.price, p.currency)}</span>` : ''}</span>
+              </div>
               <span class="product-duration">${duration}</span>
             </div>
             <div class="product-actions">
@@ -691,9 +697,11 @@
           </div>
         ` : ''}
         <div class="pd-meta">
-          <div class="pd-price">
-            ${product.price} <span class="currency">${product.currency || 'USD'}</span>
-            ${localPrice ? `<span class="local-price">${localPrice}</span>` : ''}
+          <div class="pd-price-box" style="display:flex; flex-direction:column; gap:4px;">
+            <div class="pd-price" style="font-size:1.8rem; font-weight:800; color:var(--primary); line-height:1;">
+              ${product.price} <span class="currency" style="font-size:1rem; opacity:0.8;">${product.currency || 'USD'}</span>
+            </div>
+            ${localPrice ? `<div class="pd-local-price" style="font-size:0.9rem; color:var(--text-muted); opacity:0.8;">${localPrice}</div>` : ''}
           </div>
           ${duration ? `
             <div class="pd-duration">
@@ -939,11 +947,13 @@
     body.innerHTML = `
       <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${txt('durationPrompt')}</p>
       <div id="plansList" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.2rem;">
-        ${plans.map((plan, i) => {
+        ${plans.filter(plan => !(plan.official_price && plan.price > plan.official_price)).map((plan, i) => {
           const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
           return `
             <div class="plan-option" data-index="${i}" style="border:2px solid var(--border);border-radius:12px;padding:0.9rem 1rem;cursor:pointer;transition:border-color 0.18s,background 0.18s;display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-weight:700;font-size:0.97rem;">${label}</span>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-weight:700;font-size:0.97rem;">${label}</span>
+              </div>
               <span style="font-size:1.1rem;font-weight:800;color:var(--primary);">${plan.price} ${product.currency || 'USD'}</span>
             </div>
           `;

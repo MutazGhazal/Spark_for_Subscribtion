@@ -758,6 +758,7 @@ body.rtl {
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   opacity: 0;
   transition: opacity var(--transition);
   pointer-events: none;
@@ -917,6 +918,7 @@ body.rtl {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  line-clamp: 3;
 }
 
 .product-meta {
@@ -926,6 +928,21 @@ body.rtl {
   margin-bottom: 0.75rem; /* Reduced margin */
   padding-top: 0.75rem; /* Reduced padding */
   border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.product-price-box {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.official-price-strike {
+  text-decoration: line-through;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .product-price {

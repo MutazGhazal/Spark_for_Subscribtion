@@ -228,12 +228,33 @@ def run_checker():
             global_fee
         )
         
+        # Update subscription plans if they exist
+        updated_plans = []
+        original_plans = p.get('subscription_plans', [])
+        if original_plans:
+            for plan in original_plans:
+                plan_cost = plan.get('cost_price')
+                # If plan has no cost, we can't recalculate it accurately from here
+                # without knowing which plan on Z2U it corresponds to.
+                # However, if it HAS a cost_price, we update its selling price.
+                if plan_cost is not None:
+                    plan_new_price = calculate_selling_price(
+                        plan_cost,
+                        p.get('profit_margin'),
+                        p.get('fixed_fee'),
+                        global_margin,
+                        global_fee
+                    )
+                    plan['price'] = round(plan_new_price, 2)
+                updated_plans.append(plan)
+
         # Update database
         update_data = {
             'available': is_available,
             'availability_source': source,
             'cost_price': best_cost,
             'price': round(new_selling_price, 2),
+            'subscription_plans': updated_plans if updated_plans else original_plans,
             'last_availability_check': 'now()'
         }
         supabase.table('products').update(update_data).eq('id', p_id).execute()

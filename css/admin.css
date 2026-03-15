@@ -285,6 +285,21 @@
   border-color: var(--primary-light);
 }
 
+.admin-product-card.overpriced-warning {
+  border-left: 4px solid #ef4444;
+  background: rgba(239, 68, 68, 0.02);
+}
+
+[dir="rtl"] .admin-product-card.overpriced-warning {
+  border-left: none;
+  border-right: 4px solid #ef4444;
+}
+
+.admin-product-card.overpriced-warning:hover {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: #ef4444;
+}
+
 .admin-product-card.has-source {
   cursor: pointer;
 }

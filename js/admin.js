@@ -391,16 +391,22 @@
       const plans = p.subscription_plans || [];
       const hasPlans = plans.length > 0;
       const hasSource = hasPlans || p.source_url;
+      
+      const isOverpriced = p.official_price && p.price > p.official_price;
+      const plansAreOverpriced = plans.some(plan => plan.official_price && plan.price > plan.official_price);
+      const isWarning = isOverpriced || plansAreOverpriced;
+
       return `
-        <div class="admin-product-card ${hasSource ? 'has-source' : ''}" data-index="${i}">
+        <div class="admin-product-card ${hasSource ? 'has-source' : ''} ${isWarning ? 'overpriced-warning' : ''}" data-index="${i}">
           <div class="admin-product-img">
             <img src="${p.image}" alt="" onerror="this.style.display='none'">
           </div>
           <div class="admin-product-details">
-          <h4>${adminNameVal(p)}</h4>
+          <h4>${adminNameVal(p)} ${isWarning ? '<span style="color:#ef4444; margin-inline-start:0.5rem;" title="سعر البيع أعلى من الرسمي!">⚠️</span>' : ''}</h4>
             <p>${p.category} &bull; ${p.duration_ar || p.duration_en || ''} &bull; 
               <span class="status-badge ${p.is_active !== false ? '' : 'unavailable'}">${p.is_active !== false ? '' : 'مخفي/غير نشط &bull; '}</span>
               <span class="status-badge ${p.available !== false ? 'available' : 'unavailable'}">${p.available !== false ? 'متوفر' : 'غير متوفر'}</span>
+              ${isWarning ? '<span class="status-badge warning" style="background:rgba(239,68,68,0.1); color:#ef4444; margin-inline-start:0.4rem;">تنبيه سعر!</span>' : ''}
             </p>
             <p style="font-size:0.8rem; color:var(--text-muted);">${p.availability_source && p.availability_source !== 'NONE' ? `📍 مصدر التوفر: ${p.availability_source}` : ''}</p>
             ${hasPlans
@@ -409,7 +415,11 @@
             }
             ${p.wmcentre_url ? `<a href="${p.wmcentre_url}" target="_blank" class="source-link" title="WMCentre" onclick="event.stopPropagation()" style="margin-right:8px;">🔗 WMC</a>` : ''}
           </div>
-          <span class="admin-product-price">${p.price} ${p.currency || 'USD'}</span>
+          <div class="admin-product-price-box" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+            <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${p.price}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${p.cost_price || 0}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${p.official_price || '-'}</span>
+          </div>
           <div class="admin-product-actions">
             <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
             <button class="btn-icon edit" data-index="${i}" title="تعديل"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -444,7 +454,11 @@
                   <div style="font-size:0.85rem;color:var(--text-muted);">${plan.label_en || ''}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.75rem;">
-                  <span style="font-weight:800;color:var(--primary);">${plan.price} ${p.currency || 'USD'}</span>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                    <span style="font-weight:800;color:var(--primary); ${plan.official_price && plan.price > plan.official_price ? 'color:#ef4444;' : ''}">$${plan.price}</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">تكلفة: $${plan.cost_price || 0}</span>
+                    ${plan.official_price ? `<span style="font-size:0.7rem; color:var(--text-muted); ${plan.price > plan.official_price ? 'color:#ef4444; font-weight:700;' : ''}">رسمي: $${plan.official_price}</span>` : ''}
+                  </div>
                   ${plan.source_url ? `<a href="${plan.source_url}" target="_blank" style="background:var(--primary);color:#fff;padding:0.3rem 0.8rem;border-radius:8px;text-decoration:none;font-size:0.85rem;">🔗 فتح</a>` : '<span style="color:var(--text-muted);font-size:0.8rem;">بدون رابط</span>'}
                 </div>
               </div>
@@ -542,7 +556,8 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>سعر التكلفة (Cost)</label><input type="number" id="pCostPrice" value="${p.cost_price || 0}" step="0.01" min="0" oninput="window._updatePricePreview()"></div>
-          <div class="form-group"><label>نسبة الربح (Margin - مثال: 1.1)</label><input type="number" id="pProfitMargin" value="${p.profit_margin || ''}" step="0.01" min="1" placeholder="افتراضي: ${siteSettings.global_profit_margin || 1.1}" oninput="window._updatePricePreview()"></div>
+          <div class="form-group"><label>السعر الرسمي (Retail)</label><input type="number" id="pOfficialPrice" value="${p.official_price || ''}" step="0.01" min="0"></div>
+          <div class="form-group"><label>نسبة الربح (Margin)</label><input type="number" id="pProfitMargin" value="${p.profit_margin || ''}" step="0.01" min="1" placeholder="افتراضي: ${siteSettings.global_profit_margin || 1.1}" oninput="window._updatePricePreview()"></div>
           <div class="form-group"><label>رسوم ثابتة (Fee)</label><input type="number" id="pFixedFee" value="${p.fixed_fee || ''}" step="0.01" min="0" placeholder="افتراضي: ${siteSettings.global_fixed_fee || 3}" oninput="window._updatePricePreview()"></div>
         </div>
         <div class="form-row">
@@ -611,16 +626,18 @@
           </div>
           <div id="plansContainer">
             ${(p.subscription_plans || []).map((plan, i) => `
-              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 80px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
-                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="0" min="0" step="0.01" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="https://رابط المصدر" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
+                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
               </div>
             `).join('')}
           </div>
-          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | سعر | رابط المصدر</p>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | تكلفة | رسمي | بيع</p>
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -647,12 +664,14 @@
       const nextDur = getNextDurationLabel(existingCount);
       const row = document.createElement('div');
       row.className = 'plan-row';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 80px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
       row.innerHTML = `
-        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر واحد" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="1 Month" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="number" class="plan-price" value="0" min="0" step="0.01" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-source" placeholder="https://رابط الشراء" dir="ltr" style="padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-source" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="number" class="plan-cost" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="number" class="plan-official" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="number" class="plan-price" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       `;
       row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
@@ -792,9 +811,18 @@
       const labelAr = row.querySelector('.plan-label-ar')?.value.trim() || '';
       const labelEn = row.querySelector('.plan-label-en')?.value.trim() || '';
       const price = parseFloat(row.querySelector('.plan-price')?.value) || 0;
+      const cost = parseFloat(row.querySelector('.plan-cost')?.value) || 0;
+      const official = parseFloat(row.querySelector('.plan-official')?.value) || 0;
       const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
       if (labelAr || labelEn) {
-        subscriptionPlans.push({ label_ar: labelAr, label_en: labelEn, price, source_url: sourceUrl });
+        subscriptionPlans.push({ 
+          label_ar: labelAr, 
+          label_en: labelEn, 
+          price, 
+          cost_price: cost, 
+          official_price: official, 
+          source_url: sourceUrl 
+        });
       }
     });
 
@@ -811,6 +839,7 @@
       wmcentre_url: $('#pWmcUrl').value.trim(),
       availability_source: $('#pAvailSource').value,
       cost_price: parseFloat($('#pCostPrice').value) || 0,
+      official_price: parseFloat($('#pOfficialPrice').value) || 0,
       profit_margin: $('#pProfitMargin').value ? parseFloat($('#pProfitMargin').value) : null,
       fixed_fee: $('#pFixedFee').value ? parseFloat($('#pFixedFee').value) : null,
       price: parseFloat($('#pPrice').value) || 0,
@@ -1066,14 +1095,30 @@
       const updates = products.map(p => {
         const pMargin = (p.profit_margin !== null && p.profit_margin !== undefined && p.profit_margin !== '') ? p.profit_margin : margin;
         const pFee = (p.fixed_fee !== null && p.fixed_fee !== undefined && p.fixed_fee !== '') ? p.fixed_fee : fee;
+        
+        // Update main price
         const cost = p.cost_price || p.price || 0;
         const newPrice = Number((cost * pMargin + pFee).toFixed(2));
-        return { ...p, price: newPrice };
+        
+        // Update plan prices if any
+        let newPlans = [];
+        if (p.subscription_plans && p.subscription_plans.length > 0) {
+          newPlans = p.subscription_plans.map(plan => {
+            const planCost = plan.cost_price || plan.price || 0;
+            const planNewPrice = Number((planCost * pMargin + pFee).toFixed(2));
+            return { ...plan, price: planNewPrice };
+          });
+        }
+
+        return { ...p, price: newPrice, subscription_plans: newPlans };
       });
 
-      // Update in chunks to avoid large request issues
+      // Update in chunks
       for (const p of updates) {
-        await sb.from('products').update({ price: p.price }).eq('id', p.id);
+        await sb.from('products').update({ 
+          price: p.price, 
+          subscription_plans: p.subscription_plans 
+        }).eq('id', p.id);
       }
       
       products = updates;
