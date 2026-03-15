@@ -751,9 +751,9 @@ body.rtl {
 .product-card::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: var(--radius);
-  padding: 1.5px;
+  padding: 2px; /* Border thickness */
   background: linear-gradient(135deg, var(--primary), var(--accent-pink), var(--accent));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -762,7 +762,7 @@ body.rtl {
   opacity: 0;
   transition: opacity var(--transition);
   pointer-events: none;
-  z-index: 10;
+  z-index: 5; /* Lower than text, higher than image */
 }
 
 .product-card:hover {
@@ -820,10 +820,10 @@ body.rtl {
   transition: all 0.4s ease;
 }
 
-/* On hover, make the background solid ONLY at the bottom so the revealed text is very readable */
+/* On hover, slightly increase dark gradient at the bottom only to keep text readable */
 .product-card:hover .product-image::after {
-  height: 100%;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.3) 100%);
+  height: 70%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 50%, transparent 100%);
 }
 
 .product-image img {
@@ -853,9 +853,10 @@ body.rtl {
   display: flex;
   flex-direction: column;
   position: relative;
-  z-index: 2;
-  margin-top: auto; /* Push content to bottom */
+  z-index: 6; /* Just above the glow border */
+  margin-top: auto;
   transition: all 0.4s ease;
+  background: transparent; /* Ensure no solid background covers the image */
 }
 
 /* Ensure text on top of image is readable */
