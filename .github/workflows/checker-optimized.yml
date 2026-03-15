@@ -55,7 +55,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           echo "🚀 Running QUICK check (products with missing URLs or prices)..."
-          python scripts/core/check_availability.py --quick
+          python check_availability.py --quick
           echo "✅ Quick check completed."
 
       - name: Full Check (All Products)
@@ -65,7 +65,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           echo "🚀 Running FULL check (all 268 products)..."
-          python scripts/core/check_availability.py
+          python check_availability.py
           echo "✅ Full check completed."
 
       - name: Update Prices Only
@@ -75,7 +75,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           echo "💰 Updating prices..."
-          python scripts/core/fix_plan_prices.py --update
+          python fix_plan_prices.py --update
           echo "✅ Prices updated."
 
       - name: Check URLs Only
@@ -85,7 +85,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           echo "🔗 Checking URLs..."
-          python scripts/utils/list_urls.py > url_check_results.txt
+          python list_urls.py > url_check_results.txt
           echo "✅ URL check completed."
 
       - name: Upload Results
