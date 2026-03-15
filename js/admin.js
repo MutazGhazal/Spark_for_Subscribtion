@@ -448,9 +448,20 @@
             ${p.wmcentre_url ? `<a href="${p.wmcentre_url}" target="_blank" class="source-link" title="WMCentre" onclick="event.stopPropagation()" style="margin-right:8px;">🔗 WMC</a>` : ''}
           </div>
           <div class="admin-product-price-box" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-            <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost || 0}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${officialPrice}</span>
+            ${hasPlans 
+              ? plans.map((plan, idx) => `
+                <div style="display:flex; flex-direction:column; align-items:flex-end; ${idx > 0 ? 'margin-top:4px; padding-top:4px; border-top:1px solid var(--border);' : ''}">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">${plan.label_ar || plan.label_en}</span>
+                  <span class="admin-product-price" style="font-size:0.9rem; ${plan.official_price && plan.price > plan.official_price ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع">$${plan.price}</span>
+                  ${plan.official_price ? `<span style="font-size:0.7rem; color:var(--text-muted); ${plan.price > plan.official_price ? 'color:#ef4444;' : ''}" title="السعر الرسمي">🏷️ $${plan.official_price}</span>` : ''}
+                </div>
+              `).join('')
+              : `
+                <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost || 0}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${officialPrice}</span>
+              `
+            }
           </div>
           <div class="admin-product-actions">
             <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
