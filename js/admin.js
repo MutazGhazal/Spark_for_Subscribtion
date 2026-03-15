@@ -497,10 +497,24 @@
                   <div style="font-size:0.85rem;color:var(--text-muted);">${plan.label_en || ''}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.75rem;">
-                  <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                    <span style="font-weight:800;color:var(--primary); ${plan.official_price && plan.price > plan.official_price ? 'color:#ef4444;' : ''}">$${plan.price}</span>
-                    <span style="font-size:0.7rem; color:var(--text-muted);">تكلفة: $${plan.cost_price || 0}</span>
-                    ${plan.official_price ? `<span style="font-size:0.7rem; color:var(--text-muted); ${plan.price > plan.official_price ? 'color:#ef4444; font-weight:700;' : ''}">رسمي: $${plan.official_price}</span>` : ''}
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                    <!-- سعر البيع -->
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="font-size:0.7rem; color:var(--text-muted);">بيع:</span>
+                      <span style="font-weight:800; font-size:1rem; color:var(--primary); ${plan.official_price && plan.price > plan.official_price ? 'color:#ef4444;' : ''}">$${plan.price}</span>
+                    </div>
+                    <!-- سعر التكلفة -->
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="font-size:0.7rem; color:var(--text-muted);">تكلفة:</span>
+                      <span style="font-size:0.85rem; color:#10b981; font-weight:600;">$${plan.cost_price || 0}</span>
+                    </div>
+                    <!-- السعر الرسمي -->
+                    ${plan.official_price ? `
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="font-size:0.7rem; color:var(--text-muted);">رسمي:</span>
+                      <span style="font-size:0.85rem; color:#3b82f6; font-weight:600; ${plan.price > plan.official_price ? 'color:#ef4444; text-decoration:line-through;' : ''}">$${plan.official_price}</span>
+                    </div>
+                    ` : ''}
                   </div>
                   ${plan.source_url ? `<a href="${plan.source_url}" target="_blank" style="background:var(--primary);color:#fff;padding:0.3rem 0.8rem;border-radius:8px;text-decoration:none;font-size:0.85rem;">🔗 فتح</a>` : '<span style="color:var(--text-muted);font-size:0.8rem;">بدون رابط</span>'}
                 </div>
