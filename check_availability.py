@@ -7,11 +7,19 @@ from bs4 import BeautifulSoup
 from supabase import create_client, Client
 
 # === CONFIGURATION ===
+# Try to load from .env file if exists
+if os.path.exists(".env"):
+    with open(".env", "r") as f:
+        for line in f:
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                os.environ[k] = v
+
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("❌ ERROR: Please set SUPABASE_URL and SUPABASE_KEY environment variables.")
+    print("❌ ERROR: Please set SUPABASE_URL and SUPABASE_KEY environment variables (or create .env file).")
     exit(1)
 
 try:
