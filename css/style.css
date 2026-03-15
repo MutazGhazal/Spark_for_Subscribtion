@@ -744,8 +744,10 @@ body.rtl {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 320px; /* Reduced base height */
-  height: auto; /* Allow growth */
+  min-height: 580px; /* Even longer as requested */
+  height: auto;
+  cursor: pointer;
+  background: var(--bg-card); /* Ensure clean base */
 }
 
 .product-card::before {
@@ -753,26 +755,24 @@ body.rtl {
   position: absolute;
   inset: 0;
   border-radius: var(--radius);
-  padding: 2px; /* Border thickness */
-  background: linear-gradient(135deg, var(--primary), var(--accent-pink), var(--accent));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  opacity: 0;
-  transition: opacity var(--transition);
+  border: 1.5px solid transparent; /* Prepare for hover border */
+  transition: all var(--transition);
   pointer-events: none;
-  z-index: 5; /* Lower than text, higher than image */
+  z-index: 5;
 }
 
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--primary-light);
 }
 
 .product-card:hover::before {
-  opacity: 1;
+  border-color: var(--primary-light);
+  box-shadow: inset 0 0 20px var(--glow);
+  opacity: 0.4;
 }
+
+/* Removed redundant hover rule already handled above */
 
 .product-badge {
   position: absolute;
@@ -820,16 +820,16 @@ body.rtl {
   transition: all 0.4s ease;
 }
 
-/* On hover, slightly increase dark gradient at the bottom only to keep text readable */
+/* On hover, keep the gradient subtle at the bottom, NO solid colors covering the center */
 .product-card:hover .product-image::after {
-  height: 70%;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 50%, transparent 100%);
+  height: 55%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.4) 60%, transparent 100%);
 }
 
 .product-image img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Show full image */
+  object-fit: cover; /* Fill the whole tall box */
   transition: transform var(--bounce);
 }
 
@@ -1694,6 +1694,7 @@ body.rtl {
 
   .product-card {
     border-radius: var(--radius-sm);
+    min-height: 480px; /* Proportionately longer on mobile */
   }
 
   .product-card::before {
