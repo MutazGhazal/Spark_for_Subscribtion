@@ -567,6 +567,14 @@
     });
   }
 
+  function getProductMinPrice(p) {
+    if (p.subscription_plans && p.subscription_plans.length > 0) {
+      const prices = p.subscription_plans.map(plan => plan.price).filter(p => p > 0);
+      if (prices.length > 0) return Math.min(...prices);
+    }
+    return p.price || 0;
+  }
+
   // ===== PRODUCTS =====
   function getFilteredProducts() {
     return products.filter(p => {
@@ -574,8 +582,11 @@
       if (!matchCat) return false;
       if (p.is_active === false) return false;
       
+      const minPrice = getProductMinPrice(p);
+
       // Stop Ad Logic: Hide if Selling Price > Official Price
-      if (p.official_price && p.price > p.official_price) return false;
+      // If product has an official price, and the lowest price we offer is higher, hide it.
+      if (p.official_price && minPrice > p.official_price) return false;
 
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -596,12 +607,12 @@
 
     if (filtered.length === 0) { grid.innerHTML = ''; noRes.style.display = 'block'; return; }
     noRes.style.display = 'none';
-
     grid.innerHTML = filtered.map(p => {
       const name = nameVal(p); // always use nameLang for product names
       const desc = langVal(p, 'description');
       const duration = langVal(p, 'duration');
       const isAvailable = p.available !== false;
+      const displayPrice = getProductMinPrice(p);
 
       return `
         <div class="product-card animate-in" data-id="${p.id}">
@@ -621,7 +632,7 @@
             </div>
             <div class="product-meta">
               <div class="product-price-box">
-                <span class="product-price">${p.price} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(p.price, p.currency) ? `<span class="local-price">${formatLocalPrice(p.price, p.currency)}</span>` : ''}</span>
+                <span class="product-price">${displayPrice} <span class="currency">${p.currency || 'USD'}</span>${formatLocalPrice(displayPrice, p.currency) ? `<span class="local-price">${formatLocalPrice(displayPrice, p.currency)}</span>` : ''}</span>
               </div>
               <span class="product-duration">${duration}</span>
             </div>
@@ -699,9 +710,9 @@
         <div class="pd-meta">
           <div class="pd-price-box" style="display:flex; flex-direction:column; gap:4px;">
             <div class="pd-price" style="font-size:1.8rem; font-weight:800; color:var(--primary); line-height:1;">
-              ${product.price} <span class="currency" style="font-size:1rem; opacity:0.8;">${product.currency || 'USD'}</span>
+              ${getProductMinPrice(product)} <span class="currency" style="font-size:1rem; opacity:0.8;">${product.currency || 'USD'}</span>
             </div>
-            ${localPrice ? `<div class="pd-local-price" style="font-size:0.9rem; color:var(--text-muted); opacity:0.8;">${localPrice}</div>` : ''}
+            ${formatLocalPrice(getProductMinPrice(product), product.currency) ? `<div class="pd-local-price" style="font-size:0.9rem; color:var(--text-muted); opacity:0.8;">${formatLocalPrice(getProductMinPrice(product), product.currency)}</div>` : ''}
           </div>
           ${duration ? `
             <div class="pd-duration">
