@@ -1,3 +1,5 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import requests
 import re
 import json
@@ -41,23 +43,32 @@ def test_scrape(url):
 
         # 2. Regex
         print("\n2. Checking Regex Patterns...")
-        data_matches = re.findall(r'price["\']?\s*:\s*["\']?(\d{1,4}(?:[.,]\d{2})?)["\']?', content, re.IGNORECASE)
-        visible_matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
-        visible_matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        if "Request error" in content or "Product does not exist" in content:
+            print("❌ Detected soft 404 page.")
         
-        all_matches = list(set(data_matches + visible_matches))
-        print(f"   Found potential matches: {all_matches}")
+        # Prefer specific spans
+        price_spans = soup.select('span.priceTxt') or soup.select('.price-num') or soup.select('.item-price')
+        valid_prices = []
+        if price_spans:
+            print(f"   Searching in {len(price_spans)} price spans...")
+            for s in price_spans:
+                match = re.search(r"(\d+\.?\d*)", s.get_text())
+                if match:
+                    val = float(match.group(1))
+                    if 0.5 < val < 1000: valid_prices.append(val)
         
-        prices = []
-        for m in all_matches:
-            try:
-                val = float(m.replace(',', '.'))
-                if 0.5 < val < 1000: prices.append(val)
-            except: continue
-            
+        # Regex fallback with currency
+        currency_matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
+        currency_matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        
+        all_found = list(set(valid_prices + [float(m.replace(',','.')) for m in currency_matches if re.match(r'^\d', m)]))
+        
+        prices = [v for v in all_found if 0.5 < v < 1000]
         if prices:
-            best = min(prices)
-            print(f"   ✨ Best Regex Match: {best}")
+            # Filter out very low prices if higher ones exist (to avoid fees)
+            high_prices = [v for v in prices if v >= 1.0]
+            best = min(high_prices) if high_prices else min(prices)
+            print(f"   ✨ Best Match detected: {best}")
             if not found_price: found_price = best
 
         if found_price:

@@ -400,9 +400,20 @@
       };
 
       const displayPrice = getAdminMinPrice(p);
-      const displayCost = p.subscription_plans && p.subscription_plans.length > 0 
-        ? (p.subscription_plans[0].cost_price || 0) 
-        : (p.cost_price || 0);
+      
+      // Better cost display: fallback to main cost if plan 1 cost is 0
+      let displayCost = p.cost_price || 0;
+      if (p.subscription_plans && p.subscription_plans.length > 0) {
+        const firstPlanCost = p.subscription_plans[0].cost_price;
+        if (firstPlanCost && firstPlanCost > 0) displayCost = firstPlanCost;
+      }
+
+      // Official price fallback
+      let officialPrice = p.official_price || '-';
+      if (p.subscription_plans && p.subscription_plans.length > 0) {
+          const firstPlanOfficial = p.subscription_plans[0].official_price;
+          if (firstPlanOfficial && firstPlanOfficial > 0) officialPrice = firstPlanOfficial;
+      }
 
       const hasSource = hasPlans || p.source_url;
       
@@ -431,8 +442,8 @@
           </div>
           <div class="admin-product-price-box" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
             <span class="admin-product-price" style="${isOverpriced ? 'color:#ef4444; font-weight:900;' : ''}" title="سعر البيع الحالي">$${displayPrice}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${p.official_price || '-'}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="سعر التكلفة">📉 تكلفة: $${displayCost || 0}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);" title="السعر الرسمي">🏷️ رسمي: $${officialPrice}</span>
           </div>
           <div class="admin-product-actions">
             <button class="btn-icon duplicate" data-index="${i}" title="نسخ (تدبيل)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -1117,15 +1128,21 @@
         const pFee = (p.fixed_fee !== null && p.fixed_fee !== undefined && p.fixed_fee !== '') ? p.fixed_fee : fee;
         
         // Update main price
-        const cost = p.cost_price || p.price || 0;
-        const newPrice = Number((cost * pMargin + pFee).toFixed(2));
+        const cost = p.cost_price || 0;
+        let newPrice = p.price; // Keep old price if cost is 0
+        if (cost > 0) {
+            newPrice = Number((cost * pMargin + pFee).toFixed(2));
+        }
         
         // Update plan prices if any
         let newPlans = [];
         if (p.subscription_plans && p.subscription_plans.length > 0) {
           newPlans = p.subscription_plans.map(plan => {
-            const planCost = plan.cost_price || plan.price || 0;
-            const planNewPrice = Number((planCost * pMargin + pFee).toFixed(2));
+            const planCost = plan.cost_price || 0;
+            let planNewPrice = plan.price; // Keep old price if plan cost is 0
+            if (planCost > 0) {
+                planNewPrice = Number((planCost * pMargin + pFee).toFixed(2));
+            }
             return { ...plan, price: planNewPrice };
           });
         }
