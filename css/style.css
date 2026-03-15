@@ -744,8 +744,8 @@ body.rtl {
   position: relative;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  min-height: 400px; /* Gives the background image enough vertical space to display */
+  min-height: 320px; /* Reduced base height */
+  height: auto; /* Allow growth */
 }
 
 .product-card::before {
@@ -812,9 +812,9 @@ body.rtl {
 .product-image::after {
   content: '';
   position: absolute;
-  inset: auto 0 0 0; /* Only strictly attach to bottom */
-  height: 50%; /* Only cover bottom half */
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 60%, transparent 100%);
+  inset: auto 0 0 0;
+  height: 60%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.2) 60%, transparent 100%);
   pointer-events: none;
   z-index: 1;
   transition: all 0.4s ease;
@@ -822,8 +822,8 @@ body.rtl {
 
 /* On hover, make the background solid ONLY at the bottom so the revealed text is very readable */
 .product-card:hover .product-image::after {
-  height: 60%; /* Expand slightly on hover to cover the sliding text */
-  background: linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.9) 70%, transparent 100%);
+  height: 100%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.3) 100%);
 }
 
 .product-image img {
@@ -849,14 +849,13 @@ body.rtl {
 }
 
 .product-info {
-  padding: 1rem 1rem 0.5rem 1rem; /* Less padding at the top, standard padding elsewhere */
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 2;
-  height: 100%;
-  justify-content: flex-end; /* Push content to bottom */
-  padding-top: 15rem; /* Force text down to the bottom by adding top padding */
+  margin-top: auto; /* Push content to bottom */
+  transition: all 0.4s ease;
 }
 
 /* Ensure text on top of image is readable */

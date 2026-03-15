@@ -140,7 +140,7 @@ def calculate_selling_price(cost, profit_margin_p, fixed_fee_p, global_margin, g
 def scrape_official_price(url):
     """
     Attempts to extract a price from an official website.
-    Since official sites vary, we use a generic regex search for price patterns.
+    Uses JSON-LD (Schema.org) fallback and improved regex.
     """
     if not url: return None
     try:
@@ -151,21 +151,51 @@ def scrape_official_price(url):
             return None
         
         content = res.text
-        # Look for patterns like $19.99, £9.99, etc.
-        matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
-        matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # 1. Try to find JSON-LD (Common on official sites for SEO)
+        json_ld = soup.find_all('script', type='application/ld+json')
+        for script in json_ld:
+            try:
+                data = json.loads(script.string)
+                # Handle single object or list of objects
+                items = data if isinstance(data, list) else [data]
+                for item in items:
+                    # Look for Price Specification or Offers
+                    offers = item.get('offers')
+                    if offers:
+                        if isinstance(offers, list): offers = offers[0]
+                        price = offers.get('price')
+                        if price: 
+                            print(f"  ✨ Found price in JSON-LD: ${price}")
+                            return float(price)
+            except: continue
+
+        # 2. Improved Regex search
+        # Look for patterns like "price": 19.99 or price:19.99
+        data_matches = re.findall(r'price["\']?\s*:\s*["\']?(\d{1,4}(?:[.,]\d{2})?)["\']?', content, re.IGNORECASE)
+        
+        # Look for visible patterns like $19.99 or 19.99$
+        visible_matches = re.findall(r'[\$\€\£]\s?(\d{1,4}(?:[.,]\d{2})?)', content)
+        visible_matches += re.findall(r'(\d{1,4}(?:[.,]\d{2})?)\s?[\$\€\£]', content)
+        
+        all_matches = data_matches + visible_matches
         
         prices = []
-        for m in matches:
+        for m in all_matches:
             try:
+                # Clean up: replace comma with dot, remove any extra chars
                 val = float(m.replace(',', '.'))
                 if 0.5 < val < 1000: prices.append(val)
             except: continue
             
         if prices:
+            # We take the middle-ground: many sites show both monthly and yearly.
+            # Usually the lowest is the monthly one we want to reference.
             best = min(prices)
-            print(f"  ✨ Found official price: ${best}")
+            print(f"  ✨ Found official price via regex: ${best}")
             return best
+            
     except Exception as e:
         print(f"  ⚠️ Error scraping official: {e}")
     return None
@@ -277,8 +307,11 @@ def run_checker():
                 # Scrape official price for plan if URL exists
                 if plan_official_url:
                     plan_scraped_official = scrape_official_price(plan_official_url)
-                    if plan_scraped_official:
+                    if plan_scraped_official is not None:
+                        print(f"    ✨ Updated plan official price: {plan_scraped_official}")
                         plan['official_price'] = plan_scraped_official
+                    else:
+                        print(f"    ⚠️ Failed to scrape official price for plan: {plan.get('label_en')}")
 
                 # If plan has a cost_price, update its selling price.
                 if plan_cost is not None:
@@ -298,11 +331,19 @@ def run_checker():
             'availability_source': source,
             'cost_price': best_cost,
             'price': round(new_selling_price, 2),
-            'official_price': scraped_official if scraped_official else p.get('official_price'),
+            'official_price': scraped_official if scraped_official is not None else p.get('official_price'),
             'subscription_plans': updated_plans if updated_plans else original_plans,
             'last_availability_check': 'now()'
         }
-        supabase.table('products').update(update_data).eq('id', p_id).execute()
+        if scraped_official is not None:
+            print(f"  ✅ Official price updated to: ${scraped_official}")
+        elif official_url:
+            print(f"  ❌ Official price NOT updated (Scrape failed or returned None)")
+        try:
+            supabase.table('products').update(update_data).eq('id', p_id).execute()
+        except Exception as update_err:
+            print(f"  ❌ Failed to update database for {name}: {update_err}")
+            print(f"     (Make sure you have run the latest SQL migration to add 'official_url' and 'official_price' columns)")
         
         # Be nice to the servers
         time.sleep(1)
