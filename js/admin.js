@@ -474,14 +474,19 @@
       popup.id = 'adminPlansPopup';
       popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
       popup.innerHTML = `
-        <div style="background:var(--bg-card);border-radius:16px;padding:1.5rem;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+        <style>
+          #adminPlansPopup ::-webkit-scrollbar { width: 6px; }
+          #adminPlansPopup ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+          #adminPlansPopup ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        </style>
+        <div style="background:var(--bg-card);border-radius:16px;padding:1.5rem;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-height:80vh;display:flex;flex-direction:column;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
             <h3 style="margin:0;font-size:1.1rem;">📋 ${p.name_ar || p.name_en} — مدد الاشتراك</h3>
             <button onclick="document.getElementById('adminPlansPopup').remove()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="display:flex;flex-direction:column;gap:0.6rem;max-height:400px;overflow-y:auto;padding-right:8px;">
             ${plans.map((plan, i) => `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--bg-secondary);border-radius:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--bg-secondary);border-radius:10px;flex-shrink:0;">
                 <div>
                   <div style="font-weight:700;">${plan.label_ar || plan.label_en}</div>
                   <div style="font-size:0.85rem;color:var(--text-muted);">${plan.label_en || ''}</div>
