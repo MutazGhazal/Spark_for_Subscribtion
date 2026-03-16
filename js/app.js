@@ -1501,9 +1501,9 @@
       setTimeout(() => {
         if (splashVideo) splashVideo.pause();
         hideSplash();
-      }, 3500);
+      }, 5000);
     } else {
-      setTimeout(hideSplash, 3500);
+      setTimeout(hideSplash, 5000);
     }
   }
 
