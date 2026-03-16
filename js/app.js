@@ -1764,26 +1764,33 @@
   }
 })();
 
-// Video unmute functionality
+// Video unmute on any click
 document.addEventListener('DOMContentLoaded', () => {
-  const unmuteBtn = document.getElementById('unmuteBtn');
   const splashVideo = document.getElementById('splashVideo');
-  if (unmuteBtn && splashVideo) {
-    unmuteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      // Must play from start with audio
-      splashVideo.currentTime = 0;
+  const unmuteBtn = document.getElementById('unmuteBtn');
+  
+  if (splashVideo) {
+    let audioEnabled = false;
+    
+    const enableAudio = () => {
+      if (audioEnabled || splashVideo.muted === false) return;
+      audioEnabled = true;
       splashVideo.muted = false;
       splashVideo.volume = 0.7;
-      
-      const playPromise = splashVideo.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          unmuteBtn.style.display = 'none';
-        }).catch(err => {
-          console.log('Audio play failed:', err);
-        });
-      }
-    });
+      if (unmuteBtn) unmuteBtn.style.display = 'none';
+      console.log('Audio enabled');
+    };
+    
+    // Enable audio on any click/touch
+    document.addEventListener('click', enableAudio, { once: true });
+    document.addEventListener('touchstart', enableAudio, { once: true });
+    
+    // Also enable when unmute button clicked
+    if (unmuteBtn) {
+      unmuteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        enableAudio();
+      });
+    }
   }
 });
