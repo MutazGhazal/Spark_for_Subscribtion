@@ -1633,11 +1633,24 @@
       if (splashHidden || !splash.parentNode) return;
       splashHidden = true;
       splash.classList.add('done');
-      setTimeout(() => { try { cancelAnimationFrame(animId); } catch(e){} splash.remove(); }, 900);
+      setTimeout(() => { 
+        try { cancelAnimationFrame(animId); } catch(e){} 
+        splash.remove(); 
+        // Show main content
+        document.body.style.overflow = 'auto';
+      }, 900);
     };
+    
+    // Hide splash when video ends
+    const splashVideo = document.getElementById('splashVideo');
+    if (splashVideo) {
+      splashVideo.addEventListener('ended', hideSplash);
+    }
+    
+    // Fallback timers
     setTimeout(hideSplash, 8000);  // 8 seconds for video
-    setTimeout(hideSplash, 10000);
-    splash.addEventListener('click', hideSplash, { once: true });
+    setTimeout(hideSplash, 12000);
+    // Removed click to skip - video must play fully
   }
 
   // ===== INIT =====
@@ -1746,11 +1759,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const unmuteBtn = document.getElementById('unmuteBtn');
   const splashVideo = document.getElementById('splashVideo');
   if (unmuteBtn && splashVideo) {
-    unmuteBtn.addEventListener('click', (e) => {
+    unmuteBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      splashVideo.muted = false;
-      splashVideo.volume = 0.5;
-      unmuteBtn.style.display = 'none';
+      try {
+        splashVideo.muted = false;
+        splashVideo.volume = 0.5;
+        await splashVideo.play();
+        unmuteBtn.style.display = 'none';
+      } catch (err) {
+        console.log('Audio play failed:', err);
+        // Try again with user interaction
+        splashVideo.play().catch(() => {});
+      }
     });
   }
 });
