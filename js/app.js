@@ -1630,12 +1630,18 @@
 
     let splashHidden = false;
     const hideSplash = () => {
-      if (splashHidden || !splash.parentNode) return;
+      console.log('hideSplash called');
+      if (splashHidden || !splash.parentNode) {
+        console.log('Already hidden or no parent');
+        return;
+      }
       splashHidden = true;
       splash.classList.add('done');
+      console.log('Splash done class added');
       setTimeout(() => { 
         try { cancelAnimationFrame(animId); } catch(e){} 
         splash.remove(); 
+        console.log('Splash removed');
         // Show main content
         document.body.style.overflow = 'auto';
       }, 900);
@@ -1644,16 +1650,16 @@
     // Stop video after 4 seconds and show main content
     const splashVideo = document.getElementById('splashVideo');
     if (splashVideo) {
-      // Pause video after 4 seconds
+      // Stop video after 3 seconds and redirect
       setTimeout(() => {
         if (splashVideo) {
           splashVideo.pause();
-          hideSplash();
         }
-      }, 4000);
+        hideSplash();
+      }, 3000);
     } else {
       // Fallback if no video
-      setTimeout(hideSplash, 4000);
+      setTimeout(hideSplash, 3000);
     }
   }
 
