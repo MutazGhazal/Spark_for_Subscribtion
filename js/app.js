@@ -1641,16 +1641,20 @@
       }, 900);
     };
     
-    // Hide splash when video ends
+    // Stop video after 4 seconds and show main content
     const splashVideo = document.getElementById('splashVideo');
     if (splashVideo) {
-      splashVideo.addEventListener('ended', hideSplash);
+      // Pause video after 4 seconds
+      setTimeout(() => {
+        if (splashVideo) {
+          splashVideo.pause();
+          hideSplash();
+        }
+      }, 4000);
+    } else {
+      // Fallback if no video
+      setTimeout(hideSplash, 4000);
     }
-    
-    // Fallback timers
-    setTimeout(hideSplash, 8000);  // 8 seconds for video
-    setTimeout(hideSplash, 12000);
-    // Removed click to skip - video must play fully
   }
 
   // ===== INIT =====
@@ -1759,17 +1763,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const unmuteBtn = document.getElementById('unmuteBtn');
   const splashVideo = document.getElementById('splashVideo');
   if (unmuteBtn && splashVideo) {
-    unmuteBtn.addEventListener('click', async (e) => {
+    unmuteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      try {
-        splashVideo.muted = false;
-        splashVideo.volume = 0.5;
-        await splashVideo.play();
-        unmuteBtn.style.display = 'none';
-      } catch (err) {
-        console.log('Audio play failed:', err);
-        // Try again with user interaction
-        splashVideo.play().catch(() => {});
+      // Must play from start with audio
+      splashVideo.currentTime = 0;
+      splashVideo.muted = false;
+      splashVideo.volume = 0.7;
+      
+      const playPromise = splashVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          unmuteBtn.style.display = 'none';
+        }).catch(err => {
+          console.log('Audio play failed:', err);
+        });
       }
     });
   }
