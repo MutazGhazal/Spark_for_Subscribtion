@@ -1635,8 +1635,8 @@
       splash.classList.add('done');
       setTimeout(() => { try { cancelAnimationFrame(animId); } catch(e){} splash.remove(); }, 900);
     };
-    setTimeout(hideSplash, 2800);
-    setTimeout(hideSplash, 4500);
+    setTimeout(hideSplash, 8000);  // 8 seconds for video
+    setTimeout(hideSplash, 10000);
     splash.addEventListener('click', hideSplash, { once: true });
   }
 
@@ -1740,3 +1740,17 @@
     init();
   }
 })();
+
+// Video unmute functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const unmuteBtn = document.getElementById('unmuteBtn');
+  const splashVideo = document.getElementById('splashVideo');
+  if (unmuteBtn && splashVideo) {
+    unmuteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      splashVideo.muted = false;
+      splashVideo.volume = 0.5;
+      unmuteBtn.style.display = 'none';
+    });
+  }
+});
