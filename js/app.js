@@ -1481,9 +1481,14 @@
 
   // ===== SPARK SPLASH =====
   function initFireSplash() {
+    console.log('initFireSplash started');
     const splash = document.getElementById('splash');
     const splashVideo = document.getElementById('splashVideo');
-    if (!splash) return;
+    console.log('splash:', splash, 'splashVideo:', splashVideo);
+    if (!splash) {
+      console.log('No splash element found, returning');
+      return;
+    }
 
     let splashHidden = false;
     const hideSplash = () => {
