@@ -1481,152 +1481,9 @@
 
   // ===== SPARK SPLASH =====
   function initFireSplash() {
-    const canvas = document.getElementById('fireCanvas');
     const splash = document.getElementById('splash');
-    if (!canvas || !splash) return;
-
-    const ctx = canvas.getContext('2d');
-    let W, H, animId;
-    const sparks = [];
-    const t0 = performance.now();
-
-    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-    resize();
-
-    function color() {
-      const pick = Math.random();
-      if (pick > 0.55) return [255, 255, 255];
-      if (pick > 0.25) return [180 + Math.random()*75, 210 + Math.random()*45, 255];
-      if (pick > 0.1)  return [100 + Math.random()*80, 160 + Math.random()*60, 255];
-      return [60, 130, 255];
-    }
-
-    function emit(x, y, n, pwr, spread) {
-      for (let i = 0; i < n; i++) {
-        const a = spread !== undefined
-          ? spread + (Math.random() - 0.5) * 1.2
-          : Math.random() * Math.PI * 2;
-        const spd = Math.random() * pwr + pwr * 0.2;
-        const c = color();
-        sparks.push({
-          x, y, px: x, py: y,
-          vx: Math.cos(a) * spd,
-          vy: Math.sin(a) * spd,
-          sz: Math.random() * 2 + 0.6,
-          life: 1,
-          dec: Math.random() * 0.012 + 0.006,
-          r: c[0], g: c[1], b: c[2],
-          grav: 0.15 + Math.random() * 0.1,
-          fric: 0.975 + Math.random() * 0.015
-        });
-      }
-    }
-
-    function animate(now) {
-      const ms = now - t0;
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(5, 8, 20, 0.25)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.globalCompositeOperation = 'lighter';
-
-      const cx = W / 2, cy = H * 0.43;
-
-      if (ms < 800) {
-        emit(cx, cy, 6, 8);
-        emit(cx - 4, cy + 2, 3, 6, -Math.PI / 2);
-        emit(cx + 4, cy - 2, 3, 6, -Math.PI / 2);
-      }
-
-      if (ms > 400 && ms < 900) {
-        emit(cx, cy, 10, 12);
-      }
-
-      if (ms > 800 && ms < 850) {
-        emit(cx, cy, 60, 16);
-        emit(cx, cy, 30, 10);
-      }
-
-      if (ms > 1100 && ms < 1400) {
-        const prog = (ms - 1100) / 300;
-        const lx = cx - W * 0.3 + prog * W * 0.6;
-        emit(lx, cy, 4, 5, -Math.PI / 2);
-      }
-
-      if (ms > 1400 && ms < 1700) {
-        emit(cx, cy, 8, 10);
-      }
-
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        s.px = s.x; s.py = s.y;
-        s.vx *= s.fric;
-        s.vy *= s.fric;
-        s.vy += s.grav;
-        s.x += s.vx;
-        s.y += s.vy;
-        s.life -= s.dec;
-        s.sz *= 0.994;
-
-        if (s.life <= 0 || s.y > H + 30 || s.sz < 0.15) {
-          sparks.splice(i, 1);
-          continue;
-        }
-
-        if (s.y > H - 3 && s.vy > 0) {
-          s.vy *= -0.25;
-          s.vx *= 0.7;
-          s.y = H - 3;
-        }
-
-        const al = s.life;
-
-        const dx = s.x - s.px, dy = s.y - s.py;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        if (len > 1) {
-          ctx.strokeStyle = `rgba(${s.r},${s.g},${s.b},${al * 0.9})`;
-          ctx.lineWidth = s.sz;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(s.px, s.py);
-          ctx.lineTo(s.x, s.y);
-          ctx.stroke();
-        }
-
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.sz * 0.7, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${s.r},${s.g},${s.b},${al})`;
-        ctx.fill();
-
-        if (al > 0.5) {
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.sz * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${s.r},${s.g},${s.b},${al * 0.12})`;
-          ctx.fill();
-        }
-
-        if (al > 0.7 && s.sz > 1.2) {
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.sz * 0.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,255,255,${al * 0.8})`;
-          ctx.fill();
-        }
-      }
-
-      if (ms < 1200) {
-        const p = Math.sin(ms * 0.01) * 0.3 + 0.7;
-        const gr = 50 * p;
-        const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
-        grd.addColorStop(0, `rgba(200, 230, 255, ${0.35 * p})`);
-        grd.addColorStop(0.4, `rgba(100, 170, 255, ${0.12 * p})`);
-        grd.addColorStop(1, 'rgba(60, 130, 255, 0)');
-        ctx.fillStyle = grd;
-        ctx.fillRect(cx - gr, cy - gr, gr * 2, gr * 2);
-      }
-
-      animId = requestAnimationFrame(animate);
-    }
-
-    animId = requestAnimationFrame(animate);
+    const splashVideo = document.getElementById('splashVideo');
+    if (!splash) return;
 
     let splashHidden = false;
     const hideSplash = () => {
@@ -1639,7 +1496,6 @@
       splash.classList.add('done');
       console.log('Splash done class added');
       setTimeout(() => { 
-        try { cancelAnimationFrame(animId); } catch(e){} 
         splash.remove(); 
         console.log('Splash removed');
         // Show main content
@@ -1647,18 +1503,17 @@
       }, 900);
     };
     
-    // Stop video after 4 seconds and show main content
-    const splashVideo = document.getElementById('splashVideo');
+    // Video splash - stop after 3 seconds
     if (splashVideo) {
-      // Stop video after 3 seconds and redirect
+      console.log('Video splash started');
       setTimeout(() => {
-        if (splashVideo) {
-          splashVideo.pause();
-        }
+        console.log('3 seconds passed, hiding splash');
+        if (splashVideo) splashVideo.pause();
         hideSplash();
       }, 3000);
     } else {
-      // Fallback if no video
+      // Fallback - no video
+      console.log('No video, using fallback timer');
       setTimeout(hideSplash, 3000);
     }
   }
