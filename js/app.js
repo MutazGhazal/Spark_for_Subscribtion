@@ -1481,45 +1481,29 @@
 
   // ===== SPARK SPLASH =====
   function initFireSplash() {
-    console.log('initFireSplash started');
     const splash = document.getElementById('splash');
     const splashVideo = document.getElementById('splashVideo');
-    console.log('splash:', splash, 'splashVideo:', splashVideo);
-    if (!splash) {
-      console.log('No splash element found, returning');
-      return;
-    }
+    if (!splash) return;
 
     let splashHidden = false;
     const hideSplash = () => {
-      console.log('hideSplash called');
-      if (splashHidden || !splash.parentNode) {
-        console.log('Already hidden or no parent');
-        return;
-      }
+      if (splashHidden || !splash.parentNode) return;
       splashHidden = true;
       splash.classList.add('done');
-      console.log('Splash done class added');
       setTimeout(() => { 
         splash.remove(); 
-        console.log('Splash removed');
-        // Show main content
         document.body.style.overflow = 'auto';
       }, 900);
     };
     
     // Video splash - stop after 3 seconds
     if (splashVideo) {
-      console.log('Video splash started');
       setTimeout(() => {
-        console.log('3 seconds passed, hiding splash');
         if (splashVideo) splashVideo.pause();
         hideSplash();
-      }, 3000);
+      }, 3500);
     } else {
-      // Fallback - no video
-      console.log('No video, using fallback timer');
-      setTimeout(hideSplash, 3000);
+      setTimeout(hideSplash, 3500);
     }
   }
 
