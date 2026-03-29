@@ -638,10 +638,13 @@
               </div>
               <span class="product-duration">${duration}</span>
             </div>
-            <div class="product-actions">
-              <button class="btn btn-primary buy-btn" data-id="${p.id}" ${!isAvailable ? 'disabled' : ''}>
+            <div class="product-actions" style="display:flex; gap:8px;">
+              <button class="btn btn-primary buy-btn" data-id="${p.id}" ${!isAvailable ? 'disabled' : ''} style="flex:1;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 ${txt('buyNow')}
+              </button>
+              <button class="btn card-share-btn" data-id="${p.id}" title="${txt('share')}" aria-label="${txt('share')}" style="display:flex; align-items:center; justify-content:center; padding:0 0.8rem; border:1px solid var(--border); border-radius:12px; background:var(--bg-card); color:var(--text); cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
             </div>
           </div>
@@ -653,6 +656,13 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         startBuyFlow(btn.dataset.id);
+      });
+    });
+
+    grid.querySelectorAll('.card-share-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        shareProductBtnClick(btn, btn.dataset.id);
       });
     });
 
