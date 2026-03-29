@@ -1011,8 +1011,8 @@
           if (!blob) return reject(new Error('Canvas toBlob failed'));
           const ext = product.image.split('.').pop().split('?')[0] || 'png';
           const file = new File([blob], `spark_${product.id}.${ext}`, { type: blob.type });
-          // Construct rich share text
-          const shareText = `🔥 ${name}\n📖 ${desc}\n\nاطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}`;
+          // Construct rich share text (Title + Link only)
+          const shareText = `🔥 ${name}\n\nاطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}`;
 
           resolve({ file, shareText });
         }, 'image/png', 0.95);
@@ -1055,15 +1055,14 @@
     } catch (err) {
       if (err.name !== 'AbortError') {
         const name = nameVal(product);
-        const desc = langVal(product, 'description') || '';
         const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
-        const fallbackText = `🔥 ${name}\n📖 ${desc}\n\n${url}`;
+        const fallbackText = `🔥 ${name}\n\n${url}`;
 
         if (navigator.share) {
-            await navigator.share({ title: name, text: fallbackText });
+          await navigator.share({ title: name, text: fallbackText });
         } else {
-            copyToClipboard(fallbackText);
-            showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل');
+          copyToClipboard(fallbackText);
+          showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل');
         }
       }
     } finally {
