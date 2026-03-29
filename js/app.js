@@ -248,14 +248,14 @@
     const converted = convertPrice(priceUSD, fromCurrency);
     if (converted === null) return '';
     const sym = CURRENCY_SYMBOLS[visitorCurrency] || visitorCurrency;
-    const rounded = converted < 10 ? converted.toFixed(2) : Math.round(converted).toLocaleString();
+    const rounded = Math.ceil(converted).toLocaleString();
     return `≈ ${rounded} ${sym}`;
   }
 
   function formatUSDEquiv(price, fromCurrency) {
-    if (!fromCurrency || fromCurrency === 'USD') return `$${price}`;
-    if (!ratesLoaded || !exchangeRates[fromCurrency]) return `${price} ${fromCurrency}`;
-    const usd = (price / exchangeRates[fromCurrency]).toFixed(2);
+    if (!fromCurrency || fromCurrency === 'USD') return `$${Math.ceil(price)}`;
+    if (!ratesLoaded || !exchangeRates[fromCurrency]) return `${Math.ceil(price)} ${fromCurrency}`;
+    const usd = Math.ceil(price / exchangeRates[fromCurrency]);
     return `≈ $${usd} USD`;
   }
 
@@ -572,9 +572,9 @@
   function getProductMinPrice(p) {
     if (p.subscription_plans && p.subscription_plans.length > 0) {
       const prices = p.subscription_plans.map(plan => plan.price).filter(p => p > 0);
-      if (prices.length > 0) return Math.min(...prices);
+      if (prices.length > 0) return Math.ceil(Math.min(...prices));
     }
-    return p.price || 0;
+    return Math.ceil(p.price || 0);
   }
 
   // ===== AUDIO EFFECTS =====
@@ -1149,7 +1149,7 @@
         <img src="${product.image}" alt="${name}" onerror="this.style.display='none'">
         <div>
           <div class="req-prod-name">${name}</div>
-          <div class="req-prod-price">${product.price} ${product.currency || 'USD'}</div>
+          <div class="req-prod-price">${Math.ceil(product.price)} ${product.currency || 'USD'}</div>
         </div>
       </div>
       <form class="req-form" id="reqForm">
@@ -1235,7 +1235,7 @@
               <div style="display:flex; flex-direction:column; gap:2px;">
                 <span style="font-weight:700;font-size:0.97rem;">${label}</span>
               </div>
-              <span style="font-size:1.1rem;font-weight:800;color:var(--primary);">${plan.price} ${product.currency || 'USD'}</span>
+              <span style="font-size:1.1rem;font-weight:800;color:var(--primary);">${Math.ceil(plan.price)} ${product.currency || 'USD'}</span>
             </div>
           `;
         }).join('')}
