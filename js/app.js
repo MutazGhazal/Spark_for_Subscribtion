@@ -577,6 +577,66 @@
     return p.price || 0;
   }
 
+  // ===== AUDIO EFFECTS =====
+  let sparkAudioCtx;
+  const initAudioCtx = () => {
+    if (!sparkAudioCtx) {
+      try { sparkAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    if (sparkAudioCtx && sparkAudioCtx.state === 'suspended') {
+      try { sparkAudioCtx.resume(); } catch(e) {}
+    }
+  };
+
+  window.playHoverSound = function() {
+    try {
+      initAudioCtx();
+      if (!sparkAudioCtx) return;
+      const osc = sparkAudioCtx.createOscillator();
+      const gain = sparkAudioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1000, sparkAudioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1500, sparkAudioCtx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0, sparkAudioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.03, sparkAudioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, sparkAudioCtx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(sparkAudioCtx.destination);
+      osc.start();
+      osc.stop(sparkAudioCtx.currentTime + 0.05);
+    } catch(e) {}
+  };
+
+  window.playClickSound = function() {
+    try {
+      initAudioCtx();
+      if (!sparkAudioCtx) return;
+      const osc1 = sparkAudioCtx.createOscillator();
+      const osc2 = sparkAudioCtx.createOscillator();
+      const gain = sparkAudioCtx.createGain();
+      
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(600, sparkAudioCtx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(1200, sparkAudioCtx.currentTime + 0.08);
+      
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(900, sparkAudioCtx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(1800, sparkAudioCtx.currentTime + 0.08);
+      
+      gain.gain.setValueAtTime(0, sparkAudioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, sparkAudioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, sparkAudioCtx.currentTime + 0.15);
+      
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(sparkAudioCtx.destination);
+      
+      osc1.start(); osc2.start();
+      osc1.stop(sparkAudioCtx.currentTime + 0.15);
+      osc2.stop(sparkAudioCtx.currentTime + 0.15);
+    } catch(e) {}
+  };
+
   // ===== PRODUCTS =====
   function getFilteredProducts() {
     return products.filter(p => {
@@ -667,7 +727,13 @@
     });
 
     grid.querySelectorAll('.product-card').forEach(card => {
-      card.addEventListener('click', () => openProductDetail(card.dataset.id));
+      card.addEventListener('mouseenter', () => {
+        if (window.playHoverSound) window.playHoverSound();
+      });
+      card.addEventListener('click', () => {
+        if (window.playClickSound) window.playClickSound();
+        openProductDetail(card.dataset.id);
+      });
     });
   }
 
@@ -1788,31 +1854,74 @@
   }
 })();
 
-// Video unmute on any click
+// Video unmute logic and Auto-play Permission
 document.addEventListener('DOMContentLoaded', () => {
   const splashVideo = document.getElementById('splashVideo');
   const unmuteBtn = document.getElementById('unmuteBtn');
   
   if (splashVideo) {
     let audioEnabled = false;
-    
+    const pref = localStorage.getItem('spark_audio_permission');
+
     const enableAudio = () => {
       if (audioEnabled || splashVideo.muted === false) return;
       audioEnabled = true;
       splashVideo.muted = false;
       splashVideo.volume = 0.7;
       if (unmuteBtn) unmuteBtn.style.display = 'none';
-      console.log('Audio enabled');
+      console.log('Audio manually enabled by user action');
     };
-    
-    // Enable audio on any click/touch
-    document.addEventListener('click', enableAudio, { once: true });
-    document.addEventListener('touchstart', enableAudio, { once: true });
-    
-    // Also enable when unmute button clicked
+
+    if (pref === 'granted') {
+      splashVideo.muted = false;
+      splashVideo.volume = 0.7;
+      if (unmuteBtn) unmuteBtn.style.display = 'none';
+      
+      const playPromise = splashVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          audioEnabled = true; 
+        }).catch(() => {
+          splashVideo.muted = true;
+          if (unmuteBtn) unmuteBtn.style.display = 'flex';
+          splashVideo.play().catch(e => console.warn("Video blocked entirely", e));
+        });
+      }
+    } else if (!pref) {
+      const modalHtml = `
+        <div id="audioPermModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px); transition:opacity 0.3s;">
+          <div style="background:var(--bg-card,#ffffff);border-radius:20px;padding:25px;text-align:center;max-width:350px;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div style="font-size:3rem;margin-bottom:15px;">🔊</div>
+            <h3 style="margin:0 0 10px;font-size:1.3rem;color:var(--text,#1e293b);">السماح بتشغيل الصوت؟</h3>
+            <p style="margin:0 0 20px;font-size:0.95rem;color:var(--text-secondary,#64748b);">للحصول على أفضل تجربة، هل تود تفعيل تشغيل الصوتيات تلقائياً؟</p>
+            <div style="display:flex;gap:10px;justify-content:center;">
+              <button id="btnAllowAudio" style="flex:1;background:var(--primary,#6366f1);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:bold;cursor:pointer;">نعم، تفعيل</button>
+              <button id="btnDenyAudio" style="flex:1;background:transparent;color:var(--text-secondary,#64748b);border:1px solid var(--border,#cbd5e1);padding:12px;border-radius:12px;font-weight:bold;cursor:pointer;">بدون صوت</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      const audioModal = document.getElementById('audioPermModal');
+      
+      document.getElementById('btnAllowAudio').addEventListener('click', () => {
+        localStorage.setItem('spark_audio_permission', 'granted');
+        enableAudio();
+        audioModal.style.opacity = '0';
+        setTimeout(() => audioModal.remove(), 300);
+      });
+      
+      document.getElementById('btnDenyAudio').addEventListener('click', () => {
+        localStorage.setItem('spark_audio_permission', 'denied');
+        audioModal.style.opacity = '0';
+        setTimeout(() => audioModal.remove(), 300);
+      });
+    }
+
     if (unmuteBtn) {
       unmuteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        localStorage.setItem('spark_audio_permission', 'granted');
         enableAudio();
       });
     }
