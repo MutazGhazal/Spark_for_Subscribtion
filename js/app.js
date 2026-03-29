@@ -1911,6 +1911,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const unmuteBtn = document.getElementById('unmuteBtn');
   
   if (splashVideo && splash) {
+    // Ensure splash is interactive
+    splash.style.pointerEvents = 'auto';
+    
     // We pause the video instantly so it doesn't play muted
     splashVideo.pause();
     splashVideo.currentTime = 0;
@@ -1929,6 +1932,7 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style.backdropFilter = 'blur(10px)';
     overlay.style.cursor = 'pointer';
     overlay.style.transition = 'opacity 0.4s ease';
+    overlay.style.pointerEvents = 'auto'; // CRITICAL: ensure clicks are registered
     
     overlay.innerHTML = `
       <div style="text-align:center; animation: pulse 2s infinite;">
