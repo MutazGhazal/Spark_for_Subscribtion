@@ -1014,16 +1014,16 @@
           // Construct rich share text (Title + Link only)
           const shareText = `🔥 ${name}\n\nاطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}`;
 
-          resolve({ file, shareText });
+          resolve({ file, blob, shareText });
         }, 'image/png', 0.95);
       };
       
       img.onerror = () => {
-         // Fallback if CORS fails: just share the name/link as text
+         // Fallback if CORS/Loading fails: just share the name/link as text
          reject(new Error('Image load failed'));
       };
       
-      // Use a cross-origin cache-buster to avoid CDN CORS issues
+      // Attempt to bypass CDN CORS issues with a unique cache-buster per load
       const cb = product.image.includes('?') ? '&' : '?';
       img.src = product.image + cb + 't=' + Date.now();
     });
@@ -1038,27 +1038,47 @@
     btn.style.pointerEvents = 'none';
 
     try {
-      const { file, shareText } = await generateShareImage(product);
+      const { file, blob, shareText } = await generateShareImage(product);
       
-      const shareData = {
-        title: nameVal(product),
-        text: shareText,
-        files: (navigator.canShare && navigator.canShare({ files: [file] })) ? [file] : null
-      };
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
 
-      if (shareData.files && navigator.share) {
-        // Successful share with image
-        await navigator.share(shareData);
-      } else if (navigator.share) {
-        // WebShare text-only if files blocked
-        await navigator.share({ title: shareData.title, text: shareData.text });
-        // And download so the user has the image on PC/Mobile manually
-        downloadFile(file, file.name);
+      if (isMobile && canShareFiles && navigator.share) {
+        // Mobile with file support: Share file + text (results in image + caption)
+        await navigator.share({
+          title: nameVal(product),
+          text: shareText,
+          files: [file]
+        });
       } else {
-        // Old browser logic
-        downloadFile(file, file.name);
-        copyToClipboard(shareText);
-        showToast((txt('copied') || 'تم نسخ المعلومات') + ' - جاري تحميل البوستر');
+        // PC or Mobile without file share support: Try Clipboard API (Image + Text)
+        let clipboardSource = shareText;
+        let copiedImage = false;
+
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            // Attempt to copy image and text to clipboard for Ctrl+V usage
+            const data = [new ClipboardItem({ 
+                [blob.type]: blob,
+                'text/plain': new Blob([shareText], { type: 'text/plain' })
+            })];
+            await navigator.clipboard.write(data);
+            copiedImage = true;
+          } catch(err) {
+            console.warn("ClipboardItem write failed:", err);
+            // Revert to just text copy if image copy is blocked
+            await navigator.clipboard.writeText(shareText);
+          }
+        } else {
+          copyToClipboard(shareText);
+        }
+
+        if (copiedImage) {
+           showToast((txt('copied') || 'تم نسخ الصورة والبيانات') + ' - الآن الصقها (Paste) في محادثتك');
+        } else {
+           downloadFile(file, file.name);
+           showToast((txt('copied') || 'تم نسخ المعلومات') + ' - جاري تحميل البوستر');
+        }
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -1073,10 +1093,9 @@
           showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل للشاركة');
         }
         
-        // Let them know why the image was missed
         if(err.message === 'Image load failed') {
             console.warn("CORS/Load error:", err);
-            showToast('⚠️ لم نتمكن من تضمين الصورة بسبب قيود الحماية، تم إرسال الرابط فقط.');
+            showToast('⚠️ لم نتمكن من تضمين الصورة بسبب حماية الرابط، تم إرسال التفاصيل فقط.');
         }
       }
     } finally {
