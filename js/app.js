@@ -1017,8 +1017,15 @@
           resolve({ file, shareText });
         }, 'image/png', 0.95);
       };
-      img.onerror = () => reject(new Error('Image load failed'));
-      img.src = product.image;
+      
+      img.onerror = () => {
+         // Fallback if CORS fails: just share the name/link as text
+         reject(new Error('Image load failed'));
+      };
+      
+      // Use a cross-origin cache-buster to avoid CDN CORS issues
+      const cb = product.image.includes('?') ? '&' : '?';
+      img.src = product.image + cb + 't=' + Date.now();
     });
   }
 
@@ -1032,25 +1039,26 @@
 
     try {
       const { file, shareText } = await generateShareImage(product);
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+      
       const shareData = {
         title: nameVal(product),
         text: shareText,
-        files: (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) ? [file] : null
+        files: (navigator.canShare && navigator.canShare({ files: [file] })) ? [file] : null
       };
 
       if (shareData.files && navigator.share) {
-        // Mobile with file support: Share file + text
+        // Successful share with image
         await navigator.share(shareData);
       } else if (navigator.share) {
-        // Desktop or mobile without file support: Share rich text only
+        // WebShare text-only if files blocked
         await navigator.share({ title: shareData.title, text: shareData.text });
+        // And download so the user has the image on PC/Mobile manually
+        downloadFile(file, file.name);
       } else {
-        // Universal fallback: Copy to clipboard and download image
+        // Old browser logic
         downloadFile(file, file.name);
         copyToClipboard(shareText);
-        showToast((txt('copied') || 'تم نسخ المعلومات') + ' - جاري تحميل الصورة');
+        showToast((txt('copied') || 'تم نسخ المعلومات') + ' - جاري تحميل البوستر');
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -1062,7 +1070,13 @@
           await navigator.share({ title: name, text: fallbackText });
         } else {
           copyToClipboard(fallbackText);
-          showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل');
+          showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل للشاركة');
+        }
+        
+        // Let them know why the image was missed
+        if(err.message === 'Image load failed') {
+            console.warn("CORS/Load error:", err);
+            showToast('⚠️ لم نتمكن من تضمين الصورة بسبب قيود الحماية، تم إرسال الرابط فقط.');
         }
       }
     } finally {
