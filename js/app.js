@@ -308,7 +308,8 @@
       sendOrderFirst: 'أرسل طلبك أولاً عبر واتساب',
       orderSentChoose: '✅ تم إرسال الطلب — اختر طريقة الدفع',
       reviewsCount: 'تقييم',
-      proofPrefix: 'إثبات دفع للطلب:'
+      proofPrefix: 'إثبات دفع للطلب:',
+      share: 'مشاركة',
     },
     en: {
       buyNow: 'Buy Now', choosePay: 'Choose Payment Method',
@@ -354,7 +355,8 @@
       sendOrderFirst: 'Send your order first via WhatsApp',
       orderSentChoose: '✅ Order sent — Choose payment method',
       reviewsCount: 'reviews',
-      proofPrefix: 'Payment proof for:'
+      proofPrefix: 'Payment proof for:',
+      share: 'Share',
     }
   };
 
@@ -721,10 +723,14 @@
             </div>
           ` : ''}
         </div>
-        <div class="pd-actions">
-          <button class="btn btn-primary pd-buy-btn" data-id="${product.id}" ${!isAvailable ? 'disabled' : ''}>
+        <div class="pd-actions" style="display:flex; gap:10px;">
+          <button class="btn btn-primary pd-buy-btn" data-id="${product.id}" ${!isAvailable ? 'disabled' : ''} style="flex:1;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             ${txt('buyNow')}
+          </button>
+          <button class="btn pd-share-btn" data-id="${product.id}" style="display:flex; align-items:center; justify-content:center; gap:5px; padding:0.5rem 1rem; border:1px solid var(--border); border-radius:12px; background:var(--bg-card); color:var(--text); cursor:pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            ${txt('share')}
           </button>
         </div>
       </div>
@@ -734,6 +740,10 @@
       modal.classList.remove('active');
       document.body.style.overflow = '';
       setTimeout(() => startBuyFlow(productId), 200);
+    });
+
+    body.querySelector('.pd-share-btn')?.addEventListener('click', (e) => {
+      shareProductBtnClick(e.currentTarget, productId);
     });
 
     modal.classList.add('active');
@@ -779,6 +789,74 @@
           submitBtn.textContent = txt('btnSubmitReview');
         }
       };
+    }
+  }
+
+  async function shareProductBtnClick(btn, productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const prevHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid;border-radius:50%;border-right-color:transparent;animation:spin 1s linear infinite;"></span>';
+    btn.style.pointerEvents = 'none';
+
+    try {
+      const name = nameVal(product);
+      const desc = langVal(product, 'description') || '';
+      const priceVal = getProductMinPrice(product);
+      const priceStr = `${priceVal} ${product.currency || 'USD'}`;
+      const local = formatLocalPrice(priceVal, product.currency);
+      const localStr = local ? ` (${local})` : '';
+      const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+      
+      const text = `*${name}*\n${desc}\n\nالسعر: ${priceStr}${localStr}\n\nاطلبه الآن من متجر Spark:\n${url}`;
+      
+      let shareFiles = [];
+      if (product.image && navigator.canShare) {
+        try {
+          const resp = await fetch(product.image, { mode: 'cors' });
+          const blob = await resp.blob();
+          const ext = product.image.split('.').pop().split('?')[0] || 'jpg';
+          const file = new File([blob], `product.${ext}`, { type: blob.type });
+          if (navigator.canShare({ files: [file] })) {
+            shareFiles = [file];
+          }
+        } catch (e) {
+          console.warn('Could not fetch image for share', e);
+        }
+      }
+      
+      const shareData = { title: name, text: text };
+      if (shareFiles.length > 0) { shareData.files = shareFiles; }
+      
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        copyToClipboard(text);
+        showToast(txt('copied'));
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+        copyToClipboard(url);
+        showToast(txt('copied'));
+      }
+    } finally {
+      btn.innerHTML = prevHtml;
+      btn.style.pointerEvents = 'auto';
+    }
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
     }
   }
 
