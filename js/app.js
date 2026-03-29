@@ -47,8 +47,8 @@
   };
 
   const CURRENCY_NAMES = {
-    ar: { USD:'دولار أمريكي',EUR:'يورو',GBP:'جنيه إسترليني',SAR:'ريال سعودي',AED:'درهم إماراتي',EGP:'جنيه مصري',KWD:'دينار كويتي',BHD:'دينار بحريني',QAR:'ريال قطري',OMR:'ريال عماني',JOD:'دينار أردني',IQD:'دينار عراقي',LBP:'ليرة لبنانية',SYP:'ليرة سورية',TND:'دينار تونسي',DZD:'دينار جزائري',MAD:'درهم مغربي',LYD:'دينار ليبي',YER:'ريال يمني',ILS:'شيكل',TRY:'ليرة تركية',CAD:'دولار كندي',AUD:'دولار أسترالي',JPY:'ين ياباني',CNY:'يوان صيني',INR:'روبية هندية',PKR:'روبية باكستانية',MYR:'رينغيت ماليزي',IDR:'روبية إندونيسية',KRW:'وون كوري',BRL:'ريال برازيلي',MXN:'بيزو مكسيكي',NZD:'دولار نيوزيلندي',SDG:'جنيه سوداني',SOS:'شلن صومالي',IRR:'ريال إيراني' },
-    en: { USD:'US Dollar',EUR:'Euro',GBP:'British Pound',SAR:'Saudi Riyal',AED:'UAE Dirham',EGP:'Egyptian Pound',KWD:'Kuwaiti Dinar',BHD:'Bahraini Dinar',QAR:'Qatari Riyal',OMR:'Omani Rial',JOD:'Jordanian Dinar',IQD:'Iraqi Dinar',LBP:'Lebanese Pound',SYP:'Syrian Pound',TND:'Tunisian Dinar',DZD:'Algerian Dinar',MAD:'Moroccan Dirham',LYD:'Libyan Dinar',YER:'Yemeni Rial',ILS:'Israeli Shekel',TRY:'Turkish Lira',CAD:'Canadian Dollar',AUD:'Australian Dollar',JPY:'Japanese Yen',CNY:'Chinese Yuan',INR:'Indian Rupee',PKR:'Pakistani Rupee',MYR:'Malaysian Ringgit',IDR:'Indonesian Rupiah',KRW:'South Korean Won',BRL:'Brazilian Real',MXN:'Mexican Peso',NZD:'New Zealand Dollar',SDG:'Sudanese Pound',SOS:'Somali Shilling',IRR:'Iranian Rial' }
+    ar: { USD: 'دولار أمريكي', EUR: 'يورو', GBP: 'جنيه إسترليني', SAR: 'ريال سعودي', AED: 'درهم إماراتي', EGP: 'جنيه مصري', KWD: 'دينار كويتي', BHD: 'دينار بحريني', QAR: 'ريال قطري', OMR: 'ريال عماني', JOD: 'دينار أردني', IQD: 'دينار عراقي', LBP: 'ليرة لبنانية', SYP: 'ليرة سورية', TND: 'دينار تونسي', DZD: 'دينار جزائري', MAD: 'درهم مغربي', LYD: 'دينار ليبي', YER: 'ريال يمني', ILS: 'شيكل', TRY: 'ليرة تركية', CAD: 'دولار كندي', AUD: 'دولار أسترالي', JPY: 'ين ياباني', CNY: 'يوان صيني', INR: 'روبية هندية', PKR: 'روبية باكستانية', MYR: 'رينغيت ماليزي', IDR: 'روبية إندونيسية', KRW: 'وون كوري', BRL: 'ريال برازيلي', MXN: 'بيزو مكسيكي', NZD: 'دولار نيوزيلندي', SDG: 'جنيه سوداني', SOS: 'شلن صومالي', IRR: 'ريال إيراني' },
+    en: { USD: 'US Dollar', EUR: 'Euro', GBP: 'British Pound', SAR: 'Saudi Riyal', AED: 'UAE Dirham', EGP: 'Egyptian Pound', KWD: 'Kuwaiti Dinar', BHD: 'Bahraini Dinar', QAR: 'Qatari Riyal', OMR: 'Omani Rial', JOD: 'Jordanian Dinar', IQD: 'Iraqi Dinar', LBP: 'Lebanese Pound', SYP: 'Syrian Pound', TND: 'Tunisian Dinar', DZD: 'Algerian Dinar', MAD: 'Moroccan Dirham', LYD: 'Libyan Dinar', YER: 'Yemeni Rial', ILS: 'Israeli Shekel', TRY: 'Turkish Lira', CAD: 'Canadian Dollar', AUD: 'Australian Dollar', JPY: 'Japanese Yen', CNY: 'Chinese Yuan', INR: 'Indian Rupee', PKR: 'Pakistani Rupee', MYR: 'Malaysian Ringgit', IDR: 'Indonesian Rupiah', KRW: 'South Korean Won', BRL: 'Brazilian Real', MXN: 'Mexican Peso', NZD: 'New Zealand Dollar', SDG: 'Sudanese Pound', SOS: 'Somali Shilling', IRR: 'Iranian Rial' }
   };
 
   function detectVisitorCurrency() {
@@ -106,7 +106,7 @@
     const apis = [
       {
         url: 'https://latest.currency-api.pages.dev/v1/currencies/usd.json',
-        extract: d => d && d.usd ? Object.fromEntries(Object.entries(d.usd).map(([k,v]) => [k.toUpperCase(), v])) : null
+        extract: d => d && d.usd ? Object.fromEntries(Object.entries(d.usd).map(([k, v]) => [k.toUpperCase(), v])) : null
       },
       {
         url: 'https://open.er-api.com/v6/latest/USD',
@@ -201,7 +201,7 @@
         localStorage.setItem('gh_last_commit', d);
         localStorage.setItem('gh_last_commit_ts', String(Date.now()));
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function renderLastUpdated() {
@@ -366,7 +366,7 @@
   function nameVal(obj) { return obj['name_' + nameLang] || obj['name_en'] || obj['name_ar'] || ''; }
 
   // Toggle only product/card names EN <-> AR
-  window.toggleNameLang = function() {
+  window.toggleNameLang = function () {
     nameLang = nameLang === 'en' ? 'ar' : 'en';
     localStorage.setItem('nameLang', nameLang);
     const btn = document.getElementById('nameToggle');
@@ -375,7 +375,7 @@
   };
 
   // Global handlers for crypto (inline onclick - works when delegation fails)
-  window.switchUsdtTab = function(btn) {
+  window.switchUsdtTab = function (btn) {
     const body = document.getElementById('modalBody');
     if (!body) return;
     body.querySelectorAll('.usdt-net-btn').forEach(b => b.classList.remove('active'));
@@ -384,7 +384,7 @@
     const item = body.querySelector('.usdt-addr-item[data-net="' + (btn.getAttribute('data-net') || '') + '"]');
     if (item) item.classList.add('active');
   };
-  window.handleCryptoCopy = function(btn) {
+  window.handleCryptoCopy = function (btn) {
     const row = btn.closest('.crypto-copy-row');
     const input = row && row.querySelector('input');
     if (input) {
@@ -454,20 +454,20 @@
     $('#noResultsText').textContent = txt('noResults');
     $('#paymentTitle').textContent = txt('paymentTitle');
     $('#paymentSubtitle').textContent = txt('paymentSubtitle');
-    
+
     // Reviews Translation
     const reviewsTitle = $('#reviewsTitle');
-    if(reviewsTitle) reviewsTitle.textContent = txt('reviewsTitle');
+    if (reviewsTitle) reviewsTitle.textContent = txt('reviewsTitle');
     const addReviewTitle = $('#addReviewTitle');
-    if(addReviewTitle) addReviewTitle.textContent = txt('addReviewTitle');
+    if (addReviewTitle) addReviewTitle.textContent = txt('addReviewTitle');
     const reviewNameLabel = $('#reviewNameLabel');
-    if(reviewNameLabel) reviewNameLabel.textContent = txt('reviewNameLabel');
+    if (reviewNameLabel) reviewNameLabel.textContent = txt('reviewNameLabel');
     const reviewRatingLabel = $('#reviewRatingLabel');
-    if(reviewRatingLabel) reviewRatingLabel.textContent = txt('reviewRatingLabel');
+    if (reviewRatingLabel) reviewRatingLabel.textContent = txt('reviewRatingLabel');
     const reviewCommentLabel = $('#reviewCommentLabel');
-    if(reviewCommentLabel) reviewCommentLabel.textContent = txt('reviewCommentLabel');
+    if (reviewCommentLabel) reviewCommentLabel.textContent = txt('reviewCommentLabel');
     const btnSubmitReview = $('#btnSubmitReview');
-    if(btnSubmitReview) btnSubmitReview.textContent = txt('btnSubmitReview');
+    if (btnSubmitReview) btnSubmitReview.textContent = txt('btnSubmitReview');
 
     $$('[data-ar]').forEach(el => {
       el.textContent = currentLang === 'ar' ? el.dataset.ar : el.dataset.en;
@@ -489,7 +489,7 @@
 
         products = prodRes.data || [];
         const cats = catRes.data || [];
-        
+
         // Fetch average ratings and counts for products concurrently
         const ratingPromises = products.map(async (p) => {
           try {
@@ -581,14 +581,14 @@
   let sparkAudioCtx;
   const initAudioCtx = () => {
     if (!sparkAudioCtx) {
-      try { sparkAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+      try { sparkAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
     }
     if (sparkAudioCtx && sparkAudioCtx.state === 'suspended') {
-      try { sparkAudioCtx.resume(); } catch(e) {}
+      try { sparkAudioCtx.resume(); } catch (e) { }
     }
   };
 
-  window.playHoverSound = function() {
+  window.playHoverSound = function () {
     try {
       initAudioCtx();
       if (!sparkAudioCtx) return;
@@ -600,44 +600,44 @@
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       noise.buffer = buffer;
-      
+
       const filter = sparkAudioCtx.createBiquadFilter();
       filter.type = 'highpass';
       filter.frequency.value = 5000;
-      
+
       const gain = sparkAudioCtx.createGain();
       gain.gain.setValueAtTime(0.2, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      
+
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(sparkAudioCtx.destination);
       noise.start();
-    } catch(e) {}
+    } catch (e) { }
   };
 
-  window.playClickSound = function() {
+  window.playClickSound = function () {
     try {
       initAudioCtx();
       if (!sparkAudioCtx) return;
       const t = sparkAudioCtx.currentTime;
-      
+
       // Muffled Thunder (Sub Bass)
       const sub = sparkAudioCtx.createOscillator();
       sub.type = 'sine';
       sub.frequency.setValueAtTime(80, t);
       sub.frequency.exponentialRampToValueAtTime(30, t + 0.5);
-      
+
       const subGain = sparkAudioCtx.createGain();
       subGain.gain.setValueAtTime(0, t);
       subGain.gain.linearRampToValueAtTime(2.0, t + 0.05);
       subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-      
+
       sub.connect(subGain);
       subGain.connect(sparkAudioCtx.destination);
-      sub.start(); 
+      sub.start();
       sub.stop(t + 0.5);
-      
+
       // Soft Spark (Static Noise)
       const noise = sparkAudioCtx.createBufferSource();
       const dur = 0.15;
@@ -646,21 +646,21 @@
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       noise.buffer = buffer;
-      
+
       const filter = sparkAudioCtx.createBiquadFilter();
       filter.type = 'bandpass';
       filter.frequency.setValueAtTime(4000, t);
       filter.frequency.exponentialRampToValueAtTime(1000, t + dur);
-      
+
       const noiseGain = sparkAudioCtx.createGain();
       noiseGain.gain.setValueAtTime(1.5, t);
       noiseGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
-      
+
       noise.connect(filter);
       filter.connect(noiseGain);
       noiseGain.connect(sparkAudioCtx.destination);
       noise.start();
-    } catch(e) {}
+    } catch (e) { }
   };
 
   // ===== PRODUCTS =====
@@ -669,7 +669,7 @@
       const matchCat = currentCategory === 'all' || p.category === currentCategory;
       if (!matchCat) return false;
       if (p.is_active === false) return false;
-      
+
       const minPrice = getProductMinPrice(p);
 
       // Stop Ad Logic: Hide if Selling Price > Official Price
@@ -850,10 +850,10 @@
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    
+
     // Load Reviews
     loadProductReviews(productId);
-    
+
     // Handle Review Submit
     const reviewForm = document.getElementById('reviewForm');
     if (reviewForm) {
@@ -879,7 +879,7 @@
           });
 
           if (error) throw error;
-          
+
           showToast(txt('reviewSuccess'));
           reviewForm.reset();
           loadProductReviews(productId); // Reload reviews
@@ -905,67 +905,67 @@
         const width = 1080;
         const height = (img.height / img.width) * width;
         canvas.width = width; canvas.height = height;
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         const gradient = ctx.createLinearGradient(0, height, 0, height - (height * 0.7));
         gradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
         gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
-        
+
         const name = product.name_ar || nameVal(product);
         let desc = product.description_ar || langVal(product, 'description') || '';
         if (desc.length > 200) desc = desc.substring(0, 197) + '...';
-        
+
         const priceVal = getProductMinPrice(product);
         const priceStr = `${priceVal} ${product.currency || 'USD'}`;
         const local = formatLocalPrice(priceVal, product.currency);
         const priceText = `${priceStr}${local ? ` (${local})` : ''}`;
-        
+
         ctx.textBaseline = 'bottom';
         const marginX = 60;
         let yCursor = height - 60;
-        
+
         ctx.font = 'bold 60px "Tajawal", "Cairo", system-ui, sans-serif';
         const priceMetrics = ctx.measureText(priceText);
         const priceW = priceMetrics.width;
-        
+
         const boxPx = 40, boxPy = 20;
         const boxW = priceW + (boxPx * 2);
         const boxH = 60 + (boxPy * 2);
         const boxX = width - marginX - boxW;
         const boxY = yCursor - boxH;
-        
+
         ctx.fillStyle = 'rgba(99, 102, 241, 0.95)';
         ctx.beginPath();
-        if(ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 20); else ctx.rect(boxX, boxY, boxW, boxH);
+        if (ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 20); else ctx.rect(boxX, boxY, boxW, boxH);
         ctx.fill();
-        
+
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'right';
         // Add canvas direction for proper Arabic rendering marks (e.g brackets)
         ctx.direction = 'rtl';
         ctx.fillText(priceText, width - marginX - boxPx, yCursor - boxPy - 5);
         ctx.direction = 'ltr'; // reset
-        
+
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'left';
         ctx.font = 'bold 45px system-ui';
         ctx.fillText('Spark', marginX, yCursor - 20);
-        
+
         yCursor -= (boxH + 40);
-        
+
         ctx.textAlign = 'right';
         ctx.direction = 'rtl';
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '40px "Tajawal", "Cairo", system-ui, sans-serif';
-        
+
         const words = desc.split(' ');
         let line = '';
         const lines = [];
         const maxW = width - (marginX * 2);
-        for(let n = 0; n < words.length; n++) {
+        for (let n = 0; n < words.length; n++) {
           let testLine = line + words[n] + ' ';
           if (ctx.measureText(testLine).width > maxW && n > 0) {
             lines.push(line);
@@ -975,21 +975,21 @@
           }
         }
         lines.push(line);
-        
+
         for (let i = lines.length - 1; i >= 0; i--) {
           ctx.fillText(lines[i], width - marginX, yCursor);
           yCursor -= 55;
         }
-        
+
         yCursor -= 20;
-        
+
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 75px "Tajawal", "Cairo", system-ui, sans-serif';
-        
+
         const titleWords = name.split(' ');
         let tLine = '';
         const tLines = [];
-        for(let n = 0; n < titleWords.length; n++) {
+        for (let n = 0; n < titleWords.length; n++) {
           let testLine = tLine + titleWords[n] + ' ';
           if (ctx.measureText(testLine).width > maxW && n > 0) {
             tLines.push(tLine);
@@ -999,23 +999,19 @@
           }
         }
         tLines.push(tLine);
-        
+
         for (let i = tLines.length - 1; i >= 0; i--) {
           ctx.fillText(tLines[i], width - marginX, yCursor);
           yCursor -= 85;
         }
-        
+
         ctx.direction = 'ltr';
-        
+
         canvas.toBlob((blob) => {
           if (!blob) return reject(new Error('Canvas toBlob failed'));
           const ext = product.image.split('.').pop().split('?')[0] || 'png';
           const file = new File([blob], `spark_${product.id}.${ext}`, { type: blob.type });
-          
-          // Construct rich share text
-          const shareText = `🔥 ${name}\n📖 ${desc}\n\nاطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}`;
-          
-          resolve({ file, shareText });
+          resolve({ file, urltext: `اطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}` });
         }, 'image/png', 0.95);
       };
       img.onerror = () => reject(new Error('Image load failed'));
@@ -1026,42 +1022,31 @@
   async function shareProductBtnClick(btn, productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
-    
+
     const prevHtml = btn.innerHTML;
     btn.innerHTML = '<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid;border-radius:50%;border-right-color:transparent;animation:spin 1s linear infinite;"></span>';
     btn.style.pointerEvents = 'none';
 
     try {
-      const { file, shareText } = await generateShareImage(product);
+      const { file, urltext } = await generateShareImage(product);
       const shareData = {
         title: nameVal(product),
-        text: shareText,
+        text: urltext,
         files: [file]
       };
-      
-      // On some mobile devices, we check if file sharing is supported
+
       if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
         await navigator.share(shareData);
-      } else if (navigator.share) {
-        // Fallback: Share rich text (Title + Desc + Link) if files are not supported
-        await navigator.share({ title: shareData.title, text: shareData.text });
-        // And still download the image so they have it
-        downloadFile(file, file.name);
       } else {
         downloadFile(file, file.name);
-        copyToClipboard(shareText);
-        showToast((txt('copied') || 'تم نسخ تفاصيل المنتج') + ' - جاري تحميل الصورة');
+        copyToClipboard(urltext);
+        showToast((txt('copied') || 'تم النسخ') + ' - جاري تحميل الصورة');
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
-        // Ultimate fallback: Copy rich text even if generator fails
-        const name = nameVal(product);
-        const desc = langVal(product, 'description') || '';
         const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
-        const fallbackText = `🔥 ${name}\n📖 ${desc}\n\n${url}`;
-        
-        copyToClipboard(fallbackText);
-        showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل للشاركة');
+        copyToClipboard(url);
+        showToast(txt('copied'));
       }
     } finally {
       btn.innerHTML = prevHtml;
@@ -1098,24 +1083,24 @@
     const full = Math.floor(rating || 0);
     const half = (rating || 0) - full >= 0.5 ? 1 : 0;
     const empty = 5 - full - half;
-    
+
     const fullStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
     const halfStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="url(#halfGrad)" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="halfGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="50%" stop-color="#f59e0b"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
     const emptyStar = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
-    return `<div class="stars-container" style="display:flex; gap:2px; color:#f59e0b;" title="${rating || 0} / 5">` + 
-      fullStar.repeat(full) + 
-      (half ? halfStar : '') + 
-      emptyStar.repeat(empty) + 
+    return `<div class="stars-container" style="display:flex; gap:2px; color:#f59e0b;" title="${rating || 0} / 5">` +
+      fullStar.repeat(full) +
+      (half ? halfStar : '') +
+      emptyStar.repeat(empty) +
       `</div>`;
   }
 
   async function loadProductReviews(productId) {
     const reviewsList = document.getElementById('reviewsList');
     if (!reviewsList || typeof sb === 'undefined') return;
-    
+
     reviewsList.innerHTML = `<div style="text-align:center; padding:1rem;"><span class="spinner" style="display:inline-block; width:24px; height:24px; border:3px solid var(--primary); border-radius:50%; border-right-color:transparent; animation:spin 1s linear infinite;"></span></div>`;
-    
+
     try {
       const { data, error } = await sb
         .from('reviews')
@@ -1124,17 +1109,17 @@
         .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .limit(10);
-        
+
       if (error) throw error;
-      
+
       if (!data || data.length === 0) {
         reviewsList.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:1rem 0;">${txt('noReviews')}</p>`;
         return;
       }
-      
+
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const opts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: tz };
-      
+
       reviewsList.innerHTML = data.map(r => `
         <div class="review-item" style="padding:1rem 0; border-bottom:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
@@ -1147,7 +1132,7 @@
           ${r.comment ? `<p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem; line-height:1.5;">${r.comment}</p>` : ''}
         </div>
       `).join('');
-      
+
     } catch (err) {
       console.warn("Failed to load reviews:", err);
       reviewsList.innerHTML = `<p style="text-align:center; color:#ef4444; padding:1rem 0;">Failed to load reviews.</p>`;
@@ -1270,8 +1255,8 @@
       <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${txt('durationPrompt')}</p>
       <div id="plansList" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.2rem;">
         ${plans.filter(plan => !(plan.official_price && plan.price > plan.official_price)).map((plan, i) => {
-          const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
-          return `
+      const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
+      return `
             <div class="plan-option" data-index="${i}" style="border:2px solid var(--border);border-radius:12px;padding:0.9rem 1rem;cursor:pointer;transition:border-color 0.18s,background 0.18s;display:flex;justify-content:space-between;align-items:center;">
               <div style="display:flex; flex-direction:column; gap:2px;">
                 <span style="font-weight:700;font-size:0.97rem;">${label}</span>
@@ -1279,7 +1264,7 @@
               <span style="font-size:1.1rem;font-weight:800;color:var(--primary);">${Math.ceil(plan.price)} ${product.currency || 'USD'}</span>
             </div>
           `;
-        }).join('')}
+    }).join('')}
       </div>
       <div style="background:var(--bg-secondary);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.2rem;border-right:3px solid var(--primary);">
         <label style="display:flex;align-items:center;gap:0.7rem;cursor:pointer;">
@@ -1653,7 +1638,7 @@
     html += `<div class="payment-card ${emOk ? '' : 'disabled'}"><div class="payment-card-icon email" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><h3>${txt('sendViaEmail')}</h3><p>${emOk ? emSocial.email : ''}</p>${emOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
     const crWallets = pay.crypto?.wallets || {};
-    const crHasUsdt = ['trc20','bep20','apt','pol','sol'].some(n => crWallets[n+'_enabled'] && crWallets[n+'_addr']);
+    const crHasUsdt = ['trc20', 'bep20', 'apt', 'pol', 'sol'].some(n => crWallets[n + '_enabled'] && crWallets[n + '_addr']);
     const crOk = pay.crypto?.enabled && (crHasUsdt || crWallets.binance_enabled && crWallets.binance_id);
     html += `<div class="payment-card ${crOk ? '' : 'disabled'}"><div class="payment-card-icon crypto"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>${langVal(pay.crypto || {}, 'label') || 'Crypto'}</h3><p>${txt('cryptoDesc')}</p>${crOk ? '' : `<span class="payment-disabled-label">${disabledLabel}</span>`}</div>`;
 
@@ -1720,7 +1705,7 @@
     resize();
     window.addEventListener('resize', resize);
 
-    const COLORS = ['#ffdc00','#ff8f00','#ff6a00','#ffab00','#fff5cc','#ffffff'];
+    const COLORS = ['#ffdc00', '#ff8f00', '#ff6a00', '#ffab00', '#fff5cc', '#ffffff'];
 
     class Sparkle {
       constructor() { this.reset(true); }
@@ -1801,12 +1786,12 @@
       if (splashHidden || !splash.parentNode) return;
       splashHidden = true;
       splash.classList.add('done');
-      setTimeout(() => { 
-        splash.remove(); 
+      setTimeout(() => {
+        splash.remove();
         document.body.style.overflow = 'auto';
       }, 900);
     };
-    
+
     // Video splash - stop after 3 seconds
     if (splashVideo) {
       setTimeout(() => {
@@ -1924,11 +1909,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const splashVideo = document.getElementById('splashVideo');
   const splash = document.getElementById('splash');
   const unmuteBtn = document.getElementById('unmuteBtn');
-  
+
   if (splashVideo && splash) {
     // Ensure splash is interactive
     splash.style.pointerEvents = 'auto';
-    
+
     if (unmuteBtn) unmuteBtn.style.display = 'none';
 
     // Create a beautiful "Tap to Start" interaction overlay
@@ -1944,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style.cursor = 'pointer';
     overlay.style.transition = 'opacity 0.4s ease';
     overlay.style.pointerEvents = 'auto'; // CRITICAL: ensure clicks are registered
-    
+
     overlay.innerHTML = `
       <div style="text-align:center; animation: pulse 2s infinite;">
         <div style="font-size:4rem; margin-bottom:15px;">✨</div>
@@ -1952,12 +1937,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <p style="color:#cbd5e1; margin-top:10px; font-size:1rem;">للاستمتاع بالتجربة الصوتية الكاملة</p>
       </div>
     `;
-    
+
     splash.appendChild(overlay);
 
     let started = false;
     const startExperience = (e) => {
-      if(started) return;
+      if (started) return;
       started = true;
       e.stopPropagation();
       overlay.style.opacity = '0';
@@ -1965,20 +1950,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Ensure unmuted from the start after the tap
       splashVideo.muted = false;
-      splashVideo.volume = 1.0;
+      splashVideo.volume = 0.3;
       splashVideo.currentTime = 0; // Restart so they see it all with sound
-      
+
       const playPromise = splashVideo.play();
-      if(playPromise !== undefined) {
+      if (playPromise !== undefined) {
         playPromise.then(() => {
-           console.log("Video playing with sound");
+          console.log("Video playing with sound");
         }).catch(err => {
-           console.warn("Play blocked, attempting reload:", err);
-           splashVideo.load();
-           splashVideo.play().catch(e => console.error("Critical play failure:", e));
+          console.warn("Play blocked, attempting reload:", err);
+          splashVideo.load();
+          splashVideo.play().catch(e => console.error("Critical play failure:", e));
         });
       }
-      
+
       if (window.playClickSound) window.playClickSound();
     };
 
