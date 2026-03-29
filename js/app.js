@@ -1011,7 +1011,11 @@
           if (!blob) return reject(new Error('Canvas toBlob failed'));
           const ext = product.image.split('.').pop().split('?')[0] || 'png';
           const file = new File([blob], `spark_${product.id}.${ext}`, { type: blob.type });
-          resolve({ file, urltext: `اطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}` });
+          
+          // Construct rich share text
+          const shareText = `🔥 ${name}\n📖 ${desc}\n\nاطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}`;
+          
+          resolve({ file, shareText });
         }, 'image/png', 0.95);
       };
       img.onerror = () => reject(new Error('Image load failed'));
@@ -1028,25 +1032,36 @@
     btn.style.pointerEvents = 'none';
 
     try {
-      const { file, urltext } = await generateShareImage(product);
+      const { file, shareText } = await generateShareImage(product);
       const shareData = {
         title: nameVal(product),
-        text: urltext,
+        text: shareText,
         files: [file]
       };
       
+      // On some mobile devices, we check if file sharing is supported
       if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
         await navigator.share(shareData);
+      } else if (navigator.share) {
+        // Fallback: Share rich text (Title + Desc + Link) if files are not supported
+        await navigator.share({ title: shareData.title, text: shareData.text });
+        // And still download the image so they have it
+        downloadFile(file, file.name);
       } else {
         downloadFile(file, file.name);
-        copyToClipboard(urltext);
-        showToast((txt('copied') || 'تم النسخ') + ' - جاري تحميل الصورة');
+        copyToClipboard(shareText);
+        showToast((txt('copied') || 'تم نسخ تفاصيل المنتج') + ' - جاري تحميل الصورة');
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
+        // Ultimate fallback: Copy rich text even if generator fails
+        const name = nameVal(product);
+        const desc = langVal(product, 'description') || '';
         const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
-        copyToClipboard(url);
-        showToast(txt('copied'));
+        const fallbackText = `🔥 ${name}\n📖 ${desc}\n\n${url}`;
+        
+        copyToClipboard(fallbackText);
+        showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل للشاركة');
       }
     } finally {
       btn.innerHTML = prevHtml;
