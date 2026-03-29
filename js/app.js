@@ -592,18 +592,27 @@
     try {
       initAudioCtx();
       if (!sparkAudioCtx) return;
-      const osc = sparkAudioCtx.createOscillator();
+      const t = sparkAudioCtx.currentTime;
+      const dur = 0.05;
+      const noise = sparkAudioCtx.createBufferSource();
+      const bufferSize = sparkAudioCtx.sampleRate * dur;
+      const buffer = sparkAudioCtx.createBuffer(1, bufferSize, sparkAudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      noise.buffer = buffer;
+      
+      const filter = sparkAudioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 5000;
+      
       const gain = sparkAudioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1000, sparkAudioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1500, sparkAudioCtx.currentTime + 0.04);
-      gain.gain.setValueAtTime(0, sparkAudioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.03, sparkAudioCtx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, sparkAudioCtx.currentTime + 0.04);
-      osc.connect(gain);
+      gain.gain.setValueAtTime(0.02, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      
+      noise.connect(filter);
+      filter.connect(gain);
       gain.connect(sparkAudioCtx.destination);
-      osc.start();
-      osc.stop(sparkAudioCtx.currentTime + 0.05);
+      noise.start();
     } catch(e) {}
   };
 
@@ -611,29 +620,46 @@
     try {
       initAudioCtx();
       if (!sparkAudioCtx) return;
-      const osc1 = sparkAudioCtx.createOscillator();
-      const osc2 = sparkAudioCtx.createOscillator();
-      const gain = sparkAudioCtx.createGain();
+      const t = sparkAudioCtx.currentTime;
       
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(600, sparkAudioCtx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(1200, sparkAudioCtx.currentTime + 0.08);
+      // Muffled Thunder (Sub Bass)
+      const sub = sparkAudioCtx.createOscillator();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(80, t);
+      sub.frequency.exponentialRampToValueAtTime(30, t + 0.5);
       
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(900, sparkAudioCtx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(1800, sparkAudioCtx.currentTime + 0.08);
+      const subGain = sparkAudioCtx.createGain();
+      subGain.gain.setValueAtTime(0, t);
+      subGain.gain.linearRampToValueAtTime(0.8, t + 0.05);
+      subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
       
-      gain.gain.setValueAtTime(0, sparkAudioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.1, sparkAudioCtx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, sparkAudioCtx.currentTime + 0.15);
+      sub.connect(subGain);
+      subGain.connect(sparkAudioCtx.destination);
+      sub.start(); 
+      sub.stop(t + 0.5);
       
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(sparkAudioCtx.destination);
+      // Soft Spark (Static Noise)
+      const noise = sparkAudioCtx.createBufferSource();
+      const dur = 0.15;
+      const bufferSize = sparkAudioCtx.sampleRate * dur;
+      const buffer = sparkAudioCtx.createBuffer(1, bufferSize, sparkAudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      noise.buffer = buffer;
       
-      osc1.start(); osc2.start();
-      osc1.stop(sparkAudioCtx.currentTime + 0.15);
-      osc2.stop(sparkAudioCtx.currentTime + 0.15);
+      const filter = sparkAudioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(4000, t);
+      filter.frequency.exponentialRampToValueAtTime(1000, t + dur);
+      
+      const noiseGain = sparkAudioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.3, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
+      
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(sparkAudioCtx.destination);
+      noise.start();
     } catch(e) {}
   };
 

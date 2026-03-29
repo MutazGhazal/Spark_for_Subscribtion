@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>اختبار الأصوات - المتجر</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 50px; background: #000; color: white; text-align: center; }
+    .btn { display: block; width: 100%; max-width: 400px; padding: 20px; margin: 15px auto; background: #dc2626; border: none; color: white; font-size: 18px; border-radius: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 25px rgba(220, 38, 38, 0.6); text-transform: uppercase; font-weight: 900;}
+    .btn:hover { background: #991b1b; transform: scale(1.05); }
+    .desc { font-size: 14px; opacity: 0.9; margin-top: 8px; font-weight: normal; }
+    h2 { color: #ef4444; font-size: 32px; }
+  </style>
+</head>
+<body>
+  <h2>أصوات مدمرة (أقصى قوة مبرمجة) ⚡️</h2>
+  <p style="margin-bottom: 40px; opacity: 0.8;">تم استخدام تقنيات تضخيم وتشويه عالية (Distortion) لإنتاج أقصى قوة ممكنة.</p>
+
+  <button class="btn" onclick="playOverdrivenZap()">
+    1. تيار عالي الفولتية (High Voltage Zap)
+    <div class="desc">ضربة شرار كهربائي مشوهة وصاخبة جداً.</div>
+  </button>
+
+  <button class="btn" onclick="playCinematicExplosion()">
+    2. صاعقة مدوية (Massive Thunderstrike)
+    <div class="desc">طبقة Bass مدمرة ومشوهة تحاكي سقوط صاعقة قريبة.</div>
+  </button>
+
+  <button class="btn" onclick="playThunderCrack()">
+    3. طقطقة الرعد والشرار (Crackle & Boom)
+    <div class="desc">طقطقة كهربائية حادة متبوعة بدمدمة رعد ضخمة.</div>
+  </button>
+
+  <script>
+    let ctx;
+    function init() { 
+      if(!ctx) ctx = new window.AudioContext(); 
+      if(ctx.state==='suspended') ctx.resume(); 
+    }
+
+    function createNoise(duration) {
+      if(!ctx) return null;
+      const bufferSize = ctx.sampleRate * duration;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+      return buffer;
+    }
+
+    function makeDistortionCurve(amount) {
+      let k = typeof amount === 'number' ? amount : 50;
+      let n_samples = 44100;
+      let curve = new Float32Array(n_samples);
+      let deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i ) {
+        let x = i * 2 / n_samples - 1;
+        curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+      }
+      return curve;
+    }
+
+    // 1. Overdriven Zap
+    window.playOverdrivenZap = function() {
+      init();
+      const dur = 0.4;
+      
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + dur);
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = createNoise(dur);
+      
+      const distortion = ctx.createWaveShaper();
+      distortion.curve = makeDistortionCurve(800); 
+      distortion.oversample = '4x';
+      
+      const vca = ctx.createGain();
+      vca.gain.setValueAtTime(0, ctx.currentTime);
+      vca.gain.linearRampToValueAtTime(1.5, ctx.currentTime + 0.01);
+      vca.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+      
+      osc.connect(distortion);
+      noise.connect(distortion);
+      distortion.connect(vca);
+      vca.connect(ctx.destination);
+      
+      osc.start(); noise.start();
+      osc.stop(ctx.currentTime + dur);
+      noise.stop(ctx.currentTime + dur);
+    };
+
+    // 2. Cinematic Explosion (Massive Thunderstrike)
+    window.playCinematicExplosion = function() {
+      init();
+      const dur = 3.0;
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = createNoise(dur);
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + dur);
+      
+      const sub = ctx.createOscillator();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(100, ctx.currentTime);
+      sub.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + dur);
+      
+      const distortion = ctx.createWaveShaper();
+      distortion.curve = makeDistortionCurve(400); 
+      distortion.oversample = '4x';
+      
+      const vca = ctx.createGain();
+      vca.gain.setValueAtTime(0, ctx.currentTime);
+      vca.gain.linearRampToValueAtTime(3.0, ctx.currentTime + 0.05);
+      vca.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+      
+      noise.connect(filter);
+      filter.connect(distortion);
+      sub.connect(distortion);
+      distortion.connect(vca);
+      vca.connect(ctx.destination);
+      
+      noise.start(); sub.start();
+      noise.stop(ctx.currentTime + dur);
+      sub.stop(ctx.currentTime + dur);
+    };
+
+    // 3. Crackle & Boom
+    window.playThunderCrack = function() {
+      playOverdrivenZap();
+      setTimeout(playCinematicExplosion, 80);
+    };
+  </script>
+</body>
+</html>
