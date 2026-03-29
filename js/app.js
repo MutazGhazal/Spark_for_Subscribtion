@@ -1914,9 +1914,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure splash is interactive
     splash.style.pointerEvents = 'auto';
     
-    // Attempt to preload for mobile
-    splashVideo.load();
-    
     if (unmuteBtn) unmuteBtn.style.display = 'none';
 
     // Create a beautiful "Tap to Start" interaction overlay
@@ -1948,14 +1945,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if(started) return;
       started = true;
       e.stopPropagation();
-      e.preventDefault();
-      
       overlay.style.opacity = '0';
       setTimeout(() => overlay.remove(), 400);
-      
-      // Wake up the video
+
+      // Ensure unmuted from the start after the tap
       splashVideo.muted = false;
       splashVideo.volume = 1.0;
+      splashVideo.currentTime = 0; // Restart so they see it all with sound
       
       const playPromise = splashVideo.play();
       if(playPromise !== undefined) {
