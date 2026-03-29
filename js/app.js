@@ -876,93 +876,117 @@
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
         const width = 1080;
         const height = (img.height / img.width) * width;
-        
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width; canvas.height = height;
         
         ctx.drawImage(img, 0, 0, width, height);
         
-        const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.7);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
-        gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.6)');
+        const gradient = ctx.createLinearGradient(0, height, 0, height - (height * 0.7));
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
         
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-        
-        const name = nameVal(product);
-        let desc = langVal(product, 'description') || '';
-        if (desc.length > 100) desc = desc.substring(0, 97) + '...';
+        const name = product.name_ar || nameVal(product);
+        let desc = product.description_ar || langVal(product, 'description') || '';
+        if (desc.length > 200) desc = desc.substring(0, 197) + '...';
         
         const priceVal = getProductMinPrice(product);
         const priceStr = `${priceVal} ${product.currency || 'USD'}`;
         const local = formatLocalPrice(priceVal, product.currency);
-        const localStr = local ? ` (${local})` : '';
+        const priceText = `${priceStr}${local ? ` (${local})` : ''}`;
         
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
+        ctx.textBaseline = 'bottom';
+        const marginX = 60;
+        let yCursor = height - 60;
+        
+        ctx.font = 'bold 60px "Tajawal", "Cairo", system-ui, sans-serif';
+        const priceMetrics = ctx.measureText(priceText);
+        const priceW = priceMetrics.width;
+        
+        const boxPx = 40, boxPy = 20;
+        const boxW = priceW + (boxPx * 2);
+        const boxH = 60 + (boxPy * 2);
+        const boxX = width - marginX - boxW;
+        const boxY = yCursor - boxH;
+        
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.95)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 20); else ctx.rect(boxX, boxY, boxW, boxH);
+        ctx.fill();
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 75px "Tajawal", "Cairo", system-ui, sans-serif';
-        ctx.fillText(name, width / 2, 80);
+        ctx.textAlign = 'right';
+        // Add canvas direction for proper Arabic rendering marks (e.g brackets)
+        ctx.direction = 'rtl';
+        ctx.fillText(priceText, width - marginX - boxPx, yCursor - boxPy - 5);
+        ctx.direction = 'ltr'; // reset
         
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 45px system-ui';
+        ctx.fillText('Spark', marginX, yCursor - 20);
+        
+        yCursor -= (boxH + 40);
+        
+        ctx.textAlign = 'right';
+        ctx.direction = 'rtl';
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = '45px "Tajawal", "Cairo", system-ui, sans-serif';
+        ctx.font = '40px "Tajawal", "Cairo", system-ui, sans-serif';
         
-        const maxWidth = width - 100;
         const words = desc.split(' ');
         let line = '';
-        let y = 190;
+        const lines = [];
+        const maxW = width - (marginX * 2);
         for(let n = 0; n < words.length; n++) {
           let testLine = line + words[n] + ' ';
-          let metrics = ctx.measureText(testLine);
-          if (metrics.width > maxWidth && n > 0) {
-            ctx.fillText(line, width / 2, y);
+          if (ctx.measureText(testLine).width > maxW && n > 0) {
+            lines.push(line);
             line = words[n] + ' ';
-            y += 65;
           } else {
             line = testLine;
           }
         }
-        ctx.fillText(line, width / 2, y);
+        lines.push(line);
         
-        ctx.font = 'bold 65px "Tajawal", "Cairo", system-ui, sans-serif';
-        const priceText = `${priceStr}${localStr}`;
-        const priceWidth = ctx.measureText(priceText).width;
-        
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.95)';
-        const boxY = y + 100;
-        const boxPadX = 50;
-        const boxPadY = 25;
-        ctx.beginPath();
-        // Fallback for roundRect if not perfectly supported
-        if(ctx.roundRect) {
-            ctx.roundRect((width / 2) - (priceWidth / 2) - boxPadX, boxY, priceWidth + (boxPadX * 2), 65 + (boxPadY * 2), 25);
-        } else {
-            ctx.rect((width / 2) - (priceWidth / 2) - boxPadX, boxY, priceWidth + (boxPadX * 2), 65 + (boxPadY * 2));
+        for (let i = lines.length - 1; i >= 0; i--) {
+          ctx.fillText(lines[i], width - marginX, yCursor);
+          yCursor -= 55;
         }
-        ctx.fill();
+        
+        yCursor -= 20;
         
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(priceText, width / 2, boxY + boxPadY);
+        ctx.font = 'bold 75px "Tajawal", "Cairo", system-ui, sans-serif';
         
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.beginPath();
-        if(ctx.roundRect) ctx.roundRect(width - 240, height - 100, 220, 80, 15);
-        else ctx.rect(width - 240, height - 100, 220, 80);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 35px system-ui';
-        ctx.fillText('Spark', width - 130, height - 80);
+        const titleWords = name.split(' ');
+        let tLine = '';
+        const tLines = [];
+        for(let n = 0; n < titleWords.length; n++) {
+          let testLine = tLine + titleWords[n] + ' ';
+          if (ctx.measureText(testLine).width > maxW && n > 0) {
+            tLines.push(tLine);
+            tLine = titleWords[n] + ' ';
+          } else {
+            tLine = testLine;
+          }
+        }
+        tLines.push(tLine);
+        
+        for (let i = tLines.length - 1; i >= 0; i--) {
+          ctx.fillText(tLines[i], width - marginX, yCursor);
+          yCursor -= 85;
+        }
+        
+        ctx.direction = 'ltr';
         
         canvas.toBlob((blob) => {
           if (!blob) return reject(new Error('Canvas toBlob failed'));
-          const file = new File([blob], `spark_${product.id}.png`, { type: blob.type });
+          const ext = product.image.split('.').pop().split('?')[0] || 'png';
+          const file = new File([blob], `spark_${product.id}.${ext}`, { type: blob.type });
           resolve({ file, urltext: `اطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}` });
-        }, 'image/png');
+        }, 'image/png', 0.95);
       };
       img.onerror = () => reject(new Error('Image load failed'));
       img.src = product.image;
