@@ -802,6 +802,107 @@
     }
   }
 
+  async function generateShareImage(product) {
+    return new Promise((resolve, reject) => {
+      if (!product.image) return reject(new Error('No image'));
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const width = 1080;
+        const height = (img.height / img.width) * width;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.7);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+        gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        const name = nameVal(product);
+        let desc = langVal(product, 'description') || '';
+        if (desc.length > 100) desc = desc.substring(0, 97) + '...';
+        
+        const priceVal = getProductMinPrice(product);
+        const priceStr = `${priceVal} ${product.currency || 'USD'}`;
+        const local = formatLocalPrice(priceVal, product.currency);
+        const localStr = local ? ` (${local})` : '';
+        
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 75px "Tajawal", "Cairo", system-ui, sans-serif';
+        ctx.fillText(name, width / 2, 80);
+        
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '45px "Tajawal", "Cairo", system-ui, sans-serif';
+        
+        const maxWidth = width - 100;
+        const words = desc.split(' ');
+        let line = '';
+        let y = 190;
+        for(let n = 0; n < words.length; n++) {
+          let testLine = line + words[n] + ' ';
+          let metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && n > 0) {
+            ctx.fillText(line, width / 2, y);
+            line = words[n] + ' ';
+            y += 65;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, width / 2, y);
+        
+        ctx.font = 'bold 65px "Tajawal", "Cairo", system-ui, sans-serif';
+        const priceText = `${priceStr}${localStr}`;
+        const priceWidth = ctx.measureText(priceText).width;
+        
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.95)';
+        const boxY = y + 100;
+        const boxPadX = 50;
+        const boxPadY = 25;
+        ctx.beginPath();
+        // Fallback for roundRect if not perfectly supported
+        if(ctx.roundRect) {
+            ctx.roundRect((width / 2) - (priceWidth / 2) - boxPadX, boxY, priceWidth + (boxPadX * 2), 65 + (boxPadY * 2), 25);
+        } else {
+            ctx.rect((width / 2) - (priceWidth / 2) - boxPadX, boxY, priceWidth + (boxPadX * 2), 65 + (boxPadY * 2));
+        }
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(priceText, width / 2, boxY + boxPadY);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(width - 240, height - 100, 220, 80, 15);
+        else ctx.rect(width - 240, height - 100, 220, 80);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 35px system-ui';
+        ctx.fillText('Spark', width - 130, height - 80);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('Canvas toBlob failed'));
+          const file = new File([blob], `spark_${product.id}.png`, { type: blob.type });
+          resolve({ file, urltext: `اطلبه الآن من متجر Spark:\n${window.location.origin}${window.location.pathname}?product=${product.id}` });
+        }, 'image/png');
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = product.image;
+    });
+  }
+
   async function shareProductBtnClick(btn, productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -811,39 +912,19 @@
     btn.style.pointerEvents = 'none';
 
     try {
-      const name = nameVal(product);
-      const desc = langVal(product, 'description') || '';
-      const priceVal = getProductMinPrice(product);
-      const priceStr = `${priceVal} ${product.currency || 'USD'}`;
-      const local = formatLocalPrice(priceVal, product.currency);
-      const localStr = local ? ` (${local})` : '';
-      const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+      const { file, urltext } = await generateShareImage(product);
+      const shareData = {
+        title: nameVal(product),
+        text: urltext,
+        files: [file]
+      };
       
-      const text = `*${name}*\n${desc}\n\nالسعر: ${priceStr}${localStr}\n\nاطلبه الآن من متجر Spark:\n${url}`;
-      
-      let shareFiles = [];
-      if (product.image && navigator.canShare) {
-        try {
-          const resp = await fetch(product.image, { mode: 'cors' });
-          const blob = await resp.blob();
-          const ext = product.image.split('.').pop().split('?')[0] || 'jpg';
-          const file = new File([blob], `product.${ext}`, { type: blob.type });
-          if (navigator.canShare({ files: [file] })) {
-            shareFiles = [file];
-          }
-        } catch (e) {
-          console.warn('Could not fetch image for share', e);
-        }
-      }
-      
-      const shareData = { title: name, text: text };
-      if (shareFiles.length > 0) { shareData.files = shareFiles; }
-      
-      if (navigator.share) {
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
         await navigator.share(shareData);
       } else {
-        copyToClipboard(text);
-        showToast(txt('copied'));
+        downloadFile(file, file.name);
+        copyToClipboard(urltext);
+        showToast((txt('copied') || 'تم النسخ') + ' - جاري تحميل الصورة');
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -855,6 +936,17 @@
       btn.innerHTML = prevHtml;
       btn.style.pointerEvents = 'auto';
     }
+  }
+
+  function downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   function copyToClipboard(text) {
