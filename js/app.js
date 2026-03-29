@@ -1907,73 +1907,60 @@
 // Video unmute logic and Auto-play Permission
 document.addEventListener('DOMContentLoaded', () => {
   const splashVideo = document.getElementById('splashVideo');
+  const splash = document.getElementById('splash');
   const unmuteBtn = document.getElementById('unmuteBtn');
   
-  if (splashVideo) {
-    let audioEnabled = false;
-    const pref = localStorage.getItem('spark_audio_permission');
+  if (splashVideo && splash) {
+    // We pause the video instantly so it doesn't play muted
+    splashVideo.pause();
+    splashVideo.currentTime = 0;
+    
+    if (unmuteBtn) unmuteBtn.style.display = 'none';
 
-    const enableAudio = () => {
-      if (audioEnabled || splashVideo.muted === false) return;
-      audioEnabled = true;
+    // Create a beautiful "Tap to Start" interaction overlay
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.zIndex = '10';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.background = 'rgba(15, 23, 42, 0.9)';
+    overlay.style.backdropFilter = 'blur(10px)';
+    overlay.style.cursor = 'pointer';
+    overlay.style.transition = 'opacity 0.4s ease';
+    
+    overlay.innerHTML = `
+      <div style="text-align:center; animation: pulse 2s infinite;">
+        <div style="font-size:4rem; margin-bottom:15px;">✨</div>
+        <h2 style="font-family:'Tajawal', 'Cairo', sans-serif; color:white; font-size:1.8rem; margin:0;">اضغط للبدء</h2>
+        <p style="color:#cbd5e1; margin-top:10px; font-size:1rem;">للاستمتاع بالتجربة الصوتية الكاملة</p>
+      </div>
+    `;
+    
+    splash.appendChild(overlay);
+
+    let started = false;
+    const startExperience = (e) => {
+      if(started) return;
+      started = true;
+      e.stopPropagation();
+      e.preventDefault();
+      
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 400);
+      
       splashVideo.muted = false;
-      splashVideo.volume = 0.7;
-      if (unmuteBtn) unmuteBtn.style.display = 'none';
-      console.log('Audio manually enabled by user action');
+      splashVideo.volume = 0.8;
+      const playPromise = splashVideo.play();
+      if(playPromise !== undefined) {
+        playPromise.catch(err => console.warn("Play blocked:", err));
+      }
+      
+      if (window.playClickSound) window.playClickSound();
     };
 
-    if (pref === 'granted') {
-      splashVideo.muted = false;
-      splashVideo.volume = 0.7;
-      if (unmuteBtn) unmuteBtn.style.display = 'none';
-      
-      const playPromise = splashVideo.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          audioEnabled = true; 
-        }).catch(() => {
-          splashVideo.muted = true;
-          if (unmuteBtn) unmuteBtn.style.display = 'flex';
-          splashVideo.play().catch(e => console.warn("Video blocked entirely", e));
-        });
-      }
-    } else if (!pref) {
-      const modalHtml = `
-        <div id="audioPermModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px); transition:opacity 0.3s;">
-          <div style="background:var(--bg-card,#ffffff);border-radius:20px;padding:25px;text-align:center;max-width:350px;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-            <div style="font-size:3rem;margin-bottom:15px;">🔊</div>
-            <h3 style="margin:0 0 10px;font-size:1.3rem;color:var(--text,#1e293b);">السماح بتشغيل الصوت؟</h3>
-            <p style="margin:0 0 20px;font-size:0.95rem;color:var(--text-secondary,#64748b);">للحصول على أفضل تجربة، هل تود تفعيل تشغيل الصوتيات تلقائياً؟</p>
-            <div style="display:flex;gap:10px;justify-content:center;">
-              <button id="btnAllowAudio" style="flex:1;background:var(--primary,#6366f1);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:bold;cursor:pointer;">نعم، تفعيل</button>
-              <button id="btnDenyAudio" style="flex:1;background:transparent;color:var(--text-secondary,#64748b);border:1px solid var(--border,#cbd5e1);padding:12px;border-radius:12px;font-weight:bold;cursor:pointer;">بدون صوت</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.insertAdjacentHTML('beforeend', modalHtml);
-      const audioModal = document.getElementById('audioPermModal');
-      
-      document.getElementById('btnAllowAudio').addEventListener('click', () => {
-        localStorage.setItem('spark_audio_permission', 'granted');
-        enableAudio();
-        audioModal.style.opacity = '0';
-        setTimeout(() => audioModal.remove(), 300);
-      });
-      
-      document.getElementById('btnDenyAudio').addEventListener('click', () => {
-        localStorage.setItem('spark_audio_permission', 'denied');
-        audioModal.style.opacity = '0';
-        setTimeout(() => audioModal.remove(), 300);
-      });
-    }
-
-    if (unmuteBtn) {
-      unmuteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        localStorage.setItem('spark_audio_permission', 'granted');
-        enableAudio();
-      });
-    }
+    overlay.addEventListener('click', startExperience);
+    overlay.addEventListener('touchstart', startExperience, { passive: false });
   }
 });
