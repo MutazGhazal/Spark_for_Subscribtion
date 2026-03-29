@@ -1032,22 +1032,22 @@
 
     try {
       const { file, shareText } = await generateShareImage(product);
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
       const shareData = {
         title: nameVal(product),
         text: shareText,
-        files: [file]
+        files: (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) ? [file] : null
       };
 
-      // Best effort: Share both file and text
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      if (shareData.files && navigator.share) {
+        // Mobile with file support: Share file + text
         await navigator.share(shareData);
       } else if (navigator.share) {
-        // Fallback: Share just the rich text if files not supported (avoids "copied" msg)
+        // Desktop or mobile without file support: Share rich text only
         await navigator.share({ title: shareData.title, text: shareData.text });
-        // And download for good measure
-        downloadFile(file, file.name);
       } else {
-        // Ultimate fallback for ancient browsers
+        // Universal fallback: Copy to clipboard and download image
         downloadFile(file, file.name);
         copyToClipboard(shareText);
         showToast((txt('copied') || 'تم نسخ المعلومات') + ' - جاري تحميل الصورة');
@@ -1058,8 +1058,13 @@
         const desc = langVal(product, 'description') || '';
         const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
         const fallbackText = `🔥 ${name}\n📖 ${desc}\n\n${url}`;
-        copyToClipboard(fallbackText);
-        showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل');
+
+        if (navigator.share) {
+            await navigator.share({ title: name, text: fallbackText });
+        } else {
+            copyToClipboard(fallbackText);
+            showToast(txt('copied') || 'تم نسخ الرابط والتفاصيل');
+        }
       }
     } finally {
       btn.innerHTML = prevHtml;
@@ -1963,7 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Ensure unmuted from the start after the tap
       splashVideo.muted = false;
-      splashVideo.volume = 0.3;
+      splashVideo.volume = 0.1;
       splashVideo.currentTime = 0; // Restart so they see it all with sound
 
       const playPromise = splashVideo.play();
