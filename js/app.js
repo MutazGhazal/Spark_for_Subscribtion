@@ -1914,9 +1914,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure splash is interactive
     splash.style.pointerEvents = 'auto';
     
-    // We pause the video instantly so it doesn't play muted
-    splashVideo.pause();
-    splashVideo.currentTime = 0;
+    // Attempt to preload for mobile
+    splashVideo.load();
     
     if (unmuteBtn) unmuteBtn.style.display = 'none';
 
@@ -1954,11 +1953,19 @@ document.addEventListener('DOMContentLoaded', () => {
       overlay.style.opacity = '0';
       setTimeout(() => overlay.remove(), 400);
       
+      // Wake up the video
       splashVideo.muted = false;
       splashVideo.volume = 1.0;
+      
       const playPromise = splashVideo.play();
       if(playPromise !== undefined) {
-        playPromise.catch(err => console.warn("Play blocked:", err));
+        playPromise.then(() => {
+           console.log("Video playing with sound");
+        }).catch(err => {
+           console.warn("Play blocked, attempting reload:", err);
+           splashVideo.load();
+           splashVideo.play().catch(e => console.error("Critical play failure:", e));
+        });
       }
       
       if (window.playClickSound) window.playClickSound();
