@@ -606,7 +606,7 @@
       filter.frequency.value = 5000;
       
       const gain = sparkAudioCtx.createGain();
-      gain.gain.setValueAtTime(0.02, t);
+      gain.gain.setValueAtTime(0.2, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
       
       noise.connect(filter);
@@ -630,7 +630,7 @@
       
       const subGain = sparkAudioCtx.createGain();
       subGain.gain.setValueAtTime(0, t);
-      subGain.gain.linearRampToValueAtTime(0.8, t + 0.05);
+      subGain.gain.linearRampToValueAtTime(2.0, t + 0.05);
       subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
       
       sub.connect(subGain);
@@ -653,7 +653,7 @@
       filter.frequency.exponentialRampToValueAtTime(1000, t + dur);
       
       const noiseGain = sparkAudioCtx.createGain();
-      noiseGain.gain.setValueAtTime(0.3, t);
+      noiseGain.gain.setValueAtTime(1.5, t);
       noiseGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
       
       noise.connect(filter);
@@ -1951,7 +1951,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => overlay.remove(), 400);
       
       splashVideo.muted = false;
-      splashVideo.volume = 0.8;
+      splashVideo.volume = 1.0;
       const playPromise = splashVideo.play();
       if(playPromise !== undefined) {
         playPromise.catch(err => console.warn("Play blocked:", err));
