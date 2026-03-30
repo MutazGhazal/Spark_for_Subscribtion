@@ -1029,6 +1029,9 @@
     });
   }
 
+  // Cache generated poster blobs to avoid repeated proxy fetches (fixes mobile 2-3 tap delay)
+  const shareImageCache = new Map();
+
   async function shareProductBtnClick(btn, productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -1038,27 +1041,44 @@
     btn.style.pointerEvents = 'none';
 
     try {
-      const { file, blob, shareText } = await generateShareImage(product);
+      // Use cached result if available (instant on 2nd+ tap)
+      let shareData = shareImageCache.get(productId);
+      if (!shareData) {
+        shareData = await generateShareImage(product);
+        shareImageCache.set(productId, shareData);
+      }
 
-      // Try Web Share API with the image file (works on most modern mobile and some PC browsers)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: nameVal(product),
-          text: shareText,
-          files: [file]
-        });
+      const { file, blob, shareText } = shareData;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Mobile: share image + text directly (shows image preview in WhatsApp etc.)
+        await navigator.share({ title: nameVal(product), text: shareText, files: [file] });
+
+      } else if (!isMobile && navigator.clipboard && window.ClipboardItem && blob) {
+        // PC: copy image to clipboard so user can Ctrl+V into any chat
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+          showToast('✅ تم نسخ الصورة — الصقها (Ctrl+V) في محادثتك');
+        } catch (clipErr) {
+          // Clipboard blocked (non-HTTPS or permissions) — download instead
+          downloadFile(file, file.name);
+          showToast('تم تحميل صورة الإعلان');
+        }
+
       } else if (navigator.share) {
-        // Web Share without file (PC Chrome, Firefox) — opens share sheet with text
+        // Fallback: text-only Web Share (no file support)
         await navigator.share({ title: nameVal(product), text: shareText });
+
       } else {
-        // Last resort: download the image and copy the text
+        // Last resort
         downloadFile(file, file.name);
         copyToClipboard(shareText);
         showToast('تم تحميل الصورة ونسخ النص');
       }
+
     } catch (err) {
       if (err.name !== 'AbortError') {
-        // Image generation failed (e.g. CORS) — fall back to text-only share
         const name = nameVal(product);
         const url = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
         const fallbackText = `🔥 ${name}\n\n${url}`;
