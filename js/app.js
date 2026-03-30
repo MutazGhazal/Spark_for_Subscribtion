@@ -761,6 +761,22 @@
         openProductDetail(card.dataset.id);
       });
     });
+
+    // Pre-cache share images in background so first mobile tap is instant
+    // We stagger the requests to avoid hammering the proxy
+    const isMobilePrecache = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobilePrecache) {
+      const uncached = filtered.filter(p => !shareImageCache.has(p.id));
+      uncached.forEach((p, i) => {
+        setTimeout(() => {
+          if (!shareImageCache.has(p.id)) {
+            generateShareImage(p)
+              .then(data => shareImageCache.set(p.id, data))
+              .catch(() => {}); // Silently ignore failures
+          }
+        }, 1500 + (i * 300)); // Start after 1.5s, stagger by 300ms each
+      });
+    }
   }
 
   // ===== PRODUCT DETAIL MODAL =====
