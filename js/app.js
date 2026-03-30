@@ -1019,13 +1019,13 @@
       };
       
       img.onerror = () => {
-         // Fallback if CORS/Loading fails: just share the name/link as text
          reject(new Error('Image load failed'));
       };
-      
-      // Attempt to bypass CDN CORS issues with a unique cache-buster per load
-      const cb = product.image.includes('?') ? '&' : '?';
-      img.src = product.image + cb + 't=' + Date.now();
+
+      // Route image through a CORS proxy so canvas can draw ANY external image.
+      // This is the fix for most products failing on mobile.
+      const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(product.image)}&default=1`;
+      img.src = proxyUrl;
     });
   }
 
