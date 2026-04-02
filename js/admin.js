@@ -717,11 +717,11 @@
           <div class="form-group"><label>رابط المصدر (WMCentre)</label><input type="text" id="pWmcUrl" value="${p.wmcentre_url || ''}" dir="ltr"></div>
           <div class="form-group"><label>رابط الموقع الرسمي</label><input type="text" id="pOfficialUrl" value="${p.official_url || ''}" dir="ltr" placeholder="https://..."></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>سعر التكلفة (Cost)</label><input type="number" id="pCostPrice" value="${p.cost_price || 0}" step="0.01" min="0" oninput="window._updatePricePreview()"></div>
+        <div class="form-row" style="display:none;">
+          <div class="form-group"><label>سعر التكلفة (Cost)</label><input type="number" id="pCostPrice" value="${p.cost_price || 0}" step="0.01" min="0"></div>
           <div class="form-group"><label>السعر الرسمي (Retail)</label><input type="number" id="pOfficialPrice" value="${p.official_price || ''}" step="0.01" min="0"></div>
-          <div class="form-group"><label>نسبة الربح (Margin)</label><input type="number" id="pProfitMargin" value="${p.profit_margin || ''}" step="0.01" min="1" placeholder="افتراضي: ${siteSettings.global_profit_margin || 1.1}" oninput="window._updatePricePreview()"></div>
-          <div class="form-group"><label>رسوم ثابتة (Fee)</label><input type="number" id="pFixedFee" value="${p.fixed_fee || ''}" step="0.01" min="0" placeholder="افتراضي: ${siteSettings.global_fixed_fee || 3}" oninput="window._updatePricePreview()"></div>
+          <div class="form-group"><label>نسبة الربح (Margin)</label><input type="number" id="pProfitMargin" value="${p.profit_margin || ''}" step="0.01" min="1"></div>
+          <div class="form-group"><label>رسوم ثابتة (Fee)</label><input type="number" id="pFixedFee" value="${p.fixed_fee || ''}" step="0.01" min="0"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>مصدر التوفر الحالي</label>
@@ -737,8 +737,8 @@
           </div>
         </div>
         <div class="form-row" style="background:var(--bg-secondary);padding:1rem;border-radius:10px;margin-bottom:1rem;border:1px solid var(--primary-light);">
-          <div class="form-group" style="margin:0;"><label>سعر البيع النهائي (نتاج المعادلة)</label>
-            <input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" required>
+          <div class="form-group" style="margin:0;"><label>أرخص سعر حالي (Starting from)</label>
+            <input type="number" id="pPrice" value="${p.price}" step="0.01" min="0" readonly style="background:var(--bg); opacity:0.8; font-weight:700;">
             <p id="pricePreviewMsg" style="font-size:0.75rem;margin-top:0.4rem;color:var(--primary);"></p>
           </div>
           <div class="form-group" style="margin:0;"><label>العملة</label>
@@ -788,15 +788,17 @@
             <button type="button" class="btn btn-secondary" id="addPlanBtn" style="padding:0.35rem 0.8rem;font-size:0.85rem;">+ إضافة مدة</button>
           </div>
           <div id="plansContainer">
-            ${(p.subscription_plans || []).sort((a, b) => (a.price || 0) - (b.price || 0)).map((plan, i) => `
-              <div class="plan-row ${plan.is_active === false ? 'hidden' : ''}" data-active="${plan.is_active !== false}" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
-                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="text" class="plan-official-url" value="${plan.official_url || ''}" placeholder="رابط رسمي" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                ${(p.subscription_plans || []).sort((a, b) => (a.price || 0) - (b.price || 0)).map((plan, i) => `
+              <div class="plan-row ${plan.is_active === false ? 'hidden' : ''}" data-active="${plan.is_active !== false}" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 60px 60px 60px 60px 60px 1fr auto auto;gap:0.3rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
+                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="عربي" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="English" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="المصدر" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="text" class="plan-official-url" value="${plan.official_url || ''}" placeholder="الرسمي" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+                <input type="number" class="plan-margin" value="${plan.profit_margin || ''}" placeholder="هامش" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;" title="نسبة الربح (مثلاً 1.1)">
+                <input type="number" class="plan-fee" value="${plan.fixed_fee || ''}" placeholder="رسوم" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;" title="رسوم ثابتة">
+                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--primary);border-radius:6px; font-weight:700;">
                 <button type="button" class="btn-icon toggle-plan-visibility ${plan.is_active !== false ? 'active' : ''}" title="إخفاء/إظهار">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
@@ -804,7 +806,7 @@
               </div>
             `).join('')}
           </div>
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | الرابط الرسمي | تكلفة | رسمي | بيع</p>
+          <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | الرابط الرسمي | تكلفة $ | رسمي $ | هامش | رسوم $ | سعر البيع $</p>
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -819,6 +821,9 @@
 
     $('#pImageFile').addEventListener('change', handleImagePreview);
     $('#cancelProduct').addEventListener('click', closeProductModal);
+    
+    window._updatePricePreview();
+
     $('#productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       await saveProduct(isNew, index);
@@ -832,35 +837,43 @@
       const row = document.createElement('div');
       row.className = 'plan-row';
       row.dataset.active = "true";
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 60px 60px 60px 60px 60px 1fr auto auto;gap:0.3rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
       row.innerHTML = `
-        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-source" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="text" class="plan-official-url" placeholder="رابط رسمي" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="number" class="plan-cost" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="number" class="plan-official" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
-        <input type="number" class="plan-price" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="عربي" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="English" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="text" class="plan-source" placeholder="المصدر" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="text" class="plan-official-url" placeholder="الرسمي" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="number" class="plan-cost" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="number" class="plan-official" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="number" class="plan-margin" value="" placeholder="هامش" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="number" class="plan-fee" value="" placeholder="رسوم" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
+        <input type="number" class="plan-price" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--primary);border-radius:6px; font-weight:700;">
         <button type="button" class="btn-icon toggle-plan-visibility active" title="إخفاء/إظهار">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
         <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       `;
-      row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      row.querySelector('.remove-plan').addEventListener('click', () => { row.remove(); window._updatePricePreview(); });
       const toggle = row.querySelector('.toggle-plan-visibility');
       toggle.addEventListener('click', () => {
         const isActive = row.dataset.active === 'true';
         row.dataset.active = !isActive;
         row.classList.toggle('hidden', isActive);
         toggle.classList.toggle('active', !isActive);
+        window._updatePricePreview();
       });
+
+      row.querySelectorAll('.plan-cost, .plan-margin, .plan-fee').forEach(el => el.oninput = () => { updatePlanPrice(row); window._updatePricePreview(); });
+      row.querySelector('.plan-price').oninput = () => { updatePlanMargin(row); window._updatePricePreview(); };
+
       setupBilingualFields(row.querySelector('.plan-label-ar'), row.querySelector('.plan-label-en'));
       container.appendChild(row);
+      window._updatePricePreview();
     });
 
     // Plans: toggle and remove existing rows
     $('#plansContainer').querySelectorAll('.plan-row').forEach(row => {
-      row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      row.querySelector('.remove-plan').addEventListener('click', () => { row.remove(); window._updatePricePreview(); });
       const toggle = row.querySelector('.toggle-plan-visibility');
       if (toggle) {
         toggle.addEventListener('click', () => {
@@ -868,9 +881,31 @@
           row.dataset.active = !isActive;
           row.classList.toggle('hidden', isActive);
           toggle.classList.toggle('active', !isActive);
+          window._updatePricePreview();
         });
       }
+      row.querySelectorAll('.plan-cost, .plan-margin, .plan-fee').forEach(el => el.oninput = () => { updatePlanPrice(row); window._updatePricePreview(); });
+      row.querySelector('.plan-price').oninput = () => { updatePlanMargin(row); window._updatePricePreview(); };
     });
+
+    function updatePlanPrice(row) {
+      const cost = parseFloat(row.querySelector('.plan-cost').value) || 0;
+      const marginInput = row.querySelector('.plan-margin').value;
+      const feeInput = row.querySelector('.plan-fee').value;
+      const margin = marginInput ? parseFloat(marginInput) : (siteSettings.global_profit_margin || 1.1);
+      const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
+      row.querySelector('.plan-price').value = ((cost * margin) + fee).toFixed(2);
+    }
+
+    function updatePlanMargin(row) {
+      const cost = parseFloat(row.querySelector('.plan-cost').value) || 0;
+      const price = parseFloat(row.querySelector('.plan-price').value) || 0;
+      const feeInput = row.querySelector('.plan-fee').value;
+      const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
+      if (cost > 0) {
+        row.querySelector('.plan-margin').value = ((price - fee) / cost).toFixed(3);
+      }
+    }
 
     // Auto-translate for main fields
     setupBilingualFields($('#pNameAr'), $('#pNameEn'));
@@ -1001,6 +1036,8 @@
       const price = parseFloat(row.querySelector('.plan-price')?.value) || 0;
       const cost = parseFloat(row.querySelector('.plan-cost')?.value) || 0;
       const official = parseFloat(row.querySelector('.plan-official')?.value) || 0;
+      const margin = parseFloat(row.querySelector('.plan-margin')?.value) || null;
+      const fee = parseFloat(row.querySelector('.plan-fee')?.value) || null;
       const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
       const officialUrl = row.querySelector('.plan-official-url')?.value.trim() || '';
       const isActive = row.dataset.active !== 'false';
@@ -1011,6 +1048,8 @@
           price, 
           cost_price: cost, 
           official_price: official, 
+          profit_margin: margin,
+          fixed_fee: fee,
           source_url: sourceUrl,
           official_url: officialUrl,
           is_active: isActive
@@ -1020,9 +1059,14 @@
 
     subscriptionPlans.sort((a, b) => (a.price || 0) - (b.price || 0));
 
+    // Auto-set products's main price to the minimum active plan price
+    const activePlans = subscriptionPlans.filter(p => p.is_active !== false);
+    const finalMinPrice = activePlans.length > 0 ? activePlans[0].price : (parseFloat($('#pPrice').value) || 0);
+
     const productData = {
       id,
       name_ar: nameAr, name_en: nameEn,
+      price: finalMinPrice,
       description_ar: $('#pDescAr').value.trim(),
       description_en: $('#pDescEn').value.trim(),
       features_ar: $('#pFeatAr').value.trim(),
@@ -1965,22 +2009,20 @@
 
   // Global helper for price calculation preview
   window._updatePricePreview = function() {
-    const cost = parseFloat($('#pCostPrice')?.value) || 0;
-    const marginInput = $('#pProfitMargin')?.value;
-    const feeInput = $('#pFixedFee')?.value;
+    const plans = Array.from(document.querySelectorAll('#plansContainer .plan-row'))
+      .filter(row => row.dataset.active !== 'false')
+      .map(row => parseFloat(row.querySelector('.plan-price').value) || Infinity);
 
-    const margin = marginInput ? parseFloat(marginInput) : (siteSettings.global_profit_margin || 1.1);
-    const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
+    const minPrice = plans.length > 0 ? Math.min(...plans) : 0;
+    const finalPrice = minPrice === Infinity ? 0 : minPrice;
 
-    const finalPrice = (cost * margin) + fee;
     const priceEl = $('#pPrice');
     if (priceEl) {
-      priceEl.value = finalPrice.toFixed(2);
+      priceEl.value = finalPrice > 0 ? finalPrice.toFixed(2) : '0.00';
       
       const msgEl = $('#pricePreviewMsg');
       if (msgEl) {
-        const isUsingGlobal = !marginInput || !feeInput;
-        msgEl.textContent = `(${cost}$ × ${margin}) + ${fee}$ = ${finalPrice.toFixed(2)}$ ${isUsingGlobal ? ' (مع استخدام القيم الافتراضية)' : ''}`;
+        msgEl.textContent = plans.length > 0 ? `تم تحديد السعر بناءً على أرخص مدة: ${finalPrice.toFixed(2)}$` : 'يرجى إضافة مدد اشتراك لتحديد السعر';
       }
     }
   };
