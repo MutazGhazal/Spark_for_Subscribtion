@@ -324,6 +324,16 @@
   border-color: #f59e0b;
 }
 
+/* Bulk selected highlight */
+.admin-product-card.bulk-selected {
+  border-color: var(--primary) !important;
+  background: rgba(99, 102, 241, 0.06) !important;
+}
+
+.admin-product-card.bulk-selected:hover {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
+
 .admin-product-img {
   width: 56px;
   height: 56px;

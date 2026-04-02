@@ -17,6 +17,8 @@
   // Controls product names language in admin list — always EN by default
   let adminNameLang = localStorage.getItem('adminNameLang') || 'en';
   let adminSearchQuery = '';
+  // Bulk selection
+  let selectedProductIds = new Set();
 
   async function updateLastModified() {
     try { await sb.from('site_settings').upsert({ key: 'last_modified', value: new Date().toISOString() }); } catch (e) {}
@@ -365,6 +367,54 @@
   }
 
   // ===== PRODUCTS =====
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulkActionBar');
+    const countEl = document.getElementById('bulkCount');
+    if (!bar) return;
+    if (selectedProductIds.size > 0) {
+      bar.style.display = 'flex';
+      if (countEl) countEl.textContent = `${selectedProductIds.size} منتج محدد`;
+    } else {
+      bar.style.display = 'none';
+    }
+    // Sync "select all" checkbox
+    const selectAllCb = document.getElementById('selectAllProducts');
+    if (selectAllCb) {
+      const filtered = adminSearchQuery
+        ? products.filter(p => {
+            const q = adminSearchQuery.toLowerCase();
+            return (p.name_ar || '').toLowerCase().includes(q) ||
+                   (p.name_en || '').toLowerCase().includes(q) ||
+                   (p.category || '').toLowerCase().includes(q);
+          })
+        : products;
+      selectAllCb.checked = filtered.length > 0 && filtered.every(p => selectedProductIds.has(p.id));
+      selectAllCb.indeterminate = !selectAllCb.checked && filtered.some(p => selectedProductIds.has(p.id));
+    }
+  }
+
+  async function bulkSetActive(value) {
+    if (selectedProductIds.size === 0) return;
+    const ids = [...selectedProductIds];
+    const label = value ? 'تشغيل (إظهار)' : 'إيقاف (إخفاء)';
+    setSaveStatus('saving', 'جاري التحديث...');
+    try {
+      const { error } = await sb.from('products').update({ is_active: value }).in('id', ids);
+      if (error) throw error;
+      // Update local state
+      products.forEach(p => { if (selectedProductIds.has(p.id)) p.is_active = value; });
+      setSaveStatus('saved', 'تم التحديث');
+      showToast(`✅ تم ${label} لـ ${ids.length} منتج`);
+      updateLastModified();
+      selectedProductIds.clear();
+      renderProductsList();
+    } catch (e) {
+      setSaveStatus('error', 'فشل');
+      showToast('فشل التحديث: ' + e.message);
+    }
+  }
+
   function renderProductsList() {
     const list = $('#adminProductsList');
     if (products.length === 0) {
@@ -386,10 +436,34 @@
       return;
     }
 
-    list.innerHTML = filtered.map((p) => {
+    // Build bulk action bar + select-all header
+    const allSelected = filtered.every(p => selectedProductIds.has(p.id));
+    const someSelected = filtered.some(p => selectedProductIds.has(p.id));
+
+    const bulkBarHtml = `
+      <div id="bulkActionBar" style="display:${selectedProductIds.size > 0 ? 'flex' : 'none'};align-items:center;gap:0.75rem;background:var(--primary);color:#fff;padding:0.6rem 1rem;border-radius:10px;margin-bottom:0.75rem;flex-wrap:wrap;">
+        <span id="bulkCount" style="font-weight:700;font-size:0.9rem;">${selectedProductIds.size} منتج محدد</span>
+        <button id="bulkActivateBtn" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.5);color:#fff;padding:0.35rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+          ✅ تشغيل (إظهار)
+        </button>
+        <button id="bulkDeactivateBtn" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.5);color:#fff;padding:0.35rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+          🚫 إيقاف (إخفاء)
+        </button>
+        <button id="bulkClearBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.8);padding:0.35rem 0.5rem;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;margin-inline-start:auto;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">
+          ✕ إلغاء التحديد
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.6rem;padding:0.4rem 0.8rem;background:var(--bg-secondary);border-radius:8px;margin-bottom:0.5rem;border:1px solid var(--border);">
+        <input type="checkbox" id="selectAllProducts" ${allSelected ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);" title="تحديد الكل">
+        <label for="selectAllProducts" style="cursor:pointer;font-size:0.85rem;color:var(--text-muted);user-select:none;">تحديد الكل (${filtered.length} منتج)</label>
+      </div>
+    `;
+
+    list.innerHTML = bulkBarHtml + filtered.map((p) => {
       const i = products.indexOf(p); // real index in products array (for edit/delete)
       const plans = p.subscription_plans || [];
       const hasPlans = plans && plans.length > 0;
+      const isSelected = selectedProductIds.has(p.id);
       
       const getAdminMinPrice = (prod) => {
         if (prod.subscription_plans && prod.subscription_plans.length > 0) {
@@ -428,7 +502,10 @@
       const isWarning = isOverpriced || plansAreOverpriced;
 
       return `
-        <div class="admin-product-card ${hasSource ? 'has-source' : ''} ${isWarning ? 'overpriced-warning' : ''} ${hasMissingPlanUrls ? 'missing-urls' : ''}" data-index="${i}">
+        <div class="admin-product-card ${hasSource ? 'has-source' : ''} ${isWarning ? 'overpriced-warning' : ''} ${hasMissingPlanUrls ? 'missing-urls' : ''} ${isSelected ? 'bulk-selected' : ''}" data-index="${i}" data-pid="${p.id}">
+          <div class="admin-product-select" onclick="event.stopPropagation()" style="display:flex;align-items:center;padding:0 0.25rem;">
+            <input type="checkbox" class="product-select-cb" data-pid="${p.id}" ${isSelected ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);">
+          </div>
           <div class="admin-product-img">
             <img src="${p.image}" alt="" onerror="this.style.display='none'">
           </div>
@@ -461,6 +538,39 @@
         </div>
       `;
     }).join('');
+
+    // Bulk bar events
+    const bulkActivateBtn = document.getElementById('bulkActivateBtn');
+    const bulkDeactivateBtn = document.getElementById('bulkDeactivateBtn');
+    const bulkClearBtn = document.getElementById('bulkClearBtn');
+    const selectAllCb = document.getElementById('selectAllProducts');
+
+    if (bulkActivateBtn) bulkActivateBtn.addEventListener('click', () => bulkSetActive(true));
+    if (bulkDeactivateBtn) bulkDeactivateBtn.addEventListener('click', () => bulkSetActive(false));
+    if (bulkClearBtn) bulkClearBtn.addEventListener('click', () => { selectedProductIds.clear(); renderProductsList(); });
+
+    if (selectAllCb) {
+      // Set indeterminate state
+      selectAllCb.indeterminate = someSelected && !allSelected;
+      selectAllCb.addEventListener('change', () => {
+        if (selectAllCb.checked) {
+          filtered.forEach(p => selectedProductIds.add(p.id));
+        } else {
+          filtered.forEach(p => selectedProductIds.delete(p.id));
+        }
+        renderProductsList();
+      });
+    }
+
+    // Individual checkboxes
+    list.querySelectorAll('.product-select-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const pid = cb.dataset.pid;
+        if (cb.checked) selectedProductIds.add(pid);
+        else selectedProductIds.delete(pid);
+        updateBulkBar();
+      });
+    });
 
     // Global helper to show plans popup in admin
     window._showPlans = function(idx) {
@@ -524,7 +634,7 @@
 
     list.querySelectorAll('.admin-product-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-icon') || e.target.closest('.source-link') || e.target.closest('a')) return;
+        if (e.target.closest('.btn-icon') || e.target.closest('.source-link') || e.target.closest('a') || e.target.closest('.admin-product-select')) return;
         const idx = parseInt(card.dataset.index);
         const p = products[idx];
         const plans = p?.subscription_plans || [];
