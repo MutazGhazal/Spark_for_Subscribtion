@@ -788,8 +788,8 @@
             <button type="button" class="btn btn-secondary" id="addPlanBtn" style="padding:0.35rem 0.8rem;font-size:0.85rem;">+ إضافة مدة</button>
           </div>
           <div id="plansContainer">
-            ${(p.subscription_plans || []).map((plan, i) => `
-              <div class="plan-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
+            ${(p.subscription_plans || []).sort((a, b) => (a.price || 0) - (b.price || 0)).map((plan, i) => `
+              <div class="plan-row ${plan.is_active === false ? 'hidden' : ''}" data-active="${plan.is_active !== false}" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
                 <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="رابط المصدر" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
@@ -797,6 +797,9 @@
                 <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
                 <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+                <button type="button" class="btn-icon toggle-plan-visibility ${plan.is_active !== false ? 'active' : ''}" title="إخفاء/إظهار">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
                 <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
               </div>
             `).join('')}
@@ -828,7 +831,8 @@
       const nextDur = getNextDurationLabel(existingCount);
       const row = document.createElement('div');
       row.className = 'plan-row';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.dataset.active = "true";
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 70px 70px 70px 1fr auto auto;gap:0.4rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
       row.innerHTML = `
         <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="Month" dir="ltr" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
@@ -837,16 +841,35 @@
         <input type="number" class="plan-cost" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-official" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
         <input type="number" class="plan-price" value="0" min="0" step="0.01" style="font-size:0.8rem; padding:0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+        <button type="button" class="btn-icon toggle-plan-visibility active" title="إخفاء/إظهار">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       `;
       row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      const toggle = row.querySelector('.toggle-plan-visibility');
+      toggle.addEventListener('click', () => {
+        const isActive = row.dataset.active === 'true';
+        row.dataset.active = !isActive;
+        row.classList.toggle('hidden', isActive);
+        toggle.classList.toggle('active', !isActive);
+      });
       setupBilingualFields(row.querySelector('.plan-label-ar'), row.querySelector('.plan-label-en'));
       container.appendChild(row);
     });
 
-    // Plans: remove existing rows
-    $('#plansContainer').querySelectorAll('.remove-plan').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('.plan-row').remove());
+    // Plans: toggle and remove existing rows
+    $('#plansContainer').querySelectorAll('.plan-row').forEach(row => {
+      row.querySelector('.remove-plan').addEventListener('click', () => row.remove());
+      const toggle = row.querySelector('.toggle-plan-visibility');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const isActive = row.dataset.active === 'true';
+          row.dataset.active = !isActive;
+          row.classList.toggle('hidden', isActive);
+          toggle.classList.toggle('active', !isActive);
+        });
+      }
     });
 
     // Auto-translate for main fields
@@ -980,6 +1003,7 @@
       const official = parseFloat(row.querySelector('.plan-official')?.value) || 0;
       const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
       const officialUrl = row.querySelector('.plan-official-url')?.value.trim() || '';
+      const isActive = row.dataset.active !== 'false';
       if (labelAr || labelEn) {
         subscriptionPlans.push({ 
           label_ar: labelAr, 
@@ -988,10 +1012,13 @@
           cost_price: cost, 
           official_price: official, 
           source_url: sourceUrl,
-          official_url: officialUrl
+          official_url: officialUrl,
+          is_active: isActive
         });
       }
     });
+
+    subscriptionPlans.sort((a, b) => (a.price || 0) - (b.price || 0));
 
     const productData = {
       id,

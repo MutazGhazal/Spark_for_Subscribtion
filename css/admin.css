@@ -418,6 +418,29 @@
   color: #ef4444;
 }
 
+/* Plan visibility toggle */
+.toggle-plan-visibility {
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+
+.toggle-plan-visibility.active {
+  color: var(--primary);
+}
+
+.toggle-plan-visibility:hover {
+  background: var(--bg-secondary);
+}
+
+.plan-row.hidden {
+  opacity: 0.6;
+}
+
+.plan-row.hidden input {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
 /* ===== SETTINGS FORM ===== */
 .settings-form,
 .payment-form {

@@ -571,7 +571,8 @@
 
   function getProductMinPrice(p) {
     if (p.subscription_plans && p.subscription_plans.length > 0) {
-      const prices = p.subscription_plans.map(plan => plan.price).filter(p => p > 0);
+      const activePlans = p.subscription_plans.filter(plan => plan.is_active !== false);
+      const prices = activePlans.map(plan => plan.price).filter(p => p > 0);
       if (prices.length > 0) return Math.ceil(Math.min(...prices));
     }
     return Math.ceil(p.price || 0);
@@ -1312,7 +1313,9 @@
     body.innerHTML = `
       <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">${txt('durationPrompt')}</p>
       <div id="plansList" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.2rem;">
-        ${plans.filter(plan => !(plan.official_price && plan.price > plan.official_price)).map((plan, i) => {
+        ${plans.filter(plan => plan.is_active !== false && !(plan.official_price && plan.price > plan.official_price))
+          .sort((a, b) => (a.price || 0) - (b.price || 0))
+          .map((plan, i) => {
       const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
       return `
             <div class="plan-option" data-index="${i}" style="border:2px solid var(--border);border-radius:12px;padding:0.9rem 1rem;cursor:pointer;transition:border-color 0.18s,background 0.18s;display:flex;justify-content:space-between;align-items:center;">
