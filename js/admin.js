@@ -789,24 +789,32 @@
           </div>
           <div id="plansContainer">
                 ${(p.subscription_plans || []).sort((a, b) => (a.price || 0) - (b.price || 0)).map((plan, i) => `
-              <div class="plan-row ${plan.is_active === false ? 'hidden' : ''}" data-active="${plan.is_active !== false}" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 60px 60px 60px 60px 60px 1fr auto auto;gap:0.3rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;">
-                <input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="عربي" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="English" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="المصدر" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="text" class="plan-official-url" value="${plan.official_url || ''}" placeholder="الرسمي" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="number" class="plan-cost" value="${plan.cost_price || 0}" placeholder="تكلفة" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="number" class="plan-official" value="${plan.official_price || 0}" placeholder="رسمي" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-                <input type="number" class="plan-margin" value="${plan.profit_margin || ''}" placeholder="هامش" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;" title="نسبة الربح (مثلاً 1.1)">
-                <input type="number" class="plan-fee" value="${plan.fixed_fee || ''}" placeholder="رسوم" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;" title="رسوم ثابتة">
-                <input type="number" class="plan-price" value="${plan.price || 0}" placeholder="بيع" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--primary);border-radius:6px; font-weight:700;">
-                <button type="button" class="btn-icon toggle-plan-visibility ${plan.is_active !== false ? 'active' : ''}" title="إخفاء/إظهار">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-                <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              <div class="plan-row ${plan.is_active === false ? 'hidden' : ''}" data-active="${plan.is_active !== false}" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1rem;background:var(--bg-secondary);padding:1rem;border-radius:12px;border:1px solid var(--border);">
+                <!-- Top Row: Labels and URLs -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;">
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">تسمية (AR)</label><input type="text" class="plan-label-ar" value="${plan.label_ar || ''}" placeholder="شهر" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">Label (EN)</label><input type="text" class="plan-label-en" value="${plan.label_en || ''}" placeholder="Month" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">المصدر (Z2U/WMC)</label><input type="text" class="plan-source" value="${plan.source_url || ''}" placeholder="رابط المصدر" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرابط الرسمي</label><input type="text" class="plan-official-url" value="${plan.official_url || ''}" placeholder="رابط رسمي" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+                </div>
+                <!-- Bottom Row: Pricing and Controls -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="${plan.cost_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="${plan.official_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الهامش (x)</label><input type="number" class="plan-margin" value="${plan.profit_margin || ''}" step="0.01" placeholder="${siteSettings.global_profit_margin || 1.1}" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="${plan.fixed_fee || ''}" step="0.01" placeholder="${siteSettings.global_fixed_fee || 3}" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label><input type="number" class="plan-price" value="${plan.price || 0}" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);"></div>
+                  <button type="button" class="btn-icon toggle-plan-visibility ${plan.is_active !== false ? 'active' : ''}" title="إخفاء/إظهار" style="height:38px;width:38px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button type="button" class="btn-icon delete remove-plan" title="حذف" style="height:38px;width:38px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
               </div>
             `).join('')}
           </div>
-          <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.4rem;">عربي | إنجليزي | المصدر | الرابط الرسمي | تكلفة $ | رسمي $ | هامش | رسوم $ | سعر البيع $</p>
+          </div>
         </div>
         <h4 style="margin:1rem 0 0.5rem;font-weight:600;">روابط الدفع</h4>
         <div class="form-group"><label>رابط PayPal</label><input type="text" id="pPaypal" value="${p.payment_links?.paypal||''}" placeholder="https://paypal.me/username/5"></div>
@@ -837,21 +845,25 @@
       const row = document.createElement('div');
       row.className = 'plan-row';
       row.dataset.active = "true";
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr 60px 60px 60px 60px 60px 1fr auto auto;gap:0.3rem;align-items:center;margin-bottom:0.5rem;background:var(--bg-secondary);padding:0.6rem;border-radius:8px;';
+      row.style.cssText = 'display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1rem;background:var(--bg-secondary);padding:1rem;border-radius:12px;border:1px solid var(--border);';
       row.innerHTML = `
-        <input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="عربي" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="English" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="text" class="plan-source" placeholder="المصدر" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="text" class="plan-official-url" placeholder="الرسمي" dir="ltr" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="number" class="plan-cost" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="number" class="plan-official" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="number" class="plan-margin" value="" placeholder="هامش" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="number" class="plan-fee" value="" placeholder="رسوم" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--border);border-radius:6px;">
-        <input type="number" class="plan-price" value="0" step="0.01" style="font-size:0.75rem; padding:0.3rem;border:1px solid var(--primary);border-radius:6px; font-weight:700;">
-        <button type="button" class="btn-icon toggle-plan-visibility active" title="إخفاء/إظهار">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-        <button type="button" class="btn-icon delete remove-plan" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;">
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">تسمية (AR)</label><input type="text" class="plan-label-ar" value="${nextDur.ar}" placeholder="شهر" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">Label (EN)</label><input type="text" class="plan-label-en" value="${nextDur.en}" placeholder="Month" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">المصدر (Z2U/WMC)</label><input type="text" class="plan-source" placeholder="رابط المصدر" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرابط الرسمي</label><input type="text" class="plan-official-url" placeholder="رابط رسمي" dir="ltr" style="font-size:0.85rem; padding:0.5rem;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الهامش (x)</label><input type="number" class="plan-margin" value="" placeholder="${siteSettings.global_profit_margin || 1.1}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="" placeholder="${siteSettings.global_fixed_fee || 3}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label><input type="number" class="plan-price" value="0" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);"></div>
+          <button type="button" class="btn-icon toggle-plan-visibility active" title="إخفاء/إظهار" style="height:38px;width:38px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button type="button" class="btn-icon delete remove-plan" title="حذف" style="height:38px;width:38px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
       `;
       row.querySelector('.remove-plan').addEventListener('click', () => { row.remove(); window._updatePricePreview(); });
       const toggle = row.querySelector('.toggle-plan-visibility');
