@@ -17,6 +17,7 @@
   // Controls product names language in admin list — always EN by default
   let adminNameLang = localStorage.getItem('adminNameLang') || 'en';
   let adminSearchQuery = '';
+  let showArchivedOrders = false;
   // Bulk selection
   let selectedProductIds = new Set();
 
@@ -801,7 +802,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="${plan.cost_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="${plan.official_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
-                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="${plan.profit_margin ? (plan.profit_margin > 5 ? plan.profit_margin : Math.round((plan.profit_margin - 1) * 100)) : ''}" step="1" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.1) - 1) * 100)}" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="${plan.profit_margin ? (plan.profit_margin > 5 ? plan.profit_margin : Math.round((plan.profit_margin - 1) * 100)) : ''}" step="1" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.5) - 1) * 100)}" style="font-size:0.85rem; padding:0.5rem;"></div>
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="${plan.fixed_fee || ''}" step="0.01" placeholder="${siteSettings.global_fixed_fee || 3}" style="font-size:0.85rem; padding:0.5rem;"></div>
                   <div class="form-group" style="margin:0;">
                     <label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label>
@@ -860,7 +861,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
-          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.1) - 1) * 100)}" step="1" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.5) - 1) * 100)}" step="1" style="font-size:0.85rem; padding:0.5rem;"></div>
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="" placeholder="${siteSettings.global_fixed_fee || 3}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
           <div class="form-group" style="margin:0;">
             <label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label>
@@ -918,7 +919,7 @@
         const val = parseFloat(marginInput);
         margin = 1 + (val / 100);
       } else {
-        margin = (siteSettings.global_profit_margin || 1.1);
+        margin = (siteSettings.global_profit_margin || 1.5);
       }
 
       const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
@@ -1308,7 +1309,7 @@
           <div class="form-group"><label>Hero Subtitle (English)</label><textarea id="sHeroSubEn">${store.hero_sub_en||''}</textarea></div>
         </div>
         <div class="form-row" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;">
-          <div class="form-group"><label>نسبة الربح الافتراضية (مثال: 1.10 تعني 10%)</label><input type="number" id="sGlobalMargin" value="${store.global_profit_margin||1.1}" step="0.01" min="1"></div>
+          <div class="form-group"><label>نسبة الربح الافتراضية (مثال: 1.50 تعني 50%)</label><input type="number" id="sGlobalMargin" value="${store.global_profit_margin||1.5}" step="0.01" min="1"></div>
           <div class="form-group"><label>الرسوم الثابتة الافتراضية ($)</label><input type="number" id="sGlobalFee" value="${store.global_fixed_fee||3}" step="0.01" min="0"></div>
         </div>
       </div>
@@ -1364,7 +1365,7 @@
     
     setSaveStatus('saving', 'جاري إعادة الحساب...');
     try {
-      const margin = siteSettings.global_profit_margin || 1.1;
+      const margin = siteSettings.global_profit_margin || 1.5;
       const fee = siteSettings.global_fixed_fee || 3;
       
       const updates = products.map(p => {
@@ -1610,26 +1611,118 @@
       const emptyStarSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
       const starsHtml = starSvg.repeat(full) + (half ? starSvg : '') + emptyStarSvg.repeat(empty);
 
+      const statusBadge = `<span class="review-status-badge ${r.reward_status || 'none'}">${r.reward_status === 'approved' ? 'مكافأة معتمدة' : (r.reward_status === 'pending' ? 'بانتظار التحقق' : 'تقييم عادي')}</span>`;
+
       return `
         <div class="admin-review-card ${!r.is_approved ? 'unapproved' : ''}" data-id="${r.id}">
           <div class="review-card-header">
             <div>
-              <div class="review-author">${r.author_name}</div>
+              <div class="review-author" style="display:flex; align-items:center; gap:10px;">
+                ${r.author_name} ${statusBadge}
+              </div>
               <div class="review-date">${new Date(r.created_at).toLocaleString('ar-EG', dateOpts)}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${r.customer_email || ''}</div>
             </div>
             <div class="review-product-badge">${pName}</div>
           </div>
           <div class="review-stars-val" style="display:flex; gap:2px; margin:0.5rem 0;">${starsHtml}</div>
           <p class="review-comment-val">${r.comment || '<i>بدون تعليق</i>'}</p>
-          <div class="review-actions">
+          
+          ${r.screenshot_url ? `
+            <div class="review-screenshot-preview" style="margin: 1rem 0;">
+              <p style="font-size:0.75rem; margin-bottom:5px; font-weight:600;">إثبات المشاركة:</p>
+              <a href="${r.screenshot_url}" target="_blank">
+                <img src="${r.screenshot_url}" style="max-width:150px; border-radius:8px; border:1px solid var(--border); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              </a>
+            </div>
+          ` : ''}
+
+          <div class="review-actions" style="margin-top:1rem; border-top:1px solid var(--border); padding-top:1rem; display:flex; flex-wrap:wrap; gap:10px;">
             <button class="btn btn-sm ${r.is_approved ? 'btn-secondary' : 'btn-success'}" onclick="window.toggleReviewApproval('${r.id}', ${r.is_approved})">
-              ${r.is_approved ? 'إخفاء (عدم الموافقة)' : 'موافقة وعرض'}
+              ${r.is_approved ? 'إخفاء من الموقع' : 'موافقة وعرض بالموقع'}
             </button>
+            
+            ${r.reward_status === 'pending' ? `
+              <button class="btn btn-sm" style="background:var(--primary); color:white; border:none;" onclick="window.approveReviewWithReward('${r.id}')">
+                ✅ اعتماد ومكافأة (كوبون)
+              </button>
+            ` : ''}
+
+            ${r.coupon_code ? `
+              <div class="review-coupon-info" style="display:flex; align-items:center; gap:8px; padding:0 10px; background:#f0f9ff; border-radius:5px; border:1px solid #bae6fd;">
+                <span style="font-size:0.8rem; font-weight:700; color:#0369a1;">كود: ${r.coupon_code}</span>
+                <button class="btn btn-sm" style="padding:2px 5px; background:#0ea5e9; color:white; border:none; font-size:0.7rem;" onclick="window.sendCouponWhatsApp('${r.id}')">
+                  واتساب 💬
+                </button>
+              </div>
+            ` : ''}
+
             <button class="btn btn-sm btn-danger" onclick="window.deleteReview('${r.id}')">حذف</button>
           </div>
         </div>
       `;
     }).join('');
+  };
+
+  window.approveReviewWithReward = async function(id) {
+    const review = allReviews.find(r => r.id === id);
+    if (!review) return;
+
+    if (!confirm('هل تأكدت من "إثبات المشاركة" وترغب في منح الزبون كود خصم 10%؟')) return;
+
+    try {
+      setSaveStatus('saving', 'جاري إنشاء المكافأة...');
+      
+      // 1. Generate unique code
+      const code = 'REV-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // 2. Insert into coupons table
+      const { error: cpError } = await sb.from('coupons').insert({
+        code: code,
+        discount_percent: 10,
+        customer_email: review.customer_email,
+        is_used: false
+      });
+      if (cpError) throw cpError;
+
+      // 3. Update review record
+      const { error: rvError } = await sb.from('reviews').update({
+        reward_status: 'approved',
+        is_approved: true,
+        coupon_code: code
+      }).eq('id', id);
+      if (rvError) throw rvError;
+
+      // Update local state
+      const idx = allReviews.findIndex(r => r.id === id);
+      if (idx !== -1) {
+        allReviews[idx].reward_status = 'approved';
+        allReviews[idx].is_approved = true;
+        allReviews[idx].coupon_code = code;
+      }
+
+      setSaveStatus('saved', 'تم منح المكافأة بنجاح');
+      showToast('تم اعتماد التقييم ومنح الكوبون: ' + code);
+      renderReviewsDashboard();
+
+      // Offer to send via WhatsApp
+      if (confirm('هل تريد إرسال الكوبون للزبون عبر واتساب الآن؟')) {
+        window.sendCouponWhatsApp(id);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setSaveStatus('error', 'فشل منح المكافأة');
+      showToast('خطأ: ' + e.message);
+    }
+  };
+
+  window.sendCouponWhatsApp = function(id) {
+    const r = allReviews.find(rv => rv.id === id);
+    if (!r || !r.coupon_code) return;
+    
+    const msg = encodeURIComponent(`أهلاً بك ${r.author_name}! ✨\n\nشكراً لتقييمك الرائع ومشاركتك تجربتك معنا.\n\nتقديراً لك، هذا هو كود الخصم الخاص بك (10%): *${r.coupon_code}*\nيمكنك استخدامه في طلبك القادم عبر موقعنا.\n\nسعداء بخدمتك دائماً! ❤️`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
 
   window.toggleReviewApproval = async function(id, currentStatus) {
@@ -1765,20 +1858,34 @@
     let custOrders = [];
     let refOrders = [];
     try {
-      const { data: c } = await sb.from('customer_orders').select('*').order('created_at', { ascending: false });
+      const { data: c } = await sb.from('customer_orders')
+        .select('*')
+        .eq('is_archived', showArchivedOrders)
+        .order('created_at', { ascending: false });
       custOrders = c || [];
     } catch (e) { console.error(e); }
     try {
-      const { data: r } = await sb.from('referral_orders').select('*').order('created_at', { ascending: false });
+      const { data: r } = await sb.from('referral_orders')
+        .select('*')
+        .eq('is_archived', showArchivedOrders)
+        .order('created_at', { ascending: false });
       refOrders = r || [];
     } catch (e) { console.error(e); }
 
-    let html = '';
+    let html = `
+      <div class="orders-filter-bar" style="margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--bg-secondary); border-radius:12px; border:1px solid var(--border);">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.9rem;">
+          <input type="checkbox" id="showArchivedToggle" ${showArchivedOrders ? 'checked' : ''} style="width:18px; height:18px;">
+          ${showArchivedOrders ? '📁 عرض الأرشيف (الطلبات المخفية)' : '📂 عرض الطلبات النشطة فقط'}
+        </label>
+        <span style="font-size:0.8rem; color:var(--text-muted); opacity:0.8;">(${custOrders.length + refOrders.length} طلب)</span>
+      </div>
+    `;
 
     // Customer Orders
-    html += `<h3 style="margin:0 0 1rem;font-weight:700;">طلبات العملاء</h3>`;
+    html += `<h3 style="margin:2rem 0 1rem;font-weight:700;">${showArchivedOrders ? 'طلبات العملاء (المؤرشفة)' : 'طلبات العملاء'}</h3>`;
     if (custOrders.length === 0) {
-      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات عملاء بعد</p>';
+      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات هنا</p>';
     } else {
       html += `<div class="orders-table-wrapper"><table class="orders-table">
         <thead><tr><th>المنتج</th><th>العميل</th><th>المبلغ</th><th>طريقة الدفع</th><th>الحالة</th><th>التاريخ</th><th>تفاصيل</th><th>إجراء</th></tr></thead>
@@ -1795,11 +1902,17 @@
             <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
             <td>${reqEntries.length > 0 ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.75rem;" data-toggle-reqs="${o.id}">عرض</button><div class="req-details" id="reqs-${o.id}" style="display:none;margin-top:0.5rem;">${reqEntries.map(([k,v]) => `<div style="font-size:0.78rem;"><strong>${k}:</strong> ${v}</div>`).join('')}</div>` : '—'}</td>
             <td>
-              <select class="cust-status-select" data-cust-id="${o.id}" style="padding:0.3rem;font-size:0.78rem;border-radius:4px;border:1px solid var(--border);">
-                <option value="pending" ${o.status==='pending'?'selected':''}>بانتظار</option>
-                <option value="confirmed" ${o.status==='confirmed'?'selected':''}>مؤكد</option>
-                <option value="completed" ${o.status==='completed'?'selected':''}>مكتمل</option>
-              </select>
+              <div style="display:flex; align-items:center; gap:5px;">
+                <select class="cust-status-select" data-cust-id="${o.id}" style="padding:0.3rem;font-size:0.78rem;border-radius:4px;border:1px solid var(--border);">
+                  <option value="pending" ${o.status==='pending'?'selected':''}>بانتظار</option>
+                  <option value="confirmed" ${o.status==='confirmed'?'selected':''}>مؤكد</option>
+                  <option value="completed" ${o.status==='completed'?'selected':''}>مكتمل</option>
+                </select>
+                <button class="btn-icon" onclick="window.${showArchivedOrders ? 'restoreOrder' : 'archiveOrder'}('customer_orders', '${o.id}')" title="${showArchivedOrders ? 'استعادة' : 'أرشفة (إخفاء)'}">
+                  ${showArchivedOrders ? '📤' : '📥'}
+                </button>
+                <button class="btn-icon" onclick="window.deleteOrder('customer_orders', '${o.id}')" title="حذف نهائي">🗑️</button>
+              </div>
             </td>
           </tr>`;
         }).join('')}</tbody>
@@ -1807,9 +1920,9 @@
     }
 
     // Referral Orders
-    html += `<h3 style="margin:2rem 0 1rem;font-weight:700;">طلبات الريفيرال</h3>`;
+    html += `<h3 style="margin:2rem 0 1rem;font-weight:700;">${showArchivedOrders ? 'طلبات الريفيرال (المؤرشفة)' : 'طلبات الريفيرال'}</h3>`;
     if (refOrders.length === 0) {
-      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات ريفيرال بعد</p>';
+      html += '<p style="text-align:center;color:var(--text-muted);padding:1rem;">لا توجد طلبات ريفيرال هنا</p>';
     } else {
       html += `<div class="orders-table-wrapper"><table class="orders-table">
         <thead><tr><th>المنتج</th><th>المبلغ</th><th>كود الريفيرال</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
@@ -1820,8 +1933,14 @@
           <td><span class="order-status ${o.status}">${o.status === 'confirmed' ? 'مؤكد' : o.status === 'paid' ? 'مدفوع' : 'معلّق'}</span></td>
           <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
           <td>
-            ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="confirm">تأكيد</button>` : ''}
-            ${o.status === 'confirmed' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="pay">دفع عمولة</button>` : ''}
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="confirm">تأكيد</button>` : ''}
+              ${o.status === 'confirmed' ? `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-ref-order-id="${o.id}" data-action="pay">دفع عمولة</button>` : ''}
+              <button class="btn-icon" onclick="window.${showArchivedOrders ? 'restoreOrder' : 'archiveOrder'}('referral_orders', '${o.id}')" title="${showArchivedOrders ? 'أرشفة' : 'إخفاء'}">
+                ${showArchivedOrders ? '📤' : '📥'}
+              </button>
+              <button class="btn-icon" onclick="window.deleteOrder('referral_orders', '${o.id}')" title="حذف نهائي">🗑️</button>
+            </div>
           </td>
         </tr>`).join('')}</tbody>
       </table></div>`;
@@ -1829,13 +1948,19 @@
 
     container.innerHTML = html;
 
-    // Toggle requirements details
+    // Toggle Requirements details
     container.querySelectorAll('[data-toggle-reqs]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.toggleReqs;
         const el = document.getElementById('reqs-' + id);
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
       });
+    });
+
+    // Toggle Archived View
+    $('#showArchivedToggle').addEventListener('change', (e) => {
+      showArchivedOrders = e.target.checked;
+      renderOrdersList();
     });
 
     // Customer order status change
@@ -1867,6 +1992,35 @@
       });
     });
   }
+
+  window.archiveOrder = async function(table, id) {
+    if (!confirm('هل تريد نقل هذا الطلب للأرشيف (إخفاء من القائمة النشطة)؟')) return;
+    try {
+      const { error } = await sb.from(table).update({ is_archived: true }).eq('id', id);
+      if (error) throw error;
+      showToast('تمت الأرشفة');
+      renderOrdersList();
+    } catch (e) { showToast('فشل الأرشفة: ' + e.message); }
+  };
+
+  window.restoreOrder = async function(table, id) {
+    try {
+      const { error } = await sb.from(table).update({ is_archived: false }).eq('id', id);
+      if (error) throw error;
+      showToast('تمت استعادة الطلب للقائمة النشطة');
+      renderOrdersList();
+    } catch (e) { showToast('فشل الاستعادة: ' + e.message); }
+  };
+
+  window.deleteOrder = async function(table, id) {
+    if (!confirm('⚠️ تحذير: سيتم حذف هذا الطلب نهائياً من قاعدة البيانات. هل أنت متأكد؟')) return;
+    try {
+      const { error } = await sb.from(table).delete().eq('id', id);
+      if (error) throw error;
+      showToast('تم حذف الطلب نهائياً');
+      renderOrdersList();
+    } catch (e) { showToast('فشل الحذف: ' + e.message); }
+  };
 
   function openOrderModal() {
     $('#orderModalTitle').textContent = 'تسجيل طلب جديد';

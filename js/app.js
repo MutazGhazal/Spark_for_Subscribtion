@@ -877,35 +877,59 @@
       reviewForm.onsubmit = async (e) => {
         e.preventDefault();
         const rName = document.getElementById('reviewName').value.trim();
+        const rEmail = document.getElementById('reviewEmail').value.trim();
         const rComment = document.getElementById('reviewComment').value.trim();
         const rRating = document.querySelector('input[name="rating"]:checked').value;
+        const rFile = document.getElementById('reviewScreenshot').files[0];
         const submitBtn = document.getElementById('btnSubmitReview');
 
-        if (!rName || !rRating) return;
+        if (!rName || !rRating || !rEmail || !rFile) return;
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid; border-radius:50%; border-right-color:transparent; animation:spin 1s linear infinite;"></span>';
+        submitBtn.innerHTML = '<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid; border-radius:50%; border-right-color:transparent; animation:spin 1s linear infinite;"></span> جاري الرفع...';
 
         try {
+          // 1. Upload Screenshot to Storage
+          const fileExt = rFile.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `proofs/${fileName}`;
+
+          const { error: uploadError } = await sb.storage
+            .from('review_proofs')
+            .upload(filePath, rFile);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = sb.storage
+            .from('review_proofs')
+            .getPublicUrl(filePath);
+
+          // 2. Insert Review to Database
           const { error } = await sb.from('reviews').insert({
             product_id: productId,
             author_name: rName,
+            customer_email: rEmail,
             rating: parseInt(rRating),
             comment: rComment,
-            is_approved: true // Typically handled by trigger or defaults, assumed true for now
+            screenshot_url: publicUrl,
+            reward_status: 'pending',
+            is_approved: false
           });
 
           if (error) throw error;
 
-          showToast(txt('reviewSuccess'));
+          // Store email for future reward detection
+          localStorage.setItem('lastOrderEmail', rEmail);
+
+          showToast(currentLang === 'ar' ? '✅ تم إرسال تقييمك بنجاح! سيتم مراجعته ومنحك المكافأة قريباً.' : '✅ Review submitted! It will be reviewed and reward granted soon.');
           reviewForm.reset();
-          loadProductReviews(productId); // Reload reviews
+          loadProductReviews(productId);
         } catch (err) {
           console.error("Review submit error", err);
-          showToast(txt('reviewError'));
+          showToast(currentLang === 'ar' ? '❌ فشل إرسال التقييم: ' + err.message : '❌ Submit failed: ' + err.message);
         } finally {
           submitBtn.disabled = false;
-          submitBtn.textContent = txt('btnSubmitReview');
+          submitBtn.textContent = currentLang === 'ar' ? 'إرسال التقييم للمراجعة والمكافأة' : 'Submit Review for Reward';
         }
       };
     }
@@ -1905,6 +1929,63 @@
     initHeaderScroll();
     initSparkles();
     handleDeepLink();
+    checkLoyaltyRewards();
+  }
+
+  async function checkLoyaltyRewards() {
+    const email = localStorage.getItem('lastOrderEmail');
+    if (!email || !sb) return;
+
+    try {
+      // Check for approved reviews with coupons
+      const { data: coupons } = await sb.from('coupons')
+        .select('*')
+        .eq('customer_email', email)
+        .eq('is_used', false)
+        .limit(1);
+
+      if (coupons && coupons.length > 0) {
+        showRewardWidget(coupons[0].code);
+      }
+    } catch (e) {
+      console.error("Reward check error:", e);
+    }
+  }
+
+  function showRewardWidget(code) {
+    if (document.getElementById('loyaltyRewardWidget')) return;
+
+    const widget = document.createElement('div');
+    widget.id = 'loyaltyRewardWidget';
+    widget.className = 'reward-widget-floating';
+    widget.innerHTML = `
+      <div class="reward-gift-box">🎁</div>
+      <div class="reward-content-pop">
+        <p>${currentLang === 'ar' ? 'مبروك! لديك مكافأة معتمدة:' : 'Congrats! You have a reward:'}</p>
+        <div class="reward-code-display" onclick="copyToClipboard('${code}')">${code}</div>
+        <p style="font-size:0.7rem;margin-top:0.3rem;opacity:0.8;">${currentLang === 'ar' ? 'انسخ الكود واستخدمه في طلبك القادم (خصم 10%)' : 'Copy and use on your next order (10% Off)'}</p>
+        <button class="reward-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+      </div>
+    `;
+    document.body.appendChild(widget);
+
+    // Add CSS for the widget if not present
+    if (!document.getElementById('rewardWidgetStyle')) {
+      const style = document.createElement('style');
+      style.id = 'rewardWidgetStyle';
+      style.textContent = `
+        .reward-widget-floating { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; align-items: flex-end; flex-direction: column; }
+        .reward-gift-box { width: 60px; height: 60px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5); animation: float 3s ease-in-out infinite; border: 3px solid #fff; }
+        .reward-content-pop { background: white; padding: 1rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px; min-width: 200px; position: relative; animation: slideUp 0.4s ease; display: none; }
+        .reward-widget-floating:hover .reward-content-pop { display: block; }
+        .reward-content-pop p { margin: 0; font-size: 0.85rem; font-weight: 600; color: #1e293b; }
+        .reward-code-display { background: #f1f5f9; padding: 0.6rem; border-radius: 8px; margin-top: 0.5rem; border: 2px dashed #6366f1; color: #6366f1; font-weight: 800; font-family: monospace; font-size: 1.1rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .reward-code-display:hover { background: #e0e7ff; transform: scale(1.02); }
+        .reward-close { position: absolute; top: -10px; right: -10px; background: #64748b; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   function handleDeepLink() {
