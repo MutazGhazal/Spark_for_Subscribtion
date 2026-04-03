@@ -1611,7 +1611,7 @@
       const emptyStarSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
       const starsHtml = starSvg.repeat(full) + (half ? starSvg : '') + emptyStarSvg.repeat(empty);
 
-      const statusBadge = `<span class="review-status-badge ${r.reward_status || 'none'}">${r.reward_status === 'approved' ? 'مكافأة معتمدة' : (r.reward_status === 'pending' ? 'بانتظار التحقق' : 'تقييم عادي')}</span>`;
+      const statusBadge = `<span class="review-status-badge ${r.reward_status || 'none'}" style="font-size:0.65rem; padding:2px 8px; border-radius:20px; font-weight:700; ${r.reward_status==='pending'?'background:#fef3c7;color:#92400e;':(r.reward_status==='approved'?'background:#dcfce7;color:#166534;':'background:#f1f5f9;color:#64748b;')}">${r.reward_status === 'approved' ? 'مكافأة معتمدة ✅' : (r.reward_status === 'pending' ? 'بانتظار التحقق ⏳' : 'تقييم عادي')}</span>`;
 
       return `
         <div class="admin-review-card ${!r.is_approved ? 'unapproved' : ''}" data-id="${r.id}">

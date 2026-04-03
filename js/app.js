@@ -1930,6 +1930,7 @@
     initSparkles();
     handleDeepLink();
     checkLoyaltyRewards();
+    checkReviewPrompt();
   }
 
   async function checkLoyaltyRewards() {
@@ -1949,6 +1950,79 @@
       }
     } catch (e) {
       console.error("Reward check error:", e);
+    }
+  }
+
+  async function checkReviewPrompt() {
+    const email = localStorage.getItem('lastOrderEmail');
+    if (!email || !sb) return;
+
+    // Don't show again if already shown this session
+    if (sessionStorage.getItem('hasPromptedReview')) return;
+
+    try {
+      // 1. Check if user has completed orders
+      const { data: orders } = await sb.from('customer_orders')
+        .select('id')
+        .eq('customer_email', email)
+        .eq('status', 'completed')
+        .limit(1);
+
+      if (!orders || orders.length === 0) return;
+
+      // 2. Check if they already have a review
+      const { data: reviews } = await sb.from('reviews')
+        .select('id')
+        .eq('customer_email', email)
+        .limit(1);
+
+      if (reviews && reviews.length > 0) return;
+
+      // If they bought something but didn't review, prompt them
+      showReviewPromptPopup();
+      sessionStorage.setItem('hasPromptedReview', 'true');
+
+    } catch (e) {
+      console.error("Review prompt error:", e);
+    }
+  }
+
+  function showReviewPromptPopup() {
+    if (document.getElementById('reviewPromoPopup')) return;
+
+    const popup = document.createElement('div');
+    popup.id = 'reviewPromoPopup';
+    popup.className = 'review-promo-modal';
+    popup.innerHTML = `
+      <div class="review-promo-content">
+        <div class="promo-icon">🎁</div>
+        <h3 class="promo-title">كوبون خصم 10% بانتظارك! ✨</h3>
+        <p class="promo-text">لقد أتممت طلباً مسبقاً! شارك تجربتك معنا (تقييم + سكرين شوت لمشاركتك على السوشيال ميديا) لتحصل على كود خصم فوري لطلبك القادم.</p>
+        <div class="promo-btns">
+          <button class="btn-promo-go" onclick="document.getElementById('reviewPromoPopup').remove(); document.querySelector('.reviews-section')?.scrollIntoView({behavior:'smooth'});">تقييم الآن</button>
+          <button class="btn-promo-skip" onclick="document.getElementById('reviewPromoPopup').remove()">ليس الآن</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+
+    if (!document.getElementById('reviewPromoStyle')) {
+      const style = document.createElement('style');
+      style.id = 'reviewPromoStyle';
+      style.textContent = `
+        .review-promo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 10001; display: flex; align-items: center; justify-content: center; animation: fadeInReview 0.4s ease; padding: 20px; }
+        .review-promo-content { background: white; max-width: 400px; width: 100%; padding: 2.5rem; border-radius: 28px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 2px solid #ecd4ff; position: relative; }
+        .promo-icon { font-size: 4rem; margin-bottom: 1.5rem; animation: floatGift 3s ease-in-out infinite; }
+        .promo-title { font-size: 1.5rem; font-weight: 900; color: #1e293b; margin-bottom: 1rem; line-height: 1.3; }
+        .promo-text { font-size: 0.95rem; color: #64748b; line-height: 1.7; margin-bottom: 2rem; }
+        .promo-btns { display: flex; flex-direction: column; gap: 12px; }
+        .btn-promo-go { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+        .btn-promo-go:hover { transform: scale(1.03); opacity: 0.9; }
+        .btn-promo-skip { background: #f1f5f9; color: #64748b; border: none; padding: 10px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        @keyframes fadeInReview { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes floatGift { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-15px) rotate(5deg); } }
+      `;
+      document.head.appendChild(style);
     }
   }
 
