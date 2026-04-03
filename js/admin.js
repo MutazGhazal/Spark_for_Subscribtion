@@ -801,9 +801,13 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="${plan.cost_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="${plan.official_price || 0}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
-                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الهامش (x)</label><input type="number" class="plan-margin" value="${plan.profit_margin || ''}" step="0.01" placeholder="${siteSettings.global_profit_margin || 1.1}" style="font-size:0.85rem; padding:0.5rem;"></div>
+                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="${plan.profit_margin ? (plan.profit_margin > 5 ? plan.profit_margin : Math.round((plan.profit_margin - 1) * 100)) : ''}" step="1" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.1) - 1) * 100)}" style="font-size:0.85rem; padding:0.5rem;"></div>
                   <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="${plan.fixed_fee || ''}" step="0.01" placeholder="${siteSettings.global_fixed_fee || 3}" style="font-size:0.85rem; padding:0.5rem;"></div>
-                  <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label><input type="number" class="plan-price" value="${plan.price || 0}" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);"></div>
+                  <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label>
+                    <input type="number" class="plan-price" value="${plan.price || 0}" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);">
+                    <div class="plan-net-profit" style="font-size:0.7rem; color:#059669; font-weight:600; margin-top:0.2rem;">الربح: ${(plan.price - (plan.cost_price || 0)).toFixed(2)}$</div>
+                  </div>
                   <button type="button" class="btn-icon toggle-plan-visibility ${plan.is_active !== false ? 'active' : ''}" title="إخفاء/إظهار" style="height:38px;width:38px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -856,9 +860,13 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.5fr auto auto;gap:0.5rem;align-items:flex-end;">
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">التكلفة $</label><input type="number" class="plan-cost" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسمي $</label><input type="number" class="plan-official" value="0" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
-          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الهامش (x)</label><input type="number" class="plan-margin" value="" placeholder="${siteSettings.global_profit_margin || 1.1}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
+          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الربح %</label><input type="number" class="plan-margin" value="" placeholder="${Math.round(((siteSettings.global_profit_margin || 1.1) - 1) * 100)}" step="1" style="font-size:0.85rem; padding:0.5rem;"></div>
           <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;">الرسوم $</label><input type="number" class="plan-fee" value="" placeholder="${siteSettings.global_fixed_fee || 3}" step="0.01" style="font-size:0.85rem; padding:0.5rem;"></div>
-          <div class="form-group" style="margin:0;"><label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label><input type="number" class="plan-price" value="0" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);"></div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:0.7rem;margin-bottom:0.2rem;color:var(--primary);font-weight:700;">سعر البيع النهائى $</label>
+            <input type="number" class="plan-price" value="0" step="0.01" style="font-size:1rem; padding:0.5rem; border:2px solid var(--primary); font-weight:800; color:var(--primary);">
+            <div class="plan-net-profit" style="font-size:0.7rem; color:#059669; font-weight:600; margin-top:0.2rem;">الربح: 0.00$</div>
+          </div>
           <button type="button" class="btn-icon toggle-plan-visibility active" title="إخفاء/إظهار" style="height:38px;width:38px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -904,9 +912,19 @@
       const cost = parseFloat(row.querySelector('.plan-cost').value) || 0;
       const marginInput = row.querySelector('.plan-margin').value;
       const feeInput = row.querySelector('.plan-fee').value;
-      const margin = marginInput ? parseFloat(marginInput) : (siteSettings.global_profit_margin || 1.1);
+
+      let margin;
+      if (marginInput) {
+        const val = parseFloat(marginInput);
+        margin = 1 + (val / 100);
+      } else {
+        margin = (siteSettings.global_profit_margin || 1.1);
+      }
+
       const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
-      row.querySelector('.plan-price').value = ((cost * margin) + fee).toFixed(2);
+      const price = (cost * margin) + fee;
+      row.querySelector('.plan-price').value = price.toFixed(2);
+      row.querySelector('.plan-net-profit').textContent = `الربح: ${(price - cost).toFixed(2)}$`;
     }
 
     function updatePlanMargin(row) {
@@ -915,8 +933,10 @@
       const feeInput = row.querySelector('.plan-fee').value;
       const fee = feeInput ? parseFloat(feeInput) : (siteSettings.global_fixed_fee || 3);
       if (cost > 0) {
-        row.querySelector('.plan-margin').value = ((price - fee) / cost).toFixed(3);
+        const margin = ((price - fee) / cost);
+        row.querySelector('.plan-margin').value = Math.round((margin - 1) * 100);
       }
+      row.querySelector('.plan-net-profit').textContent = `الربح: ${(price - cost).toFixed(2)}$`;
     }
 
     // Auto-translate for main fields
@@ -1048,7 +1068,11 @@
       const price = parseFloat(row.querySelector('.plan-price')?.value) || 0;
       const cost = parseFloat(row.querySelector('.plan-cost')?.value) || 0;
       const official = parseFloat(row.querySelector('.plan-official')?.value) || 0;
-      const margin = parseFloat(row.querySelector('.plan-margin')?.value) || null;
+      const marginValue = parseFloat(row.querySelector('.plan-margin')?.value);
+      let margin = null;
+      if (!isNaN(marginValue)) {
+        margin = 1 + (marginValue / 100);
+      }
       const fee = parseFloat(row.querySelector('.plan-fee')?.value) || null;
       const sourceUrl = row.querySelector('.plan-source')?.value.trim() || '';
       const officialUrl = row.querySelector('.plan-official-url')?.value.trim() || '';
