@@ -1896,11 +1896,17 @@
           return `<tr>
             <td>${o.product_name || '—'}</td>
             <td><strong>${o.customer_name || '—'}</strong>${o.customer_email ? `<br><small>${o.customer_email}</small>` : ''}</td>
-            <td>${(o.amount||0)} ${o.currency||'USD'}</td>
+            <td>
+              <div>${(o.amount||0)} ${o.currency||'USD'}</div>
+              ${o.discount_amount > 0 ? `<div style="font-size:0.7rem; color:var(--success); font-weight:700;">-${o.discount_amount} (كود: ${o.applied_promo})</div>` : ''}
+            </td>
             <td>${o.payment_method || '—'}</td>
             <td><span class="order-status ${o.status}">${statusLabels[o.status] || o.status}</span></td>
             <td>${new Date(o.created_at).toLocaleDateString('ar-EG')}</td>
-            <td>${reqEntries.length > 0 ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.75rem;" data-toggle-reqs="${o.id}">عرض</button><div class="req-details" id="reqs-${o.id}" style="display:none;margin-top:0.5rem;">${reqEntries.map(([k,v]) => `<div style="font-size:0.78rem;"><strong>${k}:</strong> ${v}</div>`).join('')}</div>` : '—'}</td>
+            <td>
+              ${reqEntries.length > 0 ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.75rem;" data-toggle-reqs="${o.id}">عرض</button><div class="req-details" id="reqs-${o.id}" style="display:none;margin-top:0.5rem;">${reqEntries.map(([k,v]) => `<div style="font-size:0.78rem;"><strong>${k}:</strong> ${v}</div>`).join('')}</div>` : ''}
+              ${o.applied_promo ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">🎟️ ${o.applied_promo}</div>` : ''}
+            </td>
             <td>
               <div style="display:flex; align-items:center; gap:5px;">
                 <select class="cust-status-select" data-cust-id="${o.id}" style="padding:0.3rem;font-size:0.78rem;border-radius:4px;border:1px solid var(--border);">

@@ -1436,6 +1436,11 @@
     lines.push(`📦 *${name}*`);
     if (desc) lines.push(`📝 ${desc}`);
     lines.push(`💰 ${displayPrice}`);
+    if (order.discountValue && order.discountValue > 0) {
+      lines.push(`🧧 *${txt('discount') || 'الخصم'}:* -${order.discountValue} ${product.currency || 'USD'} (${order.promoCode})`);
+      const finalPrice = (plan ? plan.price : product.price) - order.discountValue;
+      lines.push(`✅ *${txt('total') || 'الإجمالي'}:* ${finalPrice} ${product.currency || 'USD'}`);
+    }
     if (displayDuration) lines.push(`⏱ ${displayDuration}`);
     if (method) lines.push(`💳 ${method}`);
 
@@ -1472,14 +1477,24 @@
       await sb.from('customer_orders').insert({
         product_id: product.id,
         product_name: name,
-        amount: product.price,
+        amount: order.selectedPlan ? order.selectedPlan.price : product.price,
         currency: product.currency || 'USD',
         customer_name: order.customerName || '',
         customer_email: order.customerEmail || '',
         requirements_data: order.requirements || {},
         referral_code: refCode,
-        payment_method: method
+        payment_method: method,
+        applied_promo: order.promoCode || null,
+        discount_amount: order.discountValue || 0
       });
+
+      // If promo code used, mark coupon as used
+      if (order.promoCode) {
+        await sb.from('coupons').update({ 
+          is_used: true, 
+          used_at: new Date().toISOString() 
+        }).eq('code', order.promoCode);
+      }
     } catch (e) {
       console.error('[Order] save failed:', e);
     }
@@ -1510,10 +1525,28 @@
     const effectivePrice = pendingOrder?.selectedPlan ? pendingOrder.selectedPlan.price : product.price;
 
     let html = `<div class="modal-price-summary">
-      <span class="modal-price-main">${priceDisplay}</span>
-      ${localEquiv ? `<span class="modal-price-local">${localEquiv}</span>` : ''}
-      ${product.currency !== 'USD' ? `<span class="modal-price-usd">${usdEquiv}</span>` : ''}
+      <div id="priceMainContainer">
+        <span class="modal-price-main">${priceDisplay}</span>
+        ${localEquiv ? `<span class="modal-price-local">${localEquiv}</span>` : ''}
+        ${product.currency !== 'USD' ? `<span class="modal-price-usd">${usdEquiv}</span>` : ''}
+      </div>
+      <div id="discountDisplay" style="display:none; margin-top:0.5rem; color:var(--success); font-weight:700; font-size:0.9rem;">
+        <span>-${txt('discount') || 'خصم'}: <span id="discountVal">0</span> ${product.currency || 'USD'}</span>
+        <div id="finalPriceRow" style="font-size:1.1rem; margin-top:2px;">${txt('total') || 'الإجمالي'}: <span id="finalPriceVal">0</span> ${product.currency || 'USD'}</div>
+      </div>
     </div>`;
+
+    // Promo Code Field
+    html += `
+      <div class="promo-code-box" style="margin-bottom:1.5rem; padding:1rem; background:var(--bg-secondary); border-radius:12px; border:1px dashed var(--border);">
+        <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:8px; color:var(--text-secondary);">${txt('havePromo') || 'هل لديك كود خصم؟'}</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="promoInput" placeholder="REV-XXXXXX" style="flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--bg-main); font-family:monospace; font-weight:700; text-transform:uppercase;">
+          <button id="applyPromoBtn" class="btn btn-secondary" style="padding:0 1.2rem; height:42px; font-size:0.85rem;">${txt('apply') || 'تطبيق'}</button>
+        </div>
+        <div id="promoMsg" style="margin-top:8px; font-size:0.78rem; display:none;"></div>
+      </div>
+    `;
 
     const social = settings.social || {};
     const emailAddr = social.email;
@@ -1613,6 +1646,76 @@
     </div>`;
 
     body.innerHTML = html;
+
+    const promoInput = body.querySelector('#promoInput');
+    const applyBtn = body.querySelector('#applyPromoBtn');
+    const promoMsg = body.querySelector('#promoMsg');
+    const discountDisplay = body.querySelector('#discountDisplay');
+    const discountVal = body.querySelector('#discountVal');
+    const finalPriceVal = body.querySelector('#finalPriceVal');
+
+    applyBtn.addEventListener('click', async () => {
+      const code = promoInput.value.trim().toUpperCase();
+      if (!code) return;
+
+      applyBtn.disabled = true;
+      applyBtn.textContent = '...';
+      promoMsg.style.display = 'none';
+
+      try {
+        const { data, error } = await sb.from('coupons')
+          .select('*')
+          .eq('code', code)
+          .eq('is_used', false)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+          promoMsg.textContent = '❌ كود غير صحيح أو مستخدم مسبقاً';
+          promoMsg.style.color = 'var(--danger)';
+          promoMsg.style.display = 'block';
+          applyBtn.disabled = false;
+          applyBtn.textContent = txt('apply') || 'تطبيق';
+          return;
+        }
+
+        // Check email if provided
+        if (data.customer_email && pendingOrder.customerEmail && data.customer_email.toLowerCase() !== pendingOrder.customerEmail.toLowerCase()) {
+           promoMsg.textContent = '❌ هذا الكود مخصص لإيميل آخر';
+           promoMsg.style.color = 'var(--danger)';
+           promoMsg.style.display = 'block';
+           applyBtn.disabled = false;
+           applyBtn.textContent = txt('apply') || 'تطبيق';
+           return;
+        }
+
+        // Success
+        const discountPercent = data.discount_percent || 10;
+        const discountAmount = (effectivePrice * discountPercent) / 100;
+        const finalPrice = effectivePrice - discountAmount;
+
+        pendingOrder.promoCode = code;
+        pendingOrder.discountValue = discountAmount;
+
+        discountVal.textContent = discountAmount.toFixed(2);
+        finalPriceVal.textContent = finalPrice.toFixed(2);
+        discountDisplay.style.display = 'block';
+
+        promoMsg.textContent = `✅ تم تطبيق الخصم (${discountPercent}%)`;
+        promoMsg.style.color = 'var(--success)';
+        promoMsg.style.display = 'block';
+        promoInput.disabled = true;
+        applyBtn.style.display = 'none';
+
+      } catch (e) {
+        console.error(e);
+        promoMsg.textContent = '❌ خطأ في التحقق';
+        promoMsg.style.display = 'block';
+        applyBtn.disabled = false;
+        applyBtn.textContent = txt('apply') || 'تطبيق';
+      }
+    });
 
     function openWhatsApp(msgText) {
       const encoded = encodeURIComponent(msgText);
