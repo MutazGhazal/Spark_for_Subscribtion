@@ -2098,12 +2098,13 @@
     popup.className = 'review-promo-modal';
     popup.innerHTML = `
       <div class="review-promo-content">
-        <div class="promo-icon">🎁</div>
-        <h3 class="promo-title">كوبون خصم 10% بانتظارك! ✨</h3>
-        <p class="promo-text">لقد أتممت طلباً مسبقاً! شارك تجربتك معنا (تقييم + سكرين شوت لمشاركتك على السوشيال ميديا) لتحصل على كود خصم فوري لطلبك القادم.</p>
+        <button class="review-promo-close" onclick="document.getElementById('reviewPromoPopup').remove()">&times;</button>
+        <div class="review-promo-icon">🎁</div>
+        <h3 class="promo-title">${currentLang === 'ar' ? 'هدية بانتظارك! ✨' : 'A Gift Awaits You! ✨'}</h3>
+        <p class="promo-text">${currentLang === 'ar' ? 'لقد أتممت طلباً مسبقاً! تابعنا على انستجرام وقيم خدمتنا لتحصل على كود خصم 10% فوراً.' : 'You completed a previous order! Follow us on Instagram and review our service to get a 10% discount code immediately.'}</p>
         <div class="promo-btns">
-          <button class="btn-promo-go" onclick="document.getElementById('reviewPromoPopup').remove(); document.querySelector('.reviews-section')?.scrollIntoView({behavior:'smooth'});">تقييم الآن</button>
-          <button class="btn-promo-skip" onclick="document.getElementById('reviewPromoPopup').remove()">ليس الآن</button>
+          <button class="btn-promo-go" onclick="document.getElementById('reviewPromoPopup').remove(); openReviewWizard();">${currentLang === 'ar' ? 'ابدأ الآن' : 'Start Now'}</button>
+          <button class="btn-promo-skip" onclick="document.getElementById('reviewPromoPopup').remove()">${currentLang === 'ar' ? 'ليس الآن' : 'Not Now'}</button>
         </div>
       </div>
     `;
@@ -2126,6 +2127,223 @@
         @keyframes floatGift { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-15px) rotate(5deg); } }
       `;
       document.head.appendChild(style);
+    }
+  }
+
+  // ===== REVIEW WIZARD (STEPPER) =====
+  let wizardData = { rating: 5, comment: '', file: null, productId: null };
+
+  window.openReviewWizard = function(productId = null) {
+    if (document.getElementById('reviewWizardModal')) return;
+    wizardData = { rating: 5, comment: '', file: null, productId: productId };
+
+    const modal = document.createElement('div');
+    modal.id = 'reviewWizardModal';
+    modal.className = 'wizard-modal';
+    modal.innerHTML = `
+      <div class="wizard-container">
+        <button class="wizard-close" onclick="document.getElementById('reviewWizardModal').remove()">&times;</button>
+        
+        <div class="wizard-header">
+          <h3 id="wizardTitle">${currentLang === 'ar' ? 'دليل الحصول على الجائزة' : 'Reward Guide'}</h3>
+          <div class="wizard-stepper">
+            <div class="wizard-step active" data-step="1">1</div>
+            <div class="wizard-line"></div>
+            <div class="wizard-step" data-step="2">2</div>
+            <div class="wizard-line"></div>
+            <div class="wizard-step" data-step="3">3</div>
+          </div>
+        </div>
+
+        <div class="wizard-body" id="wizardBody"></div>
+
+        <div class="wizard-footer">
+          <button class="btn btn-secondary" id="wizardPrev" style="visibility:hidden; flex:1;">${currentLang === 'ar' ? 'السابق' : 'Back'}</button>
+          <button class="btn btn-primary" id="wizardNext" style="flex:2;">${currentLang === 'ar' ? 'موافق، الخطوة التالية' : 'Next Step'}</button>
+        </div>
+      </div>
+      <style id="wizardStyles">
+        .wizard-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 11000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: wizardFadeIn 0.3s ease; }
+        @keyframes wizardFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .wizard-container { background: var(--bg-main); width: 100%; max-width: 450px; border-radius: 24px; overflow: hidden; position: relative; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .wizard-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; z-index: 10; }
+        .wizard-header { padding: 25px 25px 15px; text-align: center; background: linear-gradient(to bottom, var(--bg-secondary), transparent); }
+        .wizard-header h3 { margin-bottom: 20px; font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        .wizard-stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
+        .wizard-step { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-secondary); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: var(--text-muted); transition: 0.3s; }
+        .wizard-step.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+        .wizard-line { width: 40px; height: 2px; background: var(--border); }
+        .wizard-body { padding: 30px 25px; min-height: 280px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .wizard-content { animation: wizardSlideIn 0.4s ease; width: 100%; }
+        @keyframes wizardSlideIn { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .wizard-icon { font-size: 3.5rem; margin-bottom: 20px; }
+        .wizard-content h4 { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
+        .wizard-content p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+        .wizard-footer { padding: 20px 25px 30px; display: flex; gap: 15px; }
+        .wizard-stars { display: flex; gap: 8px; margin: 20px 0; justify-content: center; }
+        .wizard-star { font-size: 2rem; cursor: pointer; color: #ccc; transition: 0.2s; }
+        .wizard-star.active { color: #f59e0b; transform: scale(1.1); }
+        .wizard-upload-area { border: 2px dashed var(--primary); border-radius: 16px; padding: 30px; width: 100%; margin-top: 20px; cursor: pointer; transition: 0.3s; background: rgba(99, 102, 241, 0.05); }
+        .wizard-upload-area:hover { background: rgba(99, 102, 241, 0.1); border-style: solid; }
+        .wizard-promo-close { position: absolute; top: 15px; left: 15px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; }
+        [dir="rtl"] .wizard-promo-close { right: auto; left: 15px; }
+        .review-promo-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; }
+        [dir="rtl"] .review-promo-close { left: 15px; right: auto; }
+      </style>
+    `;
+    document.body.appendChild(modal);
+    renderWizardStep(1);
+
+    const nextBtn = modal.querySelector('#wizardNext');
+    const prevBtn = modal.querySelector('#wizardPrev');
+    let currentStep = 1;
+
+    nextBtn.addEventListener('click', async () => {
+      if (currentStep === 1) {
+        currentStep = 2;
+        renderWizardStep(2);
+        prevBtn.style.visibility = 'visible';
+      } else if (currentStep === 2) {
+        const comment = document.getElementById('wizardComment').value.trim();
+        if (!comment) {
+          showToast(currentLang === 'ar' ? 'يرجى كتابة تعليق بسيط' : 'Please write a simple review');
+          return;
+        }
+        wizardData.comment = comment;
+        currentStep = 3;
+        renderWizardStep(3);
+        nextBtn.textContent = currentLang === 'ar' ? 'إرسال للمراجعة 🚀' : 'Submit for Review 🚀';
+      } else if (currentStep === 3) {
+        if (!wizardData.file) {
+          showToast(currentLang === 'ar' ? 'يرجى رفع صورة الإثبات' : 'Please upload the screenshot');
+          return;
+        }
+        await submitReviewWizard(nextBtn);
+      }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentStep > 1) {
+        currentStep--;
+        renderWizardStep(currentStep);
+        nextBtn.textContent = currentLang === 'ar' ? 'موافق، الخطوة التالية' : 'Next Step';
+        if (currentStep === 1) prevBtn.style.visibility = 'hidden';
+      }
+    });
+  };
+
+  function renderWizardStep(step) {
+    const body = document.getElementById('wizardBody');
+    if (!body) return;
+    const modal = document.getElementById('reviewWizardModal');
+    const steps = modal.querySelectorAll('.wizard-step');
+    steps.forEach((s, i) => s.classList.toggle('active', (i + 1) <= step));
+
+    // Get social from settings if available
+    const social = settings.social || {};
+    const igLink = social.instagram || "https://www.instagram.com/mutaz_ghazal/";
+
+    if (step === 1) {
+      body.innerHTML = `
+        <div class="wizard-content">
+          <div class="wizard-icon">📱</div>
+          <h4>${currentLang === 'ar' ? 'الخطوة 1: تابعنا على انستجرام' : 'Step 1: Follow on Instagram'}</h4>
+          <p>${currentLang === 'ar' ? 'افتح صفحتنا، قم بعمل فولو، واترك تعليقاً على منشور المنتج هناك.' : 'Open our page, follow us, and leave a comment on the product post there.'}</p>
+          <a href="${igLink}" target="_blank" class="btn btn-primary" style="margin-top:20px; width:100%; background:#E1306C; border:none; display:block; text-align:center; padding:12px; border-radius:12px; font-weight:800; text-decoration:none;">
+            ${currentLang === 'ar' ? 'فتح حساب الانستجرام' : 'Open Instagram Account'}
+          </a>
+          <p style="font-size:0.75rem; margin-top:12px; color:var(--text-muted); opacity:0.8;">* ${currentLang === 'ar' ? 'لا تنسَ أخذ لقطة شاشة (Screenshot) للتعليق والفولو' : 'Don\'t forget to take a screenshot of your comment and follow'}</p>
+        </div>
+      `;
+    } else if (step === 2) {
+      body.innerHTML = `
+        <div class="wizard-content">
+          <div class="wizard-icon">✍️</div>
+          <h4>${currentLang === 'ar' ? 'الخطوة 2: قيمنا هنا في الموقع' : 'Step 2: Review Us on Site'}</h4>
+          <p>${currentLang === 'ar' ? 'أخبرنا عن تجربتك مع سبارك لمساعدتنا على التطور.' : 'Tell us about your experience with Spark to help us improve.'}</p>
+          <div class="wizard-stars">
+            ${[1, 2, 3, 4, 5].map(n => `<span class="wizard-star ${n <= wizardData.rating ? 'active' : ''}" onclick="window.setWizardRating(${n})">★</span>`).join('')}
+          </div>
+          <textarea id="wizardComment" placeholder="${currentLang === 'ar' ? 'ما رأيك في الخدمة؟' : 'What do you think of the service?'}" style="width:100%; height:80px; border-radius:12px; border:1px solid var(--border); padding:12px; background:var(--bg-secondary); resize:none; font-size:0.9rem;">${wizardData.comment}</textarea>
+        </div>
+      `;
+    } else if (step === 3) {
+      body.innerHTML = `
+        <div class="wizard-content">
+          <div class="wizard-icon">📸</div>
+          <h4>${currentLang === 'ar' ? 'الخطوة 3: ارفع الإثبات' : 'Step 3: Upload Proof'}</h4>
+          <p>${currentLang === 'ar' ? 'ارفع السكرين شوت التي تظهر متابعتك وتعليقك على انستجرام.' : 'Upload the screenshot showing your follow and comment on Instagram.'}</p>
+          <div class="wizard-upload-area" onclick="document.getElementById('wizardFile').click()">
+            <div id="uploadUI">
+              <svg width="32" height="32" fill="var(--primary)" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              <div style="font-weight:700; margin-top:10px; color:var(--text-main);">${wizardData.file ? wizardData.file.name : (currentLang === 'ar' ? 'اضغط لرفع الصورة' : 'Click to Upload')}</div>
+            </div>
+            <input type="file" id="wizardFile" accept="image/*" style="display:none;" onchange="window.handleWizardFile(this)">
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  window.setWizardRating = function(n) {
+    wizardData.rating = n;
+    renderWizardStep(2);
+  };
+
+  window.handleWizardFile = function(input) {
+    if (input.files && input.files[0]) {
+      wizardData.file = input.files[0];
+      renderWizardStep(3);
+    }
+  };
+
+  async function submitReviewWizard(btn) {
+    const email = localStorage.getItem('lastOrderEmail');
+    const name = localStorage.getItem('lastOrderName') || (currentLang === 'ar' ? 'عميل سبارك' : 'Spark Customer');
+
+    btn.disabled = true;
+    btn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Submitting...';
+
+    try {
+      let screenshotUrl = null;
+      if (wizardData.file) {
+        const fileName = `proof_${Date.now()}_${wizardData.file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const { data: uploadData, error: uploadError } = await sb.storage
+          .from('review_proofs')
+          .upload(fileName, wizardData.file);
+        
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = sb.storage.from('review_proofs').getPublicUrl(fileName);
+        screenshotUrl = publicUrl;
+      }
+
+      await sb.from('reviews').insert({
+        product_id: wizardData.productId,
+        author_name: name,
+        customer_email: email,
+        rating: wizardData.rating,
+        comment: wizardData.comment,
+        screenshot_url: screenshotUrl,
+        is_approved: false
+      });
+
+      // Show success in wizard
+      const body = document.getElementById('wizardBody');
+      const footer = document.querySelector('.wizard-footer');
+      if (footer) footer.style.display = 'none';
+      body.innerHTML = `
+        <div class="wizard-content" style="padding: 20px 0;">
+          <div class="wizard-icon">🎉</div>
+          <h4>${currentLang === 'ar' ? 'تم استلام طلبك بنجاح!' : 'Submitted Successfully!'}</h4>
+          <p style="margin-top:15px; font-size:0.95rem;">${currentLang === 'ar' ? 'عند مراجعة الإثبات من قبل الإدارة، سيظهر لك الكوبون تلقائياً في الصفحة الرئيسية للمتجر.' : 'Once our team reviews the proof, your coupon will automatically appear on the store home page.'}</p>
+          <button class="btn btn-primary" style="margin-top:30px; width:100%;" onclick="document.getElementById('reviewWizardModal').remove()">${currentLang === 'ar' ? 'موافق' : 'Done'}</button>
+        </div>
+      `;
+    } catch (e) {
+      console.error(e);
+      showToast(currentLang === 'ar' ? 'حدث خطأ أثناء الإرسال' : 'Error during submission');
+      btn.disabled = false;
+      btn.textContent = currentLang === 'ar' ? 'حاول مرة أخرى' : 'Try Again';
     }
   }
 
