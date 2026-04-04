@@ -842,6 +842,28 @@
             </div>
           ` : ''}
         </div>
+
+        ${(() => {
+          const activePlans = (product.subscription_plans || []).filter(p => p.is_active !== false).sort((a,b) => (a.price || 0) - (b.price || 0));
+          if (activePlans.length === 0) return '';
+          return `
+            <div class="pd-plans-section" style="margin-bottom:1.5rem;">
+              <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem; color:var(--text);">${currentLang === 'ar' ? 'الخطط والمدد المتاحة' : 'Available Plans'}</h4>
+              <div class="pd-plans-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:0.5rem;">
+                ${activePlans.map(plan => {
+                  const label = currentLang === 'ar' ? (plan.label_ar || plan.label_en) : (plan.label_en || plan.label_ar);
+                  return `
+                    <div class="pd-plan-small-card" style="padding:0.75rem; border:1.5px solid var(--border); border-radius:10px; background:var(--bg-secondary); text-align:center; transition:all 0.2s;">
+                      <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:4px;">${label}</div>
+                      <div style="font-size:1.05rem; font-weight:800; color:var(--primary);">${Math.ceil(plan.price)} ${product.currency || 'USD'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        })()}
+
         <div class="pd-actions" style="display:flex; gap:10px;">
           <button class="btn btn-primary pd-buy-btn" data-id="${product.id}" ${!isAvailable ? 'disabled' : ''} style="flex:1;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
