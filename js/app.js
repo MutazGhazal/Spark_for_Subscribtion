@@ -1237,10 +1237,13 @@
     if (reqList.length > 0) {
       openRequirementsForm(product, reqList);
     } else {
-      const plans = product.subscription_plans || [];
-      if (plans.length > 0) {
+      const activePlans = (product.subscription_plans || []).filter(p => p.is_active !== false);
+      if (activePlans.length > 1) {
         openDurationModal(product);
       } else {
+        if (activePlans.length === 1) {
+            pendingOrder.selectedPlan = activePlans[0];
+        }
         openPaymentModal(productId);
       }
     }
@@ -1308,10 +1311,13 @@
       modal.classList.remove('active');
       document.body.style.overflow = '';
 
-      const plans = product.subscription_plans || [];
-      if (plans.length > 0) {
+      const activePlans = (product.subscription_plans || []).filter(p => p.is_active !== false);
+      if (activePlans.length > 1) {
         setTimeout(() => openDurationModal(product), 200);
       } else {
+        if (activePlans.length === 1) {
+            pendingOrder.selectedPlan = activePlans[0];
+        }
         setTimeout(() => openPaymentModal(product.id), 200);
       }
     });
