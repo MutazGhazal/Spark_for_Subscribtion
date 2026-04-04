@@ -664,6 +664,17 @@
     } catch (e) { }
   };
 
+  // Add scroll sound effect for mobile/pointing
+  let lastTickY = 0;
+  const SCROLL_TICK_THRESHOLD = 110; // Pixels per sound tick
+  window.addEventListener('scroll', () => {
+    const currentY = window.scrollY;
+    if (Math.abs(currentY - lastTickY) >= SCROLL_TICK_THRESHOLD) {
+      if (window.playHoverSound) window.playHoverSound();
+      lastTickY = currentY;
+    }
+  }, { passive: true });
+
   // ===== PRODUCTS =====
   function getFilteredProducts() {
     return products.filter(p => {
