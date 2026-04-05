@@ -248,8 +248,12 @@
     const converted = convertPrice(priceUSD, fromCurrency);
     if (converted === null) return '';
     const sym = CURRENCY_SYMBOLS[visitorCurrency] || visitorCurrency;
-    const rounded = Math.ceil(converted).toLocaleString();
-    return `≈ ${rounded} ${sym}`;
+    // Don't round to integer anymore, show decimals for local currency accuracy
+    const formatted = Number(converted.toFixed(2)).toLocaleString(undefined, {
+       minimumFractionDigits: 0,
+       maximumFractionDigits: 2
+    });
+    return `≈ ${formatted} ${sym}`;
   }
 
   function formatUSDEquiv(price, fromCurrency) {
