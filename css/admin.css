@@ -112,6 +112,8 @@
 .admin-dashboard {
   display: flex;
   min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* ===== SIDEBAR ===== */
@@ -193,6 +195,11 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+#sidebarToggle {
+  display: none;
 }
 
 .admin-topbar {
@@ -581,6 +588,10 @@
 
   .admin-sidebar.open {
     transform: translateX(0);
+  }
+
+  #sidebarToggle {
+    display: flex;
   }
 
   .admin-main {
